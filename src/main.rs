@@ -11,11 +11,11 @@ use crate::state::State;
 // tiles
 
 // Define the world size which is (width, height)
-const WORLD_SIZE: (i16, i16) = (60, 40);
+pub const WORLD_SIZE: (i16, i16) = (55, 30);
 // define the size of each tile which a square of pixels, size: (x, y) pixels.
-const TILE_SIZE: (i16, i16) = (32, 32);
+pub const TILE_SIZE: (i16, i16) = (32, 32);
 // define screen size in pixels. Will be grid size * tile size
-const SCREEN_SIZE: (f32, f32) = (
+pub const SCREEN_SIZE: (f32, f32) = (
     WORLD_SIZE.0 as f32 * TILE_SIZE.0 as f32,
     WORLD_SIZE.1 as f32 * TILE_SIZE.1 as f32,
 );
