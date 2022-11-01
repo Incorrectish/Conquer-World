@@ -22,7 +22,7 @@ pub struct Enemy {
     color: [f32; 4],
 
     // Stores enemy health: for enemy death and such
-    health: usize,
+    pub health: usize,
 }
 
 impl Enemy {
@@ -34,7 +34,8 @@ impl Enemy {
             color: [0.5, 0.5, 0.5, 0.5],
             health: ENEMY_HEALTH,
         };
-        world[temp.pos.1][temp.pos.0] = temp.color;
+        world[y][x] = temp.color;
+        println!("enemy created");
         temp
     }
 
@@ -69,17 +70,12 @@ impl Enemy {
         world[self.pos.1][self.pos.0] = self.color;
     }
 
-    pub fn update(&self, enemies: &mut Vec<Enemy>) {
+    pub fn update(enemies: &mut Vec<Enemy>) {
         // thinking of using a hack to remove all the enemies at the position instead because two
         // enemies cannot be on the same tile, would avoid the f32 lack of equality
-        if self.health <= 0 {
-            // if let Some(pos) = enemies.iter().position(|x| *x == *self) {
-            //     enemies.remove(pos);
-            // }
-            for index in (0..enemies.len()).rev() {
-                if enemies[index].pos == self.pos {
-                    enemies.remove(index);
-                }
+        for index in (0..enemies.len()).rev() {
+            if enemies[index].health <= 0 {
+                enemies.remove(index);
             }
         }
     }

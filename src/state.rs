@@ -50,9 +50,7 @@ impl State {
 
 impl ggez::event::EventHandler<GameError> for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
-        for index in (0..self.enemies.len()).rev() {
-            self.enemies[index].update(&mut self.enemies);
-        }
+        Enemy::update(&mut self.enemies);
         Ok(())
     }
     fn draw(&mut self, ctx: &mut Context) -> GameResult {

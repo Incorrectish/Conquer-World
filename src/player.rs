@@ -3,6 +3,7 @@ use ggez::input::keyboard::{KeyCode, KeyInput};
 
 // Can change easily
 const MAX_PLAYER_HEALTH: usize = 10;
+const PLAYER_PROJECTILE_DAMAGE: usize = 1;
 
 // This is with the covered tile model, but we could use the static/dynamic board paradighm or
 // something else entirely
@@ -117,7 +118,7 @@ impl Player {
         let attacking_position = Self::new_position(self.pos.0, self.pos.1, &self.direction);
         for enemy in enemies {
             if enemy.pos == attacking_position {
-
+                enemy.health -= PLAYER_PROJECTILE_DAMAGE;
             }
         }
     }
