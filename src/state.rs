@@ -1,7 +1,12 @@
 use crate::direction::Direction;
 use crate::enemy::Enemy;
 use crate::player::Player;
-use crate::{SCREEN_SIZE, TILE_SIZE, WORLD_SIZE};
+use crate::{
+    SCREEN_SIZE,
+    TILE_SIZE,
+    WORLD_SIZE,
+    projectile::Projectile,
+};
 use ggez::{
     event,
     graphics::{self, Canvas},
@@ -28,12 +33,15 @@ pub struct State {
 
     // list of enemies in our world
     enemies: Vec<Enemy>,
+
+    // list of all the projectiles in the world
+    projectiles: Vec<Projectile>,
 }
 
 impl State {
     // just returns the default values
     pub fn new() -> Self {
-        let mut world = [[[0.; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize]; 
+        let mut world = [[[0.; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
         let player = Player::new(&mut world);
         let enemies = vec![Enemy::new(&mut world, 10, 10)];
         Self {
@@ -45,7 +53,8 @@ impl State {
             tile: 0,
             world,
             player,
-            enemies, 
+            enemies,
+            projectiles: Vec::new(),
         }
     }
 }
@@ -55,6 +64,7 @@ impl ggez::event::EventHandler<GameError> for State {
         // updates all the enemies in the world, for now only removes them once their health is
         // less than or equal to 0
         Enemy::update(&mut self.enemies, &mut self.world);
+        Projectile::update(&mut self.projectiles, &mut self.world);
         Ok(())
     }
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
@@ -95,7 +105,8 @@ impl ggez::event::EventHandler<GameError> for State {
         _repeated: bool,
     ) -> Result<(), GameError> {
         // Just takes in the user input and makes an action based off of it
-        self.player.use_input(input, &mut self.world, &mut self.enemies);
+        self.player
+            .use_input(input, &mut self.world, &mut self.enemies, &mut self.projectiles);
         Ok(())
     }
 
@@ -111,12 +122,12 @@ impl ggez::event::EventHandler<GameError> for State {
     }
 
     fn mouse_button_down_event(
-            &mut self,
-            _ctx: &mut Context,
-            _button: event::MouseButton,
-            _x: f32,
-            _y: f32,
-        ) -> Result<(), GameError> {
+        &mut self,
+        _ctx: &mut Context,
+        _button: event::MouseButton,
+        _x: f32,
+        _y: f32,
+    ) -> Result<(), GameError> {
         Ok(())
     }
 }
