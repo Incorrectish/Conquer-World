@@ -34,6 +34,8 @@ impl State {
     // just returns the default values
     pub fn new() -> Self {
         let mut world = [[[0.; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize]; 
+        let player = Player::new(&mut world);
+        let enemies = vec![Enemy::new(&mut world, 10, 10)];
         Self {
             delta: 0,
             r: 0.,
@@ -42,8 +44,8 @@ impl State {
             a: 0.,
             tile: 0,
             world,
-            player: Player::new(&mut world),
-            enemies: vec![Enemy::new(&mut world, 10, 10)]
+            player,
+            enemies, 
         }
     }
 }
@@ -60,6 +62,8 @@ impl ggez::event::EventHandler<GameError> for State {
             ctx,
             graphics::Color::from([self.r, self.g, self.b, self.a]),
         );
+
+        println!("drawn");
 
 
         // draw our state matrix "world" to the screen

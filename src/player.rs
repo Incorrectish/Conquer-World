@@ -89,6 +89,8 @@ impl Player {
     ) {
         let new_position = Self::new_position(self.pos.0, self.pos.1, &self.direction);
         // TODO: refactor the colors to be some sort of enum
+        // If the new position is a tile that can be traveled to "all black" for now, then 
+        // remove the player from the current tile and place it on the new tile 
         if world[new_position.1][new_position.0] == [0., 0., 0., 0.] {
             world[self.pos.1][self.pos.0] = self.covered_tile;
             self.pos = new_position;
