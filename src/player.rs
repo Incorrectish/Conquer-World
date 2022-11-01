@@ -87,31 +87,14 @@ impl Player {
         &mut self,
         world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize],
     ) {
-        world[self.pos.1][self.pos.0] = self.covered_tile;
-        match self.direction {
-            Direction::North => {
-                if self.pos.1 > 0 {
-                    self.pos.1 -= 1
-                }
-            }
-            Direction::South => {
-                if self.pos.1 < (WORLD_SIZE.1 - 1) as usize {
-                    self.pos.1 += 1
-                }
-            }
-            Direction::East => {
-                if self.pos.0 < (WORLD_SIZE.0 - 1) as usize {
-                    self.pos.0 += 1
-                }
-            }
-            Direction::West => {
-                if self.pos.0 > 0 {
-                    self.pos.0 -= 1
-                }
-            }
+        let new_position = Self::new_position(self.pos.0, self.pos.1, &self.direction);
+        // TODO: refactor the colors to be some sort of enum
+        if world[new_position.1][new_position.0] == [0., 0., 0., 0.] {
+            world[self.pos.1][self.pos.0] = self.covered_tile;
+            self.pos = new_position;
+            self.covered_tile = world[self.pos.1][self.pos.0];
+            world[self.pos.1][self.pos.0] = self.color;
         }
-        self.covered_tile = world[self.pos.1][self.pos.0];
-        world[self.pos.1][self.pos.0] = self.color;
     }
 
     pub fn attack(&mut self, enemies: &mut Vec<Enemy>) {
