@@ -35,7 +35,6 @@ impl Enemy {
             health: ENEMY_HEALTH,
         };
         world[y][x] = temp.color;
-        println!("enemy created");
         temp
     }
 
@@ -70,13 +69,18 @@ impl Enemy {
         world[self.pos.1][self.pos.0] = self.color;
     }
 
-    pub fn update(enemies: &mut Vec<Enemy>) {
+    pub fn update(enemies: &mut Vec<Enemy>, world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize]) {
         // thinking of using a hack to remove all the enemies at the position instead because two
         // enemies cannot be on the same tile, would avoid the f32 lack of equality
         for index in (0..enemies.len()).rev() {
             if enemies[index].health <= 0 {
+                enemies[index].kill(world);
                 enemies.remove(index);
             }
         }
+    }
+
+    pub fn kill(&mut self, world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize]) {
+        world[self.pos.1][self.pos.0] = self.covered_tile;
     }
 }

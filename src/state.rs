@@ -52,7 +52,7 @@ impl State {
 
 impl ggez::event::EventHandler<GameError> for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
-        Enemy::update(&mut self.enemies);
+        Enemy::update(&mut self.enemies, &mut self.world);
         Ok(())
     }
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
@@ -62,9 +62,6 @@ impl ggez::event::EventHandler<GameError> for State {
             ctx,
             graphics::Color::from([self.r, self.g, self.b, self.a]),
         );
-
-        println!("drawn");
-
 
         // draw our state matrix "world" to the screen
         // We must partition our window into small sectors of 32 by 32 pixels and then for each

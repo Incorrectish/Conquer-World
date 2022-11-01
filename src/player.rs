@@ -1,4 +1,4 @@
-use crate::{direction::Direction, WORLD_SIZE, enemy::Enemy};
+use crate::{direction::Direction, WORLD_SIZE, enemy::{Enemy, self}};
 use ggez::input::keyboard::{KeyCode, KeyInput};
 
 // Can change easily
@@ -104,6 +104,7 @@ impl Player {
         for enemy in enemies {
             if enemy.pos == attacking_position {
                 enemy.health -= PLAYER_PROJECTILE_DAMAGE;
+                println!("health of enemy = {}", enemy.health);
             }
         }
     }
