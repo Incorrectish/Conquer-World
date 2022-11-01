@@ -7,6 +7,7 @@ use ggez::{
 mod state;
 mod player;
 mod direction;
+mod enemy;
 use crate::state::State;
 
 // Constants that determine tile size and world size, where the world is a 2 dimensional array of
