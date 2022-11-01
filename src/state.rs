@@ -52,6 +52,8 @@ impl State {
 
 impl ggez::event::EventHandler<GameError> for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
+        // updates all the enemies in the world, for now only removes them once their health is
+        // less than or equal to 0
         Enemy::update(&mut self.enemies, &mut self.world);
         Ok(())
     }
@@ -92,7 +94,7 @@ impl ggez::event::EventHandler<GameError> for State {
         input: KeyInput,
         _repeated: bool,
     ) -> Result<(), GameError> {
-        // ALT, SUPER KEY RESULTS IN A "NONE" VALUE CRASHING THIS STUFF
+        // Just takes in the user input and makes an action based off of it
         self.player.use_input(input, &mut self.world, &mut self.enemies);
         Ok(())
     }
@@ -105,6 +107,16 @@ impl ggez::event::EventHandler<GameError> for State {
         _dx: f32,
         _dy: f32,
     ) -> Result<(), GameError> {
+        Ok(())
+    }
+
+    fn mouse_button_down_event(
+            &mut self,
+            _ctx: &mut Context,
+            _button: event::MouseButton,
+            _x: f32,
+            _y: f32,
+        ) -> Result<(), GameError> {
         Ok(())
     }
 }

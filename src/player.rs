@@ -100,15 +100,21 @@ impl Player {
     }
 
     pub fn attack(&mut self, enemies: &mut Vec<Enemy>) {
+        // gets the position that the attack will be applied to, one tile forward of the player in
+        // the direction that they are facing
         let attacking_position = Self::new_position(self.pos.0, self.pos.1, &self.direction);
+        
+        // We do not know what enemies are on the tile being attacked, so we need to go through the
+        // enemies and check if any of them are on the attacking tile, then damage them
         for enemy in enemies {
             if enemy.pos == attacking_position {
                 enemy.health -= PLAYER_PROJECTILE_DAMAGE;
-                println!("health of enemy = {}", enemy.health);
             }
         }
     }
 
+    // This very simply gets the new position from the old, by checking the direction and the
+    // bounds. Should be refactored to give a travel distance instead of just one
     pub fn new_position(mut x: usize, mut y: usize, direction: &Direction) -> (usize, usize) {
         match direction {
             Direction::North => {

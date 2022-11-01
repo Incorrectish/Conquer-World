@@ -38,6 +38,7 @@ impl Enemy {
         temp
     }
 
+    // TODO: rewrite to make the travel function the same as player travel
     pub fn travel(
         &mut self,
         world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize],
@@ -81,6 +82,7 @@ impl Enemy {
     }
 
     pub fn kill(&mut self, world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize]) {
+        // for now all it does is remove the tile on the world "board"
         world[self.pos.1][self.pos.0] = self.covered_tile;
     }
 }
