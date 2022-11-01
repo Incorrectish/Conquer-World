@@ -1,4 +1,3 @@
-
 #[derive(PartialEq, Eq)]
 // Super simple direction enum, pretty self explanatory
 pub enum Direction {
@@ -7,3 +6,4 @@ pub enum Direction {
     East, 
     West,
 }
+
