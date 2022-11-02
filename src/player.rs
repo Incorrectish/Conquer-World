@@ -1,8 +1,13 @@
-use crate::{direction::Direction, WORLD_SIZE, enemy::Enemy};
+use crate::{direction::Direction, WORLD_SIZE, enemy::{Enemy, self}, projectile::Projectile};
 use ggez::input::keyboard::{KeyCode, KeyInput};
+use ggez::winit::event::VirtualKeyCode;
 
 // Can change easily
 const MAX_PLAYER_HEALTH: usize = 10;
+const PLAYER_MELEE_DAMAGE: usize = 1;
+const MELEE_ATTACK_KEYCODE: VirtualKeyCode = KeyCode::A;
+const PROJECTILE_ATTACK_KEYCODE: VirtualKeyCode = KeyCode::Space;
+const PLAYER_PROJECTILE_SPEED: usize = 1;
 
 // This is with the covered tile model, but we could use the static/dynamic board paradighm or
 // something else entirely
@@ -50,6 +55,7 @@ impl Player {
         key: KeyInput,
         world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize],
         enemies: &mut Vec<Enemy>,
+        projectiles: &mut Vec<Projectile>,
     ) {
         match key.keycode {
             Some(key_pressed) => match key_pressed {
@@ -71,9 +77,12 @@ impl Player {
                 },
 
                 // Arbitrarily chosen for attack, can change later
-                KeyCode::A => {
-                    self.attack(enemies);
+                MELEE_ATTACK_KEYCODE => {
+                    self.melee_attack(enemies);
                 },
+                PROJECTILE_ATTACK_KEYCODE => {
+                    self.projectile_attack(projectiles, world);
+                }
                 _ => {}
             },
             None => {}
@@ -86,42 +95,41 @@ impl Player {
         &mut self,
         world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize],
     ) {
-        world[self.pos.1][self.pos.0] = self.covered_tile;
-        match self.direction {
-            Direction::North => {
-                if self.pos.1 > 0 {
-                    self.pos.1 -= 1
-                }
-            }
-            Direction::South => {
-                if self.pos.1 < (WORLD_SIZE.1 - 1) as usize {
-                    self.pos.1 += 1
-                }
-            }
-            Direction::East => {
-                if self.pos.0 < (WORLD_SIZE.0 - 1) as usize {
-                    self.pos.0 += 1
-                }
-            }
-            Direction::West => {
-                if self.pos.0 > 0 {
-                    self.pos.0 -= 1
-                }
-            }
+        let new_position = Self::new_position(self.pos.0, self.pos.1, &self.direction);
+        // TODO: refactor the colors to be some sort of enum
+        // If the new position is a tile that can be traveled to "all black" for now, then 
+        // remove the player from the current tile and place it on the new tile 
+        if world[new_position.1][new_position.0] == [0., 0., 0., 0.] {
+            world[self.pos.1][self.pos.0] = self.covered_tile;
+            self.pos = new_position;
+            self.covered_tile = world[self.pos.1][self.pos.0];
+            world[self.pos.1][self.pos.0] = self.color;
         }
-        self.covered_tile = world[self.pos.1][self.pos.0];
-        world[self.pos.1][self.pos.0] = self.color;
     }
 
-    pub fn attack(&mut self, enemies: &mut Vec<Enemy>) {
+    pub fn melee_attack(&mut self, enemies: &mut Vec<Enemy>) {
+        // gets the position that the attack will be applied to, one tile forward of the player in
+        // the direction that they are facing
         let attacking_position = Self::new_position(self.pos.0, self.pos.1, &self.direction);
+        
+        // We do not know what enemies are on the tile being attacked, so we need to go through the
+        // enemies and check if any of them are on the attacking tile, then damage them
         for enemy in enemies {
             if enemy.pos == attacking_position {
-
+                enemy.health -= PLAYER_MELEE_DAMAGE;
             }
         }
     }
 
+    // This function should just spawn a projectile, the mechanics of dealing with the projectile
+    // and such should be determined by the projectile object itself
+    pub fn projectile_attack(&self, projectiles: &mut Vec<Projectile>, world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize]) {
+        let projectile_spawn_pos = Self::new_position(self.pos.1, self.pos.0, &self.direction);
+        projectiles.push(Projectile::new(projectile_spawn_pos.0, projectile_spawn_pos.1, PLAYER_PROJECTILE_SPEED, self.direction.clone(), world));
+    }
+
+    // This very simply gets the new position from the old, by checking the direction and the
+    // bounds. Should be refactored to give a travel distance instead of just one
     pub fn new_position(mut x: usize, mut y: usize, direction: &Direction) -> (usize, usize) {
         match direction {
             Direction::North => {

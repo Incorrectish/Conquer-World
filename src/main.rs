@@ -8,6 +8,7 @@ mod state;
 mod player;
 mod direction;
 mod enemy;
+mod projectile;
 use crate::state::State;
 
 // Constants that determine tile size and world size, where the world is a 2 dimensional array of
