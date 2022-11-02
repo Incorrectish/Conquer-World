@@ -1,4 +1,4 @@
-use crate::{direction::Direction, WORLD_SIZE, enemy::{Enemy, self}, projectile::Projectile};
+use crate::{direction::Direction, WORLD_SIZE, enemy::{Enemy, self}, projectile::Projectile, world::World};
 use ggez::input::keyboard::{KeyCode, KeyInput};
 use ggez::winit::event::VirtualKeyCode;
 
@@ -51,37 +51,34 @@ impl Player {
     // eventually this should be the functionality to like shoot projectiles and stuff but for now
     // it just handles like arrow keys
     pub fn use_input(
-        &mut self,
         key: KeyInput,
-        world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize],
-        enemies: &mut Vec<Enemy>,
-        projectiles: &mut Vec<Projectile>,
+        world: &mut World,
     ) {
         match key.keycode {
             Some(key_pressed) => match key_pressed {
                 KeyCode::Down => {
-                    self.direction = Direction::South;
-                    self.travel(world);
+                    world.player.direction = Direction::South;
+                    Player::travel(world);
                 }
                 KeyCode::Up => {
-                    self.direction = Direction::North;
-                    self.travel(world);
+                    world.player.direction = Direction::North;
+                    Player::travel(world);
                 }
                 KeyCode::Left => {
-                    self.direction = Direction::West;
-                    self.travel(world);
+                    world.player.direction = Direction::West;
+                    Player::travel(world);
                 }
                 KeyCode::Right => {
-                    self.direction = Direction::East;
-                    self.travel(world);
+                    world.player.direction = Direction::East;
+                    Player::travel(world);
                 },
 
                 // Arbitrarily chosen for attack, can change later
                 MELEE_ATTACK_KEYCODE => {
-                    self.melee_attack(enemies);
+                    Player::melee_attack(world);
                 },
                 PROJECTILE_ATTACK_KEYCODE => {
-                    self.projectile_attack(projectiles, world);
+                    Player::projectile_attack(world);
                 }
                 _ => {}
             },
@@ -92,29 +89,28 @@ impl Player {
     // this is the "move()" function but move is a reserved keyword so I just used the first
     // synonym I googled "travel()"
     pub fn travel(
-        &mut self,
-        world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize],
+        world: &mut World,
     ) {
-        let new_position = Self::new_position(self.pos.0, self.pos.1, &self.direction);
+        let new_position = Self::new_position(world.player.pos.0, world.player.pos.1, &world.player.direction);
         // TODO: refactor the colors to be some sort of enum
         // If the new position is a tile that can be traveled to "all black" for now, then 
         // remove the player from the current tile and place it on the new tile 
-        if world[new_position.1][new_position.0] == [0., 0., 0., 0.] {
-            world[self.pos.1][self.pos.0] = self.covered_tile;
-            self.pos = new_position;
-            self.covered_tile = world[self.pos.1][self.pos.0];
-            world[self.pos.1][self.pos.0] = self.color;
+        if world.world[new_position.1][new_position.0] == [0., 0., 0., 0.] {
+            world.world[world.player.pos.1][world.player.pos.0] = world.player.covered_tile;
+            world.player.pos = new_position;
+            world.player.covered_tile = world.world[world.player.pos.1][world.player.pos.0];
+            world.world[world.player.pos.1][world.player.pos.0] = world.player.color;
         }
     }
 
-    pub fn melee_attack(&mut self, enemies: &mut Vec<Enemy>) {
+    pub fn melee_attack(world: &mut World) {
         // gets the position that the attack will be applied to, one tile forward of the player in
         // the direction that they are facing
-        let attacking_position = Self::new_position(self.pos.0, self.pos.1, &self.direction);
+        let attacking_position = Self::new_position(world.player.pos.0, world.player.pos.1, &world.player.direction);
         
         // We do not know what enemies are on the tile being attacked, so we need to go through the
         // enemies and check if any of them are on the attacking tile, then damage them
-        for enemy in enemies {
+        for enemy in &mut world.enemies {
             if enemy.pos == attacking_position {
                 enemy.health -= PLAYER_MELEE_DAMAGE;
             }
@@ -123,9 +119,10 @@ impl Player {
 
     // This function should just spawn a projectile, the mechanics of dealing with the projectile
     // and such should be determined by the projectile object itself
-    pub fn projectile_attack(&self, projectiles: &mut Vec<Projectile>, world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize]) {
-        let projectile_spawn_pos = Self::new_position(self.pos.1, self.pos.0, &self.direction);
-        projectiles.push(Projectile::new(projectile_spawn_pos.0, projectile_spawn_pos.1, PLAYER_PROJECTILE_SPEED, self.direction.clone(), world));
+    pub fn projectile_attack(world: &mut World) {
+        let projectile_spawn_pos = Self::new_position(world.player.pos.1, world.player.pos.0, &world.player.direction);
+        let projectile = Projectile::new(projectile_spawn_pos.0, projectile_spawn_pos.1, PLAYER_PROJECTILE_SPEED, world.player.direction.clone(), world);
+        world.projectiles.push(projectile);
     }
 
     // This very simply gets the new position from the old, by checking the direction and the

@@ -1,4 +1,4 @@
-use crate::{direction::Direction, WORLD_SIZE};
+use crate::{direction::Direction, WORLD_SIZE, world::World};
 
 const ENEMY_HEALTH: usize = 5;
 
@@ -41,9 +41,9 @@ impl Enemy {
     // TODO: rewrite to make the travel function the same as player travel
     pub fn travel(
         &mut self,
-        world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize],
+        world: &mut World,
     ) {
-        world[self.pos.1][self.pos.0] = self.covered_tile;
+        world.world[self.pos.1][self.pos.0] = self.covered_tile;
         match self.direction {
             Direction::North => {
                 if self.pos.1 > 0 {
@@ -66,23 +66,23 @@ impl Enemy {
                 }
             }
         }
-        self.covered_tile = world[self.pos.1][self.pos.0];
-        world[self.pos.1][self.pos.0] = self.color;
+        self.covered_tile = world.world[self.pos.1][self.pos.0];
+        world.world[self.pos.1][self.pos.0] = self.color;
     }
 
-    pub fn update(enemies: &mut Vec<Enemy>, world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize]) {
+    pub fn update(world: &mut World) {
         // thinking of using a hack to remove all the enemies at the position instead because two
         // enemies cannot be on the same tile, would avoid the f32 lack of equality
-        for index in (0..enemies.len()).rev() {
-            if enemies[index].health <= 0 {
-                enemies[index].kill(world);
-                enemies.remove(index);
+        for index in (0..world.enemies.len()).rev() {
+            if world.enemies[index].health <= 0 {
+                Enemy::kill(world, index);
+                world.enemies.remove(index);
             }
         }
     }
 
-    pub fn kill(&mut self, world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize]) {
+    pub fn kill(world: &mut World, index: usize) {
         // for now all it does is remove the tile on the world "board"
-        world[self.pos.1][self.pos.0] = self.covered_tile;
+        world.world[world.enemies[index].pos.1][world.enemies[index].pos.0] = world.enemies[index].covered_tile;
     }
 }

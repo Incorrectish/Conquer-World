@@ -6,6 +6,7 @@ use crate::{
     TILE_SIZE,
     WORLD_SIZE,
     projectile::Projectile,
+    world::World,
 };
 use ggez::{
     event,
@@ -24,18 +25,9 @@ pub struct State {
     a: f32,
     // Current tile, in order to iterate over the thing
     tile: i16,
-
-    // world to store the state of tiles in between frames
-    world: [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize],
-
-    // store an instance of a player
-    player: Player,
-
-    // list of enemies in our world
-    enemies: Vec<Enemy>,
-
-    // list of all the projectiles in the world
-    projectiles: Vec<Projectile>,
+    
+    // Abstraction for the world and what is contained within it 
+    world: World,
 }
 
 impl State {
@@ -51,10 +43,12 @@ impl State {
             b: 0.,
             a: 0.,
             tile: 0,
-            world,
-            player,
-            enemies,
-            projectiles: Vec::new(),
+            world: World {
+                world,
+                player,
+                enemies,
+                projectiles: Vec::new(),
+            }
         }
     }
 }
@@ -63,8 +57,8 @@ impl ggez::event::EventHandler<GameError> for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
         // updates all the enemies in the world, for now only removes them once their health is
         // less than or equal to 0
-        Enemy::update(&mut self.enemies, &mut self.world);
-        Projectile::update(&mut self.projectiles, &mut self.world);
+        Enemy::update(&mut self.world);
+        Projectile::update(&mut self.world);
         Ok(())
     }
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
@@ -90,7 +84,7 @@ impl ggez::event::EventHandler<GameError> for State {
                             TILE_SIZE.0 as i32,
                             TILE_SIZE.1 as i32,
                         ))
-                        .color(self.world[i as usize][j as usize]),
+                        .color(self.world.world[i as usize][j as usize]),
                 );
             }
         }
@@ -105,8 +99,8 @@ impl ggez::event::EventHandler<GameError> for State {
         _repeated: bool,
     ) -> Result<(), GameError> {
         // Just takes in the user input and makes an action based off of it
-        self.player
-            .use_input(input, &mut self.world, &mut self.enemies, &mut self.projectiles);
+        
+        Player::use_input(input, &mut self.world);
         Ok(())
     }
 

@@ -9,13 +9,15 @@ mod player;
 mod direction;
 mod enemy;
 mod projectile;
+mod world;
+
 use crate::state::State;
 
 // Constants that determine tile size and world size, where the world is a 2 dimensional array of
 // tiles
 
 // Define the world size which is (width, height)
-pub const WORLD_SIZE: (i16, i16) = (55, 30);
+pub const WORLD_SIZE: (i16, i16) = (50, 50);
 // define the size of each tile which a square of pixels, size: (x, y) pixels.
 pub const TILE_SIZE: (i16, i16) = (32, 32);
 // define screen size in pixels. Will be grid size * tile size
