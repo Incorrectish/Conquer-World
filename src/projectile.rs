@@ -1,7 +1,7 @@
 use crate::{
     direction::Direction,
     player::Player,
-    WORLD_SIZE
+    WORLD_SIZE, world::World
 };
 
 pub struct Projectile {
@@ -20,7 +20,7 @@ impl Projectile {
         y: usize,
         speed: usize,
         direction: Direction,
-        world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize],
+        world: &mut World,
     ) -> Self {
         let color = [1., 0., 0., 0.5];
         let temp = Projectile {
@@ -28,27 +28,26 @@ impl Projectile {
             speed,
             direction,
             color,
-            covered_tile: world[y][x],
+            covered_tile: world.world[y][x],
         };
-        world[y][x] = color;
+        world.world[y][x] = color;
         temp
     }
 
     pub fn update(
-        projectiles: &mut Vec<Projectile>,
-        world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize],
+        world: &mut World
     ) {
-        for index in (0..projectiles.len()).rev() {
+        for index in (0..world.projectiles.len()).rev() {
             let new_position = Player::new_position(
-                projectiles[index].pos.0,
-                projectiles[index].pos.1,
-                &projectiles[index].direction,
+                world.projectiles[index].pos.0,
+                world.projectiles[index].pos.1,
+                &world.projectiles[index].direction,
             );
 
             // if the projectile goes out of bounds, the position won't change 
-            if projectiles[index].pos == new_position {
-                projectiles[index].kill(world);
-                projectiles.remove(index);
+            if world.projectiles[index].pos == new_position {
+                Projectile::kill(index, world);
+                world.projectiles.remove(index);
             }
 
             // case for impact with player
@@ -57,7 +56,7 @@ impl Projectile {
         }
     }
 
-    pub fn kill(&self, world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize]) {
-        world[self.pos.1][self.pos.0] = self.covered_tile;
+    pub fn kill(index: usize, world: &mut World) {
+        world.world[world.projectiles[index].pos.1][world.projectiles[index].pos.0] = world.projectiles[index].covered_tile;
     }
 }
