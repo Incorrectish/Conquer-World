@@ -7,6 +7,7 @@ use crate::{
     WORLD_SIZE,
     projectile::Projectile,
     world::World,
+    tile
 };
 use ggez::{
     event,
@@ -33,7 +34,8 @@ pub struct State {
 impl State {
     // just returns the default values
     pub fn new() -> Self {
-        let mut world = [[[0.; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
+        let mut world = [[tile::FLOOR; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
+        World::gen_boss(&mut world);
         let player = Player::new(&mut world);
         let enemies = vec![Enemy::new(&mut world, 10, 10)];
         Self {

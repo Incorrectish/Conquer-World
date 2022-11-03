@@ -10,6 +10,7 @@ mod direction;
 mod enemy;
 mod projectile;
 mod world;
+mod tile;
 
 use crate::state::State;
 

@@ -1,4 +1,4 @@
-use crate::{direction::Direction, WORLD_SIZE, world::World};
+use crate::{direction::Direction, WORLD_SIZE, world::World, tile};
 
 const ENEMY_HEALTH: usize = 5;
 
@@ -31,7 +31,7 @@ impl Enemy {
             pos: (x, y),
             direction: Direction::North,
             covered_tile: world[y][x],
-            color: [0.5, 0.5, 0.5, 0.5],
+            color: tile::ENEMY,
             health: ENEMY_HEALTH,
         };
         world[y][x] = temp.color;

@@ -1,4 +1,4 @@
-use crate::{direction::Direction, WORLD_SIZE, enemy::{Enemy, self}, projectile::Projectile, world::World};
+use crate::{direction::Direction, WORLD_SIZE, enemy::{Enemy, self}, projectile::Projectile, world::World, tile};
 use ggez::input::keyboard::{KeyCode, KeyInput};
 use ggez::winit::event::VirtualKeyCode;
 
@@ -41,7 +41,7 @@ impl Player {
             pos: (0, 0),
             direction: Direction::North,
             covered_tile: world[0][0],
-            color: [1., 1., 1., 1.],
+            color: tile::PLAYER,
             health: MAX_PLAYER_HEALTH,
         };
         world[temp.pos.1][temp.pos.0] = temp.color;
