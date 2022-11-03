@@ -25,8 +25,6 @@ impl World {
     pub fn gen_boss(world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize]) {
         let x: usize = (WORLD_SIZE.0 as usize) / 2 - 1;
         let y: usize = (WORLD_SIZE.1 as usize) / 2 - 1;
-        println!("{}", x);
-        println!("{}", y);
         for i in 0..8 {
             for j in 0..8 {
                 world[x-3+i][y-3+j] = tile::WALL;
