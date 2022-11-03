@@ -46,7 +46,7 @@ impl World {
             let x = random::rand_range(rng, 5, WORLD_SIZE.0);
             let y = random::rand_range(rng, 5, WORLD_SIZE.1);
 
-            Self::gen_water_helper(rng, x, y, 0, world);
+            gen_water_helper(rng, x, y, 0, world);
             lakes_added += 1;
         }
     }
@@ -56,16 +56,16 @@ impl World {
             world[x as usize][y as usize] = tile::WATER;
         }
 
-        if random::bernoulli(rng, 1.-0.1*(dist as f32)) {
+        if random::bernoulli(&mut rng , 1.-0.1*(dist as f32)) {
             Self::gen_water_helper(rng, x+1, y, dist+1, world);
         }
-        if random::bernoulli(rng, 1.-0.1*(dist as f32)) {
+        if random::bernoulli(&mut rng , 1.-0.1*(dist as f32)) {
             Self::gen_water_helper(rng, x-1, y, dist+1, world);
         }
-        if random::bernoulli(rng, 1.-0.1*(dist as f32)) {
+        if random::bernoulli(&mut rng , 1.-0.1*(dist as f32)) {
             Self::gen_water_helper(rng, x, y+1, dist+1, world);
         }
-        if random::bernoulli(rng, 1.-0.1*(dist as f32)) {
+        if random::bernoulli(&mut rng , 1.-0.1*(dist as f32)) {
             Self::gen_water_helper(rng, x, y-1, dist+1, world);
         }
     }

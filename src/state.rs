@@ -15,6 +15,7 @@ use ggez::{
     input::keyboard::{KeyCode, KeyInput},
     Context, GameError, GameResult,
 };
+use rand::rngs::ThreadRng;
 
 pub struct State {
     // Time delta, unused for now I think
@@ -35,6 +36,7 @@ impl State {
     // just returns the default values
     pub fn new() -> Self {
         let mut world = [[tile::FLOOR; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
+        let mut rng = rand::thread_rng();
         World::gen_boss(&mut world);
         let player = Player::new(&mut world);
         let enemies = vec![Enemy::new(&mut world, 10, 10)];
@@ -50,7 +52,7 @@ impl State {
                 player,
                 enemies,
                 projectiles: Vec::new(),
-            }
+            },
         }
     }
 }

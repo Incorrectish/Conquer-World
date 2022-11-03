@@ -11,6 +11,7 @@ mod enemy;
 mod projectile;
 mod world;
 mod tile;
+mod random;
 
 use crate::state::State;
 
