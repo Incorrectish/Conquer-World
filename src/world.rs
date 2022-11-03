@@ -49,22 +49,20 @@ impl World {
         }
     }
 
-    pub fn gen_water_helper(rng: &mut ThreadRng, x: i16, y: i16, dist: i16, world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize]) {
+    fn gen_water_helper(rng: &mut ThreadRng, x: i16, y: i16, dist: i16, world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize]) {
         if world[x as usize][y as usize] == tile::FLOOR {
             world[x as usize][y as usize] = tile::WATER;
         }
 
-        if random::bernoulli(rng, 1.-0.1*(dist as f32)) {
-            Self::gen_water_helper(rng, x+1, y, dist+1, world);
-        }
-        if random::bernoulli(rng, 1.-0.1*(dist as f32)) {
-            Self::gen_water_helper(rng, x-1, y, dist+1, world);
-        }
-        if random::bernoulli(rng, 1.-0.1*(dist as f32)) {
-            Self::gen_water_helper(rng, x, y+1, dist+1, world);
-        }
-        if random::bernoulli(rng, 1.-0.1*(dist as f32)) {
-            Self::gen_water_helper(rng, x, y-1, dist+1, world);
+        let directions: [[i16; 2]; 4] = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+        for dir in directions {
+            if random::bernoulli(rng, 1. - 0.2 * (dist as f32)) {
+                let i = x + dir[0];
+                let j = y + dir[1];
+                if i >= 0 && i < WORLD_SIZE.0 && j >= 0 && j < WORLD_SIZE.1 {
+                    Self::gen_water_helper(rng, i, j, dist+1, world);
+                }
+            }
         }
     }
 }

@@ -38,6 +38,7 @@ impl State {
         let mut world = [[tile::FLOOR; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
         let mut rng = rand::thread_rng();
         World::gen_boss(&mut world);
+        World::gen_water(&mut rng, &mut world);
         let player = Player::new(&mut world);
         let enemies = vec![Enemy::new(&mut world, 10, 10)];
         Self {
