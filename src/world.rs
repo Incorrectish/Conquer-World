@@ -75,13 +75,18 @@ impl World {
 
     // generates the center boss room for map
     pub fn gen_boss(world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize]) {
+        // x and y of center of map
         let x: usize = (WORLD_SIZE.0 as usize) / 2 - 1;
         let y: usize = (WORLD_SIZE.1 as usize) / 2 - 1;
+
+        // builds a 8x8 square around the center of WALL tiles
         for i in 0..8 {
             for j in 0..8 {
                 world[x-3+i][y-3+j] = tile::WALL;
             }
         }
+
+        // builds a 2x2 square in the center of PORTAL tiles
         world[x][y] = tile::PORTAL;
         world[x+1][y] = tile::PORTAL;
         world[x][y+1] = tile::PORTAL;
@@ -96,12 +101,14 @@ impl World {
             let x = random::rand_range(rng, 5, WORLD_SIZE.0); // random x coordinate
             let y = random::rand_range(rng, 5, WORLD_SIZE.1); // random y coordinate
 
-            Self::gen_water_helper(rng, x, y, 0, world); // new lake center at (x, y)
+            Self::gen_water_helper(rng, x, y, 0, world); // new lake centered at (x, y)
             lakes_added += 1;
         }
     }
 
-    // Recursively generates lakes -- floodfill-esque idea, but expansion is probabilistic
+    // Recursively generates lakes -- floodfill-esque idea around the center, but expansion is
+    // limited probabilistically (probability of expansion decreases as we range further from the
+    // center)
     fn gen_water_helper(rng: &mut ThreadRng, x: i16, y: i16, dist: i16, world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize]) {
         // sets curr tile to water
         if world[x as usize][y as usize] == tile::FLOOR {
@@ -109,11 +116,12 @@ impl World {
         }
 
         const DIRECTIONS: [[i16; 2]; 4] = [[0, 1], [0, -1], [1, 0], [-1, 0]]; // orthogonal dirs
-        for dir in DIRECTIONS { // for each tile in an orthogonal dir
+        for dir in DIRECTIONS { // for each tile in an orthogonal direction
+            // With certain probability, continue expanding lake in that direction
             if Self::prob_expand_water(rng, dist) {
                 let i = x + dir[0];
                 let j = y + dir[1];
-                // if in bounds, draw water on that adjacent tile
+                // if in bounds, recursively call fn on adjacent tile (draws WATER at that tile)
                 if i >= 0 && i < WORLD_SIZE.0 && j >= 0 && j < WORLD_SIZE.1 {
                     Self::gen_water_helper(rng, i, j, dist+1, world);
                 }
