@@ -1,4 +1,4 @@
-use crate::{direction::Direction, WORLD_SIZE, world::World, tile};
+use crate::{direction::Direction, WORLD_SIZE, world::World, tile, movable::Movable};
 
 const ENEMY_HEALTH: usize = 5;
 
@@ -87,3 +87,36 @@ impl Enemy {
     }
 }
 
+impl Movable for Enemy {
+    fn set_pos(&mut self, new_pos: (usize, usize)) {
+        todo!()
+    }
+
+    fn get_pos(&self) -> (usize, usize) {
+        todo!()
+    }
+
+    fn get_x(&self) -> usize {
+        todo!()
+    }
+
+    fn get_y(&self) -> usize {
+        todo!()
+    }
+
+    fn get_covered_tile(&self) -> [f32; 4] {
+        todo!()
+    }
+
+    fn set_covered_tile(&mut self, new_tile: [f32; 4]) {
+        todo!()
+    }
+
+    fn get_color(&self) -> [f32; 4] {
+        todo!()
+    }
+
+    fn get_direction(&self) -> Direction {
+        todo!()
+    }
+}

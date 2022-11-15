@@ -4,7 +4,8 @@ use crate::{
     enemy::Enemy,
     projectile::Projectile,
     tile,
-    random
+    random, 
+    direction::Direction, movable::Movable,
 };
 use rand::rngs::ThreadRng;
 
@@ -23,6 +24,55 @@ pub struct World {
 }
 
 impl World {
+
+    // this is the "move()" function but move is a reserved keyword so I just used the first
+    // synonym I googled "travel()"
+    pub fn travel(
+        world: &mut World,
+        entity: &mut impl Movable,
+    ) {
+        let new_position = Self::new_position(entity.get_x(), entity.get_y(), &entity.get_direction());
+        // TODO: refactor the colors to be some sort of enum
+        // If the new position is a tile that can be traveled to "all black" for now, then 
+        // remove the player from the current tile and place it on the new tile 
+        if world.world[new_position.1][new_position.0] == [0., 0., 0., 0.] {
+            // TODO: refactor to remove covered tile, layer approach created by Ishan and Michael
+            world.world[entity.get_y()][entity.get_x()] = entity.get_covered_tile();
+            entity.set_pos(new_position);
+            entity.set_covered_tile(world.world[entity.get_y()][entity.get_x()]);
+            world.world[entity.get_y()][entity.get_x()] = entity.get_color();
+        }
+    }
+
+
+    // This very simply gets the new position from the old, by checking the direction and the
+    // bounds. Should be refactored to give a travel distance instead of just one
+    pub fn new_position(mut x: usize, mut y: usize, direction: &Direction) -> (usize, usize) {
+        match direction {
+            Direction::North => {
+                if y > 0 as usize {
+                    y -= 1
+                }
+            }
+            Direction::South => {
+                if y < (WORLD_SIZE.1 - 1) as usize {
+                    y += 1
+                }
+            }
+            Direction::East => {
+                if x < (WORLD_SIZE.0 - 1) as usize {
+                    x += 1
+                }
+            }
+            Direction::West => {
+                if x > 0 as usize {
+                    x -= 1
+                }
+            }
+        }
+        (x, y)
+    }
+
     // generates the center boss room for map
     pub fn gen_boss(world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize]) {
         let x: usize = (WORLD_SIZE.0 as usize) / 2 - 1;
