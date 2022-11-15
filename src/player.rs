@@ -1,4 +1,4 @@
-use crate::{direction::Direction, WORLD_SIZE, enemy::{Enemy, self}, projectile::Projectile, world::World, tile};
+use crate::{direction::Direction, WORLD_SIZE, enemy::{Enemy, self}, projectile::Projectile, world::World, tile, movable::Movable};
 use ggez::input::keyboard::{KeyCode, KeyInput};
 use ggez::winit::event::VirtualKeyCode;
 
@@ -58,19 +58,19 @@ impl Player {
             Some(key_pressed) => match key_pressed {
                 KeyCode::Down => {
                     world.player.direction = Direction::South;
-                    Player::travel(world);
+                    World::travel(world, &mut world.player);
                 }
                 KeyCode::Up => {
                     world.player.direction = Direction::North;
-                    Player::travel(world);
+                    World::travel(world, &mut world.player);
                 }
                 KeyCode::Left => {
                     world.player.direction = Direction::West;
-                    Player::travel(world);
+                    World::travel(world, &mut world.player);
                 }
                 KeyCode::Right => {
                     world.player.direction = Direction::East;
-                    Player::travel(world);
+                    World::travel(world, &mut world.player);
                 },
 
                 // Arbitrarily chosen for attack, can change later
@@ -86,27 +86,11 @@ impl Player {
         }
     }
 
-    // this is the "move()" function but move is a reserved keyword so I just used the first
-    // synonym I googled "travel()"
-    pub fn travel(
-        world: &mut World,
-    ) {
-        let new_position = Self::new_position(world.player.pos.0, world.player.pos.1, &world.player.direction);
-        // TODO: refactor the colors to be some sort of enum
-        // If the new position is a tile that can be traveled to "all black" for now, then 
-        // remove the player from the current tile and place it on the new tile 
-        if world.world[new_position.1][new_position.0] == [0., 0., 0., 0.] {
-            world.world[world.player.pos.1][world.player.pos.0] = world.player.covered_tile;
-            world.player.pos = new_position;
-            world.player.covered_tile = world.world[world.player.pos.1][world.player.pos.0];
-            world.world[world.player.pos.1][world.player.pos.0] = world.player.color;
-        }
-    }
 
     pub fn melee_attack(world: &mut World) {
         // gets the position that the attack will be applied to, one tile forward of the player in
         // the direction that they are facing
-        let attacking_position = Self::new_position(world.player.pos.0, world.player.pos.1, &world.player.direction);
+        let attacking_position = World::new_position(world.player.pos.0, world.player.pos.1, &world.player.direction);
         
         // We do not know what enemies are on the tile being attacked, so we need to go through the
         // enemies and check if any of them are on the attacking tile, then damage them
@@ -120,37 +104,43 @@ impl Player {
     // This function should just spawn a projectile, the mechanics of dealing with the projectile
     // and such should be determined by the projectile object itself
     pub fn projectile_attack(world: &mut World) {
-        let projectile_spawn_pos = Self::new_position(world.player.pos.1, world.player.pos.0, &world.player.direction);
+        let projectile_spawn_pos = World::new_position(world.player.pos.0, world.player.pos.1, &world.player.direction);
         let projectile = Projectile::new(projectile_spawn_pos.0, projectile_spawn_pos.1, PLAYER_PROJECTILE_SPEED, world.player.direction.clone(), world);
         world.projectiles.push(projectile);
     }
 
-    // This very simply gets the new position from the old, by checking the direction and the
-    // bounds. Should be refactored to give a travel distance instead of just one
-    pub fn new_position(mut x: usize, mut y: usize, direction: &Direction) -> (usize, usize) {
-        match direction {
-            Direction::North => {
-                if y > 0 as usize {
-                    y -= 1
-                }
-            }
-            Direction::South => {
-                if y < (WORLD_SIZE.1 - 1) as usize {
-                    y += 1
-                }
-            }
-            Direction::East => {
-                if x < (WORLD_SIZE.0 - 1) as usize {
-                    x += 1
-                }
-            }
-            Direction::West => {
-                if x > 0 as usize {
-                    x -= 1
-                }
-            }
-        }
-        (x, y)
-    }
 }
 
+impl Movable for Player {
+    fn set_pos(&mut self, new_pos: (usize, usize)) {
+        todo!()
+    }
+
+    fn get_pos(&self) -> (usize, usize) {
+        todo!()
+    }
+
+    fn get_x(&self) -> usize {
+        todo!()
+    }
+
+    fn get_y(&self) -> usize {
+        todo!()
+    }
+
+    fn get_covered_tile(&self) -> [f32; 4] {
+        todo!()
+    }
+
+    fn set_covered_tile(&mut self, new_tile: [f32; 4]) {
+        todo!()
+    }
+
+    fn get_color(&self) -> [f32; 4] {
+        todo!()
+    }
+
+    fn get_direction(&self) -> Direction {
+        todo!()
+    }
+}
