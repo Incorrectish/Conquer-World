@@ -38,13 +38,15 @@ impl World {
         world[x+1][y+1] = tile::PORTAL;
     }
 
+    // generates water tiles around the map
     pub fn gen_water(rng: &mut ThreadRng, world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize]) {
         let mut lakes_added = 0;
-        while lakes_added < 5 {
-            let x = random::rand_range(rng, 5, WORLD_SIZE.0);
-            let y = random::rand_range(rng, 5, WORLD_SIZE.1);
+        const TOTAL_LAKES: i16 = 5;
+        while lakes_added < TOTAL_LAKES {
+            let x = random::rand_range(rng, 5, WORLD_SIZE.0); // random x coordinate
+            let y = random::rand_range(rng, 5, WORLD_SIZE.1); // random y coordinate
 
-            Self::gen_water_helper(rng, x, y, 0, world);
+            Self::gen_water_helper(rng, x, y, 0, world); // new lake center at (x, y)
             lakes_added += 1;
         }
     }
@@ -54,8 +56,8 @@ impl World {
             world[x as usize][y as usize] = tile::WATER;
         }
 
-        let directions: [[i16; 2]; 4] = [[0, 1], [0, -1], [1, 0], [-1, 0]];
-        for dir in directions {
+        const DIRECTIONS: [[i16; 2]; 4] = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+        for dir in DIRECTIONS {
             if random::bernoulli(rng, 1. - 0.2 * (dist as f32)) {
                 let i = x + dir[0];
                 let j = y + dir[1];
