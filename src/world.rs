@@ -51,21 +51,29 @@ impl World {
         }
     }
 
+    // Recursively generates lakes -- floodfill-esque idea, but expansion is probabilistic
     fn gen_water_helper(rng: &mut ThreadRng, x: i16, y: i16, dist: i16, world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize]) {
+        // sets curr tile to water
         if world[x as usize][y as usize] == tile::FLOOR {
             world[x as usize][y as usize] = tile::WATER;
         }
 
-        const DIRECTIONS: [[i16; 2]; 4] = [[0, 1], [0, -1], [1, 0], [-1, 0]];
-        for dir in DIRECTIONS {
-            if random::bernoulli(rng, 1. - 0.2 * (dist as f32)) {
+        const DIRECTIONS: [[i16; 2]; 4] = [[0, 1], [0, -1], [1, 0], [-1, 0]]; // orthogonal dirs
+        for dir in DIRECTIONS { // for each tile in an orthogonal dir
+            if Self::prob_expand_water(rng, dist) {
                 let i = x + dir[0];
                 let j = y + dir[1];
+                // if in bounds, draw water on that adjacent tile
                 if i >= 0 && i < WORLD_SIZE.0 && j >= 0 && j < WORLD_SIZE.1 {
                     Self::gen_water_helper(rng, i, j, dist+1, world);
                 }
             }
         }
+    }
+
+    // Gets probability of continuing to expand lake outwards
+    fn prob_expand_water(rng: &mut ThreadRng, dist: i16) -> bool {
+        random::bernoulli(rng, 1. - 0.2 * (dist as f32))
     }
 }
 
