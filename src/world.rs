@@ -6,6 +6,7 @@ use crate::{
     tile,
     random, 
     direction::Direction, movable::Movable,
+    entity::Entity,
 };
 use rand::rngs::ThreadRng;
 
@@ -29,8 +30,13 @@ impl World {
     // synonym I googled "travel()"
     pub fn travel(
         world: &mut World,
-        entity: &mut impl Movable,
+        entity_type: Entity,
     ) {
+        let entity = match entity_type {
+            Entity::Player => &world.player,
+            Entity::Enemy(i) => &world::enemies[i],
+            Entity::Projectile(i) => &world.projectiles[i],
+        }
         let new_position = Self::new_position(entity.get_x(), entity.get_y(), &entity.get_direction());
         // TODO: refactor the colors to be some sort of enum
         // If the new position is a tile that can be traveled to "all black" for now, then 
