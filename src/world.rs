@@ -32,20 +32,43 @@ impl World {
         world: &mut World,
         entity_type: Entity,
     ) {
-        let entity = match entity_type {
-            Entity::Player => &world.player,
-            Entity::Enemy(i) => &world::enemies[i],
-            Entity::Projectile(i) => &world.projectiles[i],
-        }
-        let new_position = Self::new_position(entity.get_x(), entity.get_y(), &entity.get_direction());
+
+        // You need to implement the layering system in order for this to work properly, as
+        // entities will no longer have covered tiles
+        let (x, y, direction) = match entity_type {
+            Entity::Player => (world.player.pos.0, world.player.pos.1, world.player.direction),
+            Entity::Enemy(i) => (world.enemies[i].pos.0, world.enemies[i].pos.1, world.player.direction),
+            Entity::Projectile(i) => (world.projectiles[i].pos.0, world.projectiles[i].pos.1, world.player.direction),
+        };
+        let new_position = Self::new_position(x, y, &direction);
         // TODO: refactor the colors to be some sort of enum
         // If the new position is a tile that can be traveled to "all black" for now, then 
         // remove the player from the current tile and place it on the new tile 
         if world.world[new_position.1][new_position.0] == [0., 0., 0., 0.] {
             // TODO: refactor to remove covered tile, layer approach created by Ishan and Michael
-            world.world[entity.get_y()][entity.get_x()] = entity.get_covered_tile();
-            entity.set_pos(new_position);
-            entity.set_covered_tile(world.world[entity.get_y()][entity.get_x()]);
+            // something like: dynamic[y][x] = static[y][x]?????, michael this won't work unless
+            // you fix
+            world.world[y][x] = ;// static stuff
+                                 //
+        
+            // dynamic board doesn't exist. TODO: michael fix
+            match entity_type {
+                Entity::Player => { 
+                    world.player.pos = new_position;
+                    dynamic_board[new_position.1][new_position.0] = world.player.color;
+                },
+                Entity::Enemy(i) => { 
+                    world.enemies[i].pos = new_position;
+                    dynamic_board[new_position.1][new_position.0] = world.enemies[i].color;
+                },
+                Entity::Projectile(i)=> {
+                    world.projectiles[i].pos = new_position;
+                    dynamic_board[new_position.1][new_position.0] = world.projectiles[i].color;
+                },
+            }
+            // entity.set_covered_tile(world.world[entity.get_y()][entity.get_x()]);
+            // above line is unusable because of the thing
+            // refactor bot
             world.world[entity.get_y()][entity.get_x()] = entity.get_color();
         }
     }
