@@ -1,4 +1,5 @@
 use crate::{direction::Direction, WORLD_SIZE, enemy::{Enemy, self}, projectile::Projectile, world::World, tile, movable::Movable};
+use crate::entity::Entity;
 use ggez::input::keyboard::{KeyCode, KeyInput};
 use ggez::winit::event::VirtualKeyCode;
 
@@ -58,19 +59,19 @@ impl Player {
             Some(key_pressed) => match key_pressed {
                 KeyCode::Down => {
                     world.player.direction = Direction::South;
-                    World::travel(world, &mut world.player);
+                    World::travel(world, Entity::Player);
                 }
                 KeyCode::Up => {
                     world.player.direction = Direction::North;
-                    World::travel(world, &mut world.player);
+                    World::travel(world, Entity::Player);
                 }
                 KeyCode::Left => {
                     world.player.direction = Direction::West;
-                    World::travel(world, &mut world.player);
+                    World::travel(world, Entity::Player);
                 }
                 KeyCode::Right => {
                     world.player.direction = Direction::East;
-                    World::travel(world, &mut world.player);
+                    World::travel(world, Entity::Player);
                 },
 
                 // Arbitrarily chosen for attack, can change later
