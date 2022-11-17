@@ -6,9 +6,9 @@ use crate::{
 };
 
 pub struct Projectile {
-    pos: (usize, usize),
+    pub pos: (usize, usize),
     speed: usize,
-    direction: Direction,
+    pub direction: Direction,
     color: [f32; 4],
     covered_tile: [f32; 4],
     // maybe add an alignment so projectiles from enemies cannot damage themselves and projectiles

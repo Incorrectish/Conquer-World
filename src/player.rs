@@ -1,5 +1,4 @@
-use crate::{direction::Direction, WORLD_SIZE, enemy::{Enemy, self}, projectile::Projectile, world::World, tile, movable::Movable};
-use crate::entity::Entity;
+use crate::{direction::Direction, WORLD_SIZE, enemy::{Enemy, self}, entity::Entity, projectile::Projectile, world::World, tile, movable::Movable};
 use ggez::input::keyboard::{KeyCode, KeyInput};
 use ggez::winit::event::VirtualKeyCode;
 
@@ -14,13 +13,13 @@ const PLAYER_PROJECTILE_SPEED: usize = 1;
 // something else entirely
 pub struct Player {
     // This is the position in the form (x, y)
-    pos: (usize, usize),
+    pub pos: (usize, usize),
     
     // The direction that the player is facing at the moment
     // It isn't needed for movement, and the way I wrote movement is a bit convoluted to allow this
     // attribute to make sense, but when we introduce projectiles, this will be needed to make them
     // shoot in the right direction
-    direction: Direction,
+    pub direction: Direction,
     
     // This simply stores the color of the tile that the player is currently on, so that when they
     // move off of it, it can be rendered properly back to what it was 
