@@ -122,14 +122,14 @@ impl World {
     }
 
     // generates water tiles around the map
-    pub fn gen_water(rng: &mut ThreadRng, world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize]) {
+    pub fn gen_lake(rng: &mut ThreadRng, world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize]) {
         let mut lakes_added = 0;
         const TOTAL_LAKES: i16 = 5;
         while lakes_added < TOTAL_LAKES {
             let x = random::rand_range(rng, 5, WORLD_SIZE.0); // random x coordinate
             let y = random::rand_range(rng, 5, WORLD_SIZE.1); // random y coordinate
 
-            Self::gen_water_helper(rng, x, y, 0, world); // new lake centered at (x, y)
+            Self::gen_lake_helper(rng, x, y, 0, world); // new lake centered at (x, y)
             lakes_added += 1;
         }
     }
@@ -137,7 +137,7 @@ impl World {
     // Recursively generates lakes -- floodfill-esque idea around the center, but expansion is
     // limited probabilistically (probability of expansion decreases as we range further from the
     // center)
-    fn gen_water_helper(rng: &mut ThreadRng, x: i16, y: i16, dist: i16, world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize]) {
+    fn gen_lake_helper(rng: &mut ThreadRng, x: i16, y: i16, dist: i16, world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize]) {
         // sets curr tile to water
         if world[x as usize][y as usize] == tile::FLOOR {
             world[x as usize][y as usize] = tile::WATER;
@@ -146,20 +146,25 @@ impl World {
         const DIRECTIONS: [[i16; 2]; 4] = [[0, 1], [0, -1], [1, 0], [-1, 0]]; // orthogonal dirs
         for dir in DIRECTIONS { // for each tile in an orthogonal direction
             // With certain probability, continue expanding lake in that direction
-            if Self::prob_expand_water(rng, dist) {
+            if Self::prob_expand_lake(rng, dist) {
                 let i = x + dir[0];
                 let j = y + dir[1];
                 // if in bounds, recursively call fn on adjacent tile (draws WATER at that tile)
                 if i >= 0 && i < WORLD_SIZE.0 && j >= 0 && j < WORLD_SIZE.1 {
-                    Self::gen_water_helper(rng, i, j, dist+1, world);
+                    Self::gen_lake_helper(rng, i, j, dist+1, world);
                 }
             }
         }
     }
 
     // Gets probability of continuing to expand lake outwards
-    fn prob_expand_water(rng: &mut ThreadRng, dist: i16) -> bool {
+    fn prob_expand_lake(rng: &mut ThreadRng, dist: i16) -> bool {
         random::bernoulli(rng, 1. - 0.2 * (dist as f32))
+    }
+
+    // checks to see if there is an adjacent lake with 1 space of padding i.e.
+    fn check_adjacent_lake(x: i16, y:i16, world: &mut World) {
+
     }
 }
 
