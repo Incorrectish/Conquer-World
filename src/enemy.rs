@@ -11,7 +11,7 @@ pub struct Enemy {
     // It isn't needed for movement, and the way I wrote movement is a bit convoluted to allow this
     // attribute to make sense, but when we introduce projectiles, this will be needed to make them
     // shoot in the right direction
-    direction: Direction,
+    pub direction: Direction,
     
     // This simply stores the color of the tile that the enemy is currently on, so that when they
     // move off of it, it can be rendered properly back to what it was 
