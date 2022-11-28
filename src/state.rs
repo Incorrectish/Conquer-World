@@ -36,6 +36,7 @@ impl State {
     // just returns the default values
     pub fn new() -> Self {
         let mut world = [[tile::FLOOR; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
+        let mut board = [[tile::FLOOR; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
         let mut rng = rand::thread_rng();
         World::gen_boss(&mut world);
         World::gen_lake(&mut rng, &mut world);
@@ -50,6 +51,7 @@ impl State {
             tile: 0,
             world: World {
                 world,
+                board,
                 player,
                 enemies,
                 projectiles: Vec::new(),
