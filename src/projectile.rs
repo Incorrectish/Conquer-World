@@ -2,7 +2,6 @@ use crate::{
     direction::Direction,
     player::Player,
     WORLD_SIZE, world::World,
-    movable::Movable,
 };
 
 pub struct Projectile {
@@ -66,36 +65,3 @@ impl Projectile {
     }
 }
 
-impl Movable for Projectile {
-    fn set_pos(&mut self, new_pos: (usize, usize)) {
-        todo!()
-    }
-
-    fn get_pos(&self) -> (usize, usize) {
-        todo!()
-    }
-
-    fn get_x(&self) -> usize {
-        todo!()
-    }
-
-    fn get_y(&self) -> usize {
-        todo!()
-    }
-
-    fn get_covered_tile(&self) -> [f32; 4] {
-        todo!()
-    }
-
-    fn set_covered_tile(&mut self, new_tile: [f32; 4]) {
-        todo!()
-    }
-
-    fn get_color(&self) -> [f32; 4] {
-        todo!()
-    }
-
-    fn get_direction(&self) -> Direction {
-        todo!()
-    }
-}

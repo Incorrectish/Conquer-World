@@ -12,7 +12,6 @@ mod projectile;
 mod world;
 mod tile;
 mod random;
-mod movable;
 mod entity;
 
 use crate::state::State;

@@ -18,15 +18,11 @@ use ggez::{
 use rand::rngs::ThreadRng;
 
 pub struct State {
-    // Time delta, unused for now I think
-    delta: u128,
     // RGBA values
     r: f32,
     g: f32,
     b: f32,
     a: f32,
-    // Current tile, in order to iterate over the thing
-    tile: i16,
     
     // Abstraction for the world and what is contained within it 
     world: World,
@@ -35,27 +31,12 @@ pub struct State {
 impl State {
     // just returns the default values
     pub fn new() -> Self {
-        let mut world = [[tile::FLOOR; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
-        let mut board = [[tile::FLOOR; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
-        let mut rng = rand::thread_rng();
-        World::gen_boss(&mut world);
-        World::gen_water(&mut rng, &mut world);
-        let player = Player::new(&mut world);
-        let enemies = vec![Enemy::new(&mut world, 10, 10)];
         Self {
-            delta: 0,
             r: 0.,
             g: 0.,
             b: 0.,
             a: 0.,
-            tile: 0,
-            world: World {
-                world,
-                board,
-                player,
-                enemies,
-                projectiles: Vec::new(),
-            },
+            world: World::new(),
         }
     }
 }

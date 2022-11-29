@@ -1,4 +1,4 @@
-use crate::{direction::Direction, WORLD_SIZE, enemy::{Enemy, self}, entity::Entity, projectile::Projectile, world::World, tile, movable::Movable};
+use crate::{direction::Direction, WORLD_SIZE, enemy::{Enemy, self}, entity::Entity, projectile::Projectile, world::World, tile, };
 use ggez::input::keyboard::{KeyCode, KeyInput};
 use ggez::winit::event::VirtualKeyCode;
 
@@ -21,10 +21,6 @@ pub struct Player {
     // shoot in the right direction
     pub direction: Direction,
     
-    // This simply stores the color of the tile that the player is currently on, so that when they
-    // move off of it, it can be rendered properly back to what it was 
-    covered_tile: [f32; 4],
-
     // This is the player color. NOTE: both this and the previous attribute assume that the game
     // world is a set of tiles and the player is represented as a solid color
     color: [f32; 4],
@@ -40,7 +36,6 @@ impl Player {
         let temp = Self {
             pos: (0, 0),
             direction: Direction::North,
-            covered_tile: world[0][0],
             color: tile::PLAYER,
             health: MAX_PLAYER_HEALTH,
         };
@@ -111,36 +106,3 @@ impl Player {
 
 }
 
-impl Movable for Player {
-    fn set_pos(&mut self, new_pos: (usize, usize)) {
-        todo!()
-    }
-
-    fn get_pos(&self) -> (usize, usize) {
-        todo!()
-    }
-
-    fn get_x(&self) -> usize {
-        todo!()
-    }
-
-    fn get_y(&self) -> usize {
-        todo!()
-    }
-
-    fn get_covered_tile(&self) -> [f32; 4] {
-        todo!()
-    }
-
-    fn set_covered_tile(&mut self, new_tile: [f32; 4]) {
-        todo!()
-    }
-
-    fn get_color(&self) -> [f32; 4] {
-        todo!()
-    }
-
-    fn get_direction(&self) -> Direction {
-        todo!()
-    }
-}

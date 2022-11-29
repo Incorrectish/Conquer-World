@@ -3,9 +3,9 @@ use crate::{
     player::Player,
     enemy::Enemy,
     projectile::Projectile,
-    tile,
+    tile::{self, FLOOR},
     random, 
-    direction::Direction, movable::Movable,
+    direction::Direction, 
     entity::Entity,
 };
 use rand::rngs::ThreadRng;
@@ -28,6 +28,24 @@ pub struct World {
 }
 
 impl World {
+    
+    pub fn new() -> Self {
+        let mut world = [[tile::FLOOR; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
+        let mut rng = rand::thread_rng();
+        World::gen_boss(&mut world);
+        World::gen_water(&mut rng, &mut world);
+        let board = world.clone(); 
+        let player = Player::new(&mut world);
+        let enemies = vec![Enemy::new(&mut world, 10, 10)];
+        World {
+            world,
+            board,
+            player,
+            enemies,
+            projectiles: Vec::new(),
+        }
+    }
+
 
     // this is the "move()" function but move is a reserved keyword so I just used the first
     // synonym I googled "travel()"
@@ -42,31 +60,23 @@ impl World {
             Entity::Enemy(i) => (world.enemies[i].pos.0, world.enemies[i].pos.1, &world.enemies[i].direction),
             Entity::Projectile(i) => (world.projectiles[i].pos.0, world.projectiles[i].pos.1, &world.projectiles[i].direction),
         };
-        let new_position = Self::new_position(x, y, &direction);
+        let new_position = Self::new_position(x, y, direction);
         // TODO: refactor the colors to be some sort of enum
         // If the new position is a tile that can be traveled to "all black" for now, then 
         // remove the player from the current tile and place it on the new tile 
-        if world.world[new_position.1][new_position.0] == [0., 0., 0., 0.] {
+        if world.world[new_position.1][new_position.0] == FLOOR {
             // TODO: refactor to remove covered tile, layer approach created by Ishan and Michael
             // something like: dynamic[y][x] = static[y][x]?????, michael this won't work unless
             // you fix
+            world.world[new_position.1][new_position.0] = world.world[y][x];
             world.world[y][x] = world.board[y][x];// static stuff
                                  //
         
             // dynamic board doesn't exist. TODO: michael fix
             match entity_type {
-                Entity::Player => { 
-                    world.world[new_position.1][new_position.0] = world.board[world.player.pos.1][world.player.pos.0];
-                    world.player.pos = new_position;
-                },
-                Entity::Enemy(i) => { 
-                    world.world[new_position.1][new_position.0] = world.board[world.enemies[i].pos.1][world.enemies[i].pos.0];
-                    world.enemies[i].pos = new_position;
-                },
-                Entity::Projectile(i)=> {
-                    world.world[new_position.1][new_position.0] = world.board[world.projectiles[i].pos.1][world.projectiles[i].pos.0];
-                    world.projectiles[i].pos = new_position;
-                },
+                Entity::Player => world.player.pos = new_position,
+                Entity::Enemy(i) => world.enemies[i].pos = new_position,
+                Entity::Projectile(i) => world.projectiles[i].pos = new_position,
             }
             // entity.set_covered_tile(world.world[entity.get_y()][entity.get_x()]);
             // above line is unusable because of the thing

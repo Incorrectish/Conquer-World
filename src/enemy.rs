@@ -1,4 +1,4 @@
-use crate::{direction::Direction, WORLD_SIZE, world::World, tile, movable::Movable};
+use crate::{direction::Direction, WORLD_SIZE, world::World, tile, };
 
 const ENEMY_HEALTH: usize = 5;
 
@@ -13,10 +13,6 @@ pub struct Enemy {
     // shoot in the right direction
     pub direction: Direction,
     
-    // This simply stores the color of the tile that the enemy is currently on, so that when they
-    // move off of it, it can be rendered properly back to what it was 
-    covered_tile: [f32; 4],
-
     // This is the enemy color. NOTE: both this and the previous attribute assume that the game
     // world is a set of tiles and the enemy is represented as a solid color
     color: [f32; 4],
@@ -30,7 +26,6 @@ impl Enemy {
         let temp = Self {
             pos: (x, y),
             direction: Direction::North,
-            covered_tile: world[y][x],
             color: tile::ENEMY,
             health: ENEMY_HEALTH,
         };
@@ -39,36 +34,36 @@ impl Enemy {
     }
 
     // TODO: rewrite to make the travel function the same as player travel
-    pub fn travel(
-        &mut self,
-        world: &mut World,
-    ) {
-        world.world[self.pos.1][self.pos.0] = self.covered_tile;
-        match self.direction {
-            Direction::North => {
-                if self.pos.1 > 0 {
-                    self.pos.1 -= 1
-                }
-            }
-            Direction::South => {
-                if self.pos.1 < (WORLD_SIZE.1 - 1) as usize {
-                    self.pos.1 += 1
-                }
-            }
-            Direction::East => {
-                if self.pos.0 < (WORLD_SIZE.0 - 1) as usize {
-                    self.pos.0 += 1
-                }
-            }
-            Direction::West => {
-                if self.pos.0 > 0 {
-                    self.pos.0 -= 1
-                }
-            }
-        }
-        self.covered_tile = world.world[self.pos.1][self.pos.0];
-        world.world[self.pos.1][self.pos.0] = self.color;
-    }
+    // pub fn travel(
+    //     &mut self,
+    //     world: &mut World,
+    // ) {
+    //     world.world[self.pos.1][self.pos.0] = self.covered_tile;
+    //     match self.direction {
+    //         Direction::North => {
+    //             if self.pos.1 > 0 {
+    //                 self.pos.1 -= 1
+    //             }
+    //         }
+    //         Direction::South => {
+    //             if self.pos.1 < (WORLD_SIZE.1 - 1) as usize {
+    //                 self.pos.1 += 1
+    //             }
+    //         }
+    //         Direction::East => {
+    //             if self.pos.0 < (WORLD_SIZE.0 - 1) as usize {
+    //                 self.pos.0 += 1
+    //             }
+    //         }
+    //         Direction::West => {
+    //             if self.pos.0 > 0 {
+    //                 self.pos.0 -= 1
+    //             }
+    //         }
+    //     }
+    //     self.covered_tile = world.world[self.pos.1][self.pos.0];
+    //     world.world[self.pos.1][self.pos.0] = self.color;
+    // }
 
     pub fn update(world: &mut World) {
         // thinking of using a hack to remove all the enemies at the position instead because two
@@ -83,40 +78,6 @@ impl Enemy {
 
     pub fn kill(world: &mut World, index: usize) {
         // for now all it does is remove the tile on the world "board"
-        world.world[world.enemies[index].pos.1][world.enemies[index].pos.0] = world.enemies[index].covered_tile;
-    }
-}
-
-impl Movable for Enemy {
-    fn set_pos(&mut self, new_pos: (usize, usize)) {
-        todo!()
-    }
-
-    fn get_pos(&self) -> (usize, usize) {
-        todo!()
-    }
-
-    fn get_x(&self) -> usize {
-        todo!()
-    }
-
-    fn get_y(&self) -> usize {
-        todo!()
-    }
-
-    fn get_covered_tile(&self) -> [f32; 4] {
-        todo!()
-    }
-
-    fn set_covered_tile(&mut self, new_tile: [f32; 4]) {
-        todo!()
-    }
-
-    fn get_color(&self) -> [f32; 4] {
-        todo!()
-    }
-
-    fn get_direction(&self) -> Direction {
-        todo!()
+        world.world[world.enemies[index].pos.1][world.enemies[index].pos.0] = world.board[world.enemies[index].pos.1][world.enemies[index].pos.0];
     }
 }
