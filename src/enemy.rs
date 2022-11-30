@@ -1,4 +1,4 @@
-use crate::{direction::Direction, WORLD_SIZE, world::World, tile, };
+use crate::{direction::Direction, tile, world::World, WORLD_SIZE};
 
 const ENEMY_HEALTH: usize = 5;
 
@@ -6,13 +6,13 @@ const ENEMY_HEALTH: usize = 5;
 pub struct Enemy {
     // This is the position in the form (x, y)
     pub pos: (usize, usize),
-    
+
     // The direction that the enemy is facing at the moment
     // It isn't needed for movement, and the way I wrote movement is a bit convoluted to allow this
     // attribute to make sense, but when we introduce projectiles, this will be needed to make them
     // shoot in the right direction
     pub direction: Direction,
-    
+
     // This is the enemy color. NOTE: both this and the previous attribute assume that the game
     // world is a set of tiles and the enemy is represented as a solid color
     color: [f32; 4],
@@ -22,7 +22,11 @@ pub struct Enemy {
 }
 
 impl Enemy {
-    pub fn new(world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize], x: usize, y: usize) -> Self {
+    pub fn new(
+        world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize],
+        x: usize,
+        y: usize,
+    ) -> Self {
         let temp = Self {
             pos: (x, y),
             direction: Direction::North,
@@ -78,6 +82,7 @@ impl Enemy {
 
     pub fn kill(world: &mut World, index: usize) {
         // for now all it does is remove the tile on the world "board"
-        world.world[world.enemies[index].pos.1][world.enemies[index].pos.0] = world.board[world.enemies[index].pos.1][world.enemies[index].pos.0];
+        world.world[world.enemies[index].pos.1][world.enemies[index].pos.0] =
+            world.board[world.enemies[index].pos.1][world.enemies[index].pos.0];
     }
 }

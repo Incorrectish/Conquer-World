@@ -1,8 +1,4 @@
-use crate::{
-    direction::Direction,
-    player::Player,
-    WORLD_SIZE, world::World,
-};
+use crate::{direction::Direction, player::Player, world::World, WORLD_SIZE};
 
 pub struct Projectile {
     pub pos: (usize, usize),
@@ -15,13 +11,7 @@ pub struct Projectile {
 }
 
 impl Projectile {
-    pub fn new(
-        x: usize,
-        y: usize,
-        speed: usize,
-        direction: Direction,
-        world: &mut World,
-    ) -> Self {
+    pub fn new(x: usize, y: usize, speed: usize, direction: Direction, world: &mut World) -> Self {
         let color = [1., 0., 0., 0.5];
         let temp = Projectile {
             pos: (x, y),
@@ -34,9 +24,7 @@ impl Projectile {
         temp
     }
 
-    pub fn update(
-        world: &mut World
-    ) {
+    pub fn update(world: &mut World) {
         for index in (0..world.projectiles.len()).rev() {
             let new_position = World::new_position(
                 world.projectiles[index].pos.0,
@@ -44,7 +32,7 @@ impl Projectile {
                 &world.projectiles[index].direction,
             );
 
-            // if the projectile goes out of bounds, the position won't change 
+            // if the projectile goes out of bounds, the position won't change
             if world.projectiles[index].pos == new_position {
                 Projectile::kill(index, world);
                 world.projectiles.remove(index);
@@ -56,12 +44,11 @@ impl Projectile {
             // case for impact with enemy
 
             // general projectile movement
-
         }
     }
 
     pub fn kill(index: usize, world: &mut World) {
-        world.world[world.projectiles[index].pos.1][world.projectiles[index].pos.0] = world.projectiles[index].covered_tile;
+        world.world[world.projectiles[index].pos.1][world.projectiles[index].pos.0] =
+            world.projectiles[index].covered_tile;
     }
 }
-

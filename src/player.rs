@@ -1,4 +1,12 @@
-use crate::{direction::Direction, WORLD_SIZE, enemy::{Enemy, self}, entity::Entity, projectile::Projectile, world::World, tile, };
+use crate::{
+    direction::Direction,
+    enemy::{self, Enemy},
+    entity::Entity,
+    projectile::Projectile,
+    tile,
+    world::World,
+    WORLD_SIZE,
+};
 use ggez::input::keyboard::{KeyCode, KeyInput};
 use ggez::winit::event::VirtualKeyCode;
 
@@ -14,21 +22,20 @@ const PLAYER_PROJECTILE_SPEED: usize = 1;
 pub struct Player {
     // This is the position in the form (x, y)
     pub pos: (usize, usize),
-    
+
     // The direction that the player is facing at the moment
     // It isn't needed for movement, and the way I wrote movement is a bit convoluted to allow this
     // attribute to make sense, but when we introduce projectiles, this will be needed to make them
     // shoot in the right direction
     pub direction: Direction,
-    
+
     // This is the player color. NOTE: both this and the previous attribute assume that the game
     // world is a set of tiles and the player is represented as a solid color
     color: [f32; 4],
 
     // Stores player health: for player death and such
     health: usize,
-
-    // 
+    //
 }
 
 impl Player {
@@ -45,10 +52,7 @@ impl Player {
 
     // eventually this should be the functionality to like shoot projectiles and stuff but for now
     // it just handles like arrow keys
-    pub fn use_input(
-        key: KeyInput,
-        world: &mut World,
-    ) {
+    pub fn use_input(key: KeyInput, world: &mut World) {
         match key.keycode {
             Some(key_pressed) => match key_pressed {
                 KeyCode::Down => {
@@ -66,12 +70,12 @@ impl Player {
                 KeyCode::Right => {
                     world.player.direction = Direction::East;
                     World::travel(world, Entity::Player);
-                },
+                }
 
                 // Arbitrarily chosen for attack, can change later
                 MELEE_ATTACK_KEYCODE => {
                     Player::melee_attack(world);
-                },
+                }
                 PROJECTILE_ATTACK_KEYCODE => {
                     Player::projectile_attack(world);
                 }
@@ -81,12 +85,15 @@ impl Player {
         }
     }
 
-
     pub fn melee_attack(world: &mut World) {
         // gets the position that the attack will be applied to, one tile forward of the player in
         // the direction that they are facing
-        let attacking_position = World::new_position(world.player.pos.0, world.player.pos.1, &world.player.direction);
-        
+        let attacking_position = World::new_position(
+            world.player.pos.0,
+            world.player.pos.1,
+            &world.player.direction,
+        );
+
         // We do not know what enemies are on the tile being attacked, so we need to go through the
         // enemies and check if any of them are on the attacking tile, then damage them
         for enemy in &mut world.enemies {
@@ -99,10 +106,18 @@ impl Player {
     // This function should just spawn a projectile, the mechanics of dealing with the projectile
     // and such should be determined by the projectile object itself
     pub fn projectile_attack(world: &mut World) {
-        let projectile_spawn_pos = World::new_position(world.player.pos.0, world.player.pos.1, &world.player.direction);
-        let projectile = Projectile::new(projectile_spawn_pos.0, projectile_spawn_pos.1, PLAYER_PROJECTILE_SPEED, world.player.direction.clone(), world);
+        let projectile_spawn_pos = World::new_position(
+            world.player.pos.0,
+            world.player.pos.1,
+            &world.player.direction,
+        );
+        let projectile = Projectile::new(
+            projectile_spawn_pos.0,
+            projectile_spawn_pos.1,
+            PLAYER_PROJECTILE_SPEED,
+            world.player.direction.clone(),
+            world,
+        );
         world.projectiles.push(projectile);
     }
-
 }
-

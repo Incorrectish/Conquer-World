@@ -17,6 +17,11 @@ pub struct World {
     // board that stores the internal world 
     pub board: [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize],
 
+    // stores the bottom left and top right coordinates of the currently rendered world, useful for
+    // querying whether a coordinate is in the current world
+    pub top_left: (usize, usize),
+    pub bottom_right: (usize, usize),
+
     // store an instance of a player
     pub player: Player,
 
@@ -40,10 +45,20 @@ impl World {
         World {
             world,
             board,
+            top_left: (0, 0),
+            bottom_right: (WORLD_SIZE.0 as usize, WORLD_SIZE.1 as usize),
             player,
             enemies,
             projectiles: Vec::new(),
         }
+    }
+
+
+    // this function just returns whether a set of coordinates are within the bounds of the dynamic
+    // world. takes in the world, x, and y, and returns true if the coordinates are inside the
+    // world, and false otherwise
+    pub fn coordinates_are_within_world(world: &mut World, x: usize, y: usize) -> bool {
+        x <= world.bottom_right.0 && x >= world.top_left.0 && y <= world.bottom_right.1 && y >= world.top_left.1
     }
 
 

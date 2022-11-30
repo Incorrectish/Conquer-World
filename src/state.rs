@@ -1,14 +1,7 @@
 use crate::direction::Direction;
 use crate::enemy::Enemy;
 use crate::player::Player;
-use crate::{
-    SCREEN_SIZE,
-    TILE_SIZE,
-    WORLD_SIZE,
-    projectile::Projectile,
-    world::World,
-    tile
-};
+use crate::{projectile::Projectile, tile, world::World, SCREEN_SIZE, TILE_SIZE, WORLD_SIZE};
 use ggez::{
     event,
     graphics::{self, Canvas},
@@ -23,8 +16,8 @@ pub struct State {
     g: f32,
     b: f32,
     a: f32,
-    
-    // Abstraction for the world and what is contained within it 
+
+    // Abstraction for the world and what is contained within it
     world: World,
 }
 
@@ -87,7 +80,7 @@ impl ggez::event::EventHandler<GameError> for State {
         _repeated: bool,
     ) -> Result<(), GameError> {
         // Just takes in the user input and makes an action based off of it
-        
+
         Player::use_input(input, &mut self.world);
         Ok(())
     }
@@ -113,4 +106,3 @@ impl ggez::event::EventHandler<GameError> for State {
         Ok(())
     }
 }
-
