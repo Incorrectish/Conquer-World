@@ -1,6 +1,7 @@
 use crate::{direction::Direction, tile, world::World, WORLD_SIZE};
 
 const ENEMY_HEALTH: usize = 5;
+const PERMISSIBLE_TILES: [[f32; 4]; 1] = [tile::FLOOR];
 
 // This is basically the same as the enemy for now, but I am just testing an enemy system
 pub struct Enemy {
@@ -12,6 +13,9 @@ pub struct Enemy {
     // attribute to make sense, but when we introduce projectiles, this will be needed to make them
     // shoot in the right direction
     pub direction: Direction,
+
+    // Just like in player controls the amount of tiles an enemy moves in one "turn"
+    pub speed: usize,
 
     // This is the enemy color. NOTE: both this and the previous attribute assume that the game
     // world is a set of tiles and the enemy is represented as a solid color
@@ -30,6 +34,7 @@ impl Enemy {
         let temp = Self {
             pos: (x, y),
             direction: Direction::North,
+            speed: 1,
             color: tile::ENEMY,
             health: ENEMY_HEALTH,
         };
@@ -84,5 +89,14 @@ impl Enemy {
         // for now all it does is remove the tile on the world "board"
         world.world[world.enemies[index].pos.1][world.enemies[index].pos.0] =
             world.board[world.enemies[index].pos.1][world.enemies[index].pos.0];
+    }
+
+    pub fn can_travel_to(tile: [f32; 4]) -> bool {
+        for permissible_tile in PERMISSIBLE_TILES {
+            if tile == permissible_tile {
+                return true;
+            }
+        }
+        false
     }
 }

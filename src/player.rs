@@ -16,6 +16,7 @@ const PLAYER_MELEE_DAMAGE: usize = 1;
 const MELEE_ATTACK_KEYCODE: VirtualKeyCode = KeyCode::A;
 const PROJECTILE_ATTACK_KEYCODE: VirtualKeyCode = KeyCode::Space;
 const PLAYER_PROJECTILE_SPEED: usize = 1;
+const PERMISSIBLE_TILES: [[f32; 4]; 1] = [tile::FLOOR];
 
 // This is with the covered tile model, but we could use the static/dynamic board paradighm or
 // something else entirely
@@ -28,6 +29,9 @@ pub struct Player {
     // attribute to make sense, but when we introduce projectiles, this will be needed to make them
     // shoot in the right direction
     pub direction: Direction,
+
+    // This controls the number of tiles a player moves in a direction in a given keypress
+    pub speed: usize,
 
     // This is the player color. NOTE: both this and the previous attribute assume that the game
     // world is a set of tiles and the player is represented as a solid color
@@ -43,6 +47,7 @@ impl Player {
         let temp = Self {
             pos: (0, 0),
             direction: Direction::North,
+            speed: 1,
             color: tile::PLAYER,
             health: MAX_PLAYER_HEALTH,
         };
@@ -91,7 +96,9 @@ impl Player {
         let attacking_position = World::new_position(
             world.player.pos.0,
             world.player.pos.1,
-            &world.player.direction,
+            world.player.direction.clone(),
+            world,
+            world.player.speed,
         );
 
         // We do not know what enemies are on the tile being attacked, so we need to go through the
@@ -109,7 +116,9 @@ impl Player {
         let projectile_spawn_pos = World::new_position(
             world.player.pos.0,
             world.player.pos.1,
-            &world.player.direction,
+            world.player.direction.clone(),
+            world,
+            world.player.speed,
         );
         let projectile = Projectile::new(
             projectile_spawn_pos.0,
@@ -119,5 +128,14 @@ impl Player {
             world,
         );
         world.projectiles.push(projectile);
+    }
+
+    pub fn can_travel_to(tile: [f32; 4]) -> bool {
+        for permissible_tile in PERMISSIBLE_TILES {
+            if tile == permissible_tile {
+                return true;
+            }
+        }
+        false
     }
 }
