@@ -1,19 +1,19 @@
 use ggez::{
-    event, graphics::{self, Canvas},
+    event,
+    graphics::{self, Canvas},
     input::keyboard::{KeyCode, KeyInput},
     Context, GameResult,
 };
 
-mod state;
-mod player;
 mod direction;
 mod enemy;
-mod projectile;
-mod world;
-mod tile;
-mod random;
-mod movable;
 mod entity;
+mod player;
+mod projectile;
+mod random;
+mod state;
+mod tile;
+mod world;
 
 use crate::state::State;
 
@@ -30,7 +30,7 @@ pub const SCREEN_SIZE: (f32, f32) = (
     WORLD_SIZE.1 as f32 * TILE_SIZE.1 as f32,
 );
 
-fn main() -> GameResult { 
+fn main() -> GameResult {
     // Here we use a ContextBuilder to setup metadata about our game. First the title and author
     let (ctx, events_loop) = ggez::ContextBuilder::new("Rust Game", "Ishan Kar")
         // Next we set up the window. This title will be displayed in the title bar of the window.
@@ -47,4 +47,3 @@ fn main() -> GameResult {
     // And finally we actually run our game, passing in our context and state.
     event::run(ctx, events_loop, state)
 }
-
