@@ -89,6 +89,7 @@ impl Enemy {
         // for now all it does is remove the tile on the world "board"
         world.world[world.enemies[index].pos.1][world.enemies[index].pos.0] =
             world.board[world.enemies[index].pos.1][world.enemies[index].pos.0];
+        world.enemies.remove(index);
     }
 
     pub fn can_travel_to(tile: [f32; 4]) -> bool {

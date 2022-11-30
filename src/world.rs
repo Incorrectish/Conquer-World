@@ -151,7 +151,7 @@ impl World {
         // because it reached the bounds or the end of the map 
         
 
-        if new_position == (x, y) && !world.can_travel_to(entity_type.clone(), new_position.0, new_position.1) {
+        if new_position == (x, y) || !world.can_travel_to(entity_type.clone(), new_position.0, new_position.1) {
             return false;
         }
         // TODO: refactor the colors to be some sort of enum
