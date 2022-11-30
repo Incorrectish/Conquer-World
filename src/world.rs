@@ -17,12 +17,22 @@ pub struct World {
     pub world: [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize],
 
     // board that stores the internal world
-    pub board: [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize],
+    pub board: [[[f32; 4]; 2*WORLD_SIZE.0 as usize]; 2*WORLD_SIZE.1 as usize],
 
     // stores the bottom left and top right coordinates of the currently rendered world, useful for
     // querying whether a coordinate is in the current world
     pub top_left: (usize, usize),
     pub bottom_right: (usize, usize),
+
+    // same as above, but for the board instead of world
+    pub board_top_left: (usize, usize),
+    pub board_bottom_right: (usize, usize),
+
+    // offset in x and y direction for world
+    // for example, if x_offset = 25 and y_offset = 10, board will span from 
+    // 25 <= x < 25 + WORLD_SIZE.0 and 10 <= y < 10 + WORLD_SIZE.1
+    pub x_offset: usize,
+    pub y_offset: usize,
 
     // store an instance of a player
     pub player: Player,
@@ -36,11 +46,12 @@ pub struct World {
 
 impl World {
     pub fn new() -> Self {
-        let mut world = [[tile::FLOOR; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
         let mut rng = rand::thread_rng();
-        World::gen_boss(&mut world);
-        World::gen_water(&mut rng, &mut world);
-        let board = world.clone();
+        let mut board = [[tile::FLOOR; 2*WORLD_SIZE.0 as usize]; 2*WORLD_SIZE.1 as usize];
+        World::gen_boss(&mut board);
+        World::gen_water(&mut rng, &mut board);
+        let mut world = [[tile::FLOOR; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
+        World::draw_world(&mut world, &mut board);
         let player = Player::new(&mut world);
         let enemies = vec![Enemy::new(&mut world, 10, 10)];
         World {
@@ -48,9 +59,42 @@ impl World {
             board,
             top_left: (0, 0),
             bottom_right: (WORLD_SIZE.0 as usize, WORLD_SIZE.1 as usize),
+            board_top_left: (0, 0),
+            board_bottom_right: (2*WORLD_SIZE.0 as usize, 2*WORLD_SIZE.1 as usize),
+            x_offset: 0,
+            y_offset: 0,
             player,
             enemies,
             projectiles: Vec::new(),
+        }
+    }
+
+    // draws initial world from board (0 offsets)
+    pub fn draw_world(
+        world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize],
+        board: &mut [[[f32; 4]; 2*WORLD_SIZE.0 as usize]; 2*WORLD_SIZE.1 as usize]
+    ) {
+        for i_coord in 0..WORLD_SIZE.0 {
+            for j_coord in 0..WORLD_SIZE.1 {
+                // ishan you can clean this up lol i'm still not super familiar with which
+                // dimension is which
+                let i = i_coord as usize;
+                let j = j_coord as usize;
+                world[i][j] = board[i][j];
+            }
+        }
+    }
+
+    // draws world from board based on offsets and stuff
+    pub fn refresh_world(world: &mut World) {
+        for i_coord in 0..WORLD_SIZE.0 {
+            for j_coord in 0..WORLD_SIZE.1 {
+                // ishan you can clean this up lol i'm still not super familiar with which
+                // dimension is which
+                let i = i_coord as usize;
+                let j = j_coord as usize;
+                world.world[i][j] = world.board[i + world.y_offset][j + world.x_offset];
+            }
         }
     }
 
@@ -62,6 +106,14 @@ impl World {
             && x >= world.top_left.0
             && y <= world.bottom_right.1
             && y >= world.top_left.1
+    }
+
+    // Returns true if coordinates inside board (note distinction from world), false otherwise
+    pub fn coordinates_are_within_board(world: &mut World, x: usize, y: usize) -> bool {
+        x <= world.board_bottom_right.0
+            && x >= world.board_top_left.0
+            && y <= world.board_bottom_right.1
+            && y >= world.board_top_left.1
     }
 
     // this is the "move()" function but move is a reserved keyword so I just used the first
@@ -91,6 +143,7 @@ impl World {
         };
 
         let new_position = Self::new_position(x, y, direction, world, speed);
+
 
         // if the new position is the same as the old position, movement is impossible and this
         // function returns false as it wasn't able to move the player or projectile, either
@@ -158,7 +211,7 @@ impl World {
     }
 
     // generates the center boss room for map
-    pub fn gen_boss(world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize]) {
+    pub fn gen_boss(world: &mut [[[f32; 4]; 2*WORLD_SIZE.0 as usize]; 2*WORLD_SIZE.1 as usize]) {
         // x and y of center of map
         let x: usize = (WORLD_SIZE.0 as usize) / 2 - 1;
         let y: usize = (WORLD_SIZE.1 as usize) / 2 - 1;
@@ -180,7 +233,7 @@ impl World {
     // generates water tiles around the map
     pub fn gen_water(
         rng: &mut ThreadRng,
-        world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize],
+        world: &mut [[[f32; 4]; 2*WORLD_SIZE.0 as usize]; 2*WORLD_SIZE.1 as usize],
     ) {
         let mut lakes_added = 0;
         const TOTAL_LAKES: i16 = 5;
@@ -201,7 +254,7 @@ impl World {
         x: i16,
         y: i16,
         dist: i16,
-        world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize],
+        world: &mut [[[f32; 4]; 2*WORLD_SIZE.0 as usize]; 2*WORLD_SIZE.1 as usize],
     ) {
         // sets curr tile to water
         if world[x as usize][y as usize] == tile::FLOOR {
