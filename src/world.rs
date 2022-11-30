@@ -7,6 +7,7 @@ use crate::{
     random,
     tile::{self, FLOOR},
     WORLD_SIZE,
+    BOARD_SIZE
 };
 
 use std::cmp::{max, min};
@@ -17,7 +18,7 @@ pub struct World {
     pub world: [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize],
 
     // board that stores the internal world
-    pub board: [[[f32; 4]; 2*WORLD_SIZE.0 as usize]; 2*WORLD_SIZE.1 as usize],
+    pub board: [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
 
     // stores the bottom left and top right coordinates of the currently rendered world, useful for
     // querying whether a coordinate is in the current world
@@ -47,7 +48,7 @@ pub struct World {
 impl World {
     pub fn new() -> Self {
         let mut rng = rand::thread_rng();
-        let mut board = [[tile::FLOOR; 2*WORLD_SIZE.0 as usize]; 2*WORLD_SIZE.1 as usize];
+        let mut board = [[tile::FLOOR; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize];
         World::gen_boss(&mut board);
         World::gen_water(&mut rng, &mut board);
         let mut world = [[tile::FLOOR; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
@@ -60,7 +61,7 @@ impl World {
             top_left: (0, 0),
             bottom_right: (WORLD_SIZE.0 as usize, WORLD_SIZE.1 as usize),
             board_top_left: (0, 0),
-            board_bottom_right: (2*WORLD_SIZE.0 as usize, 2*WORLD_SIZE.1 as usize),
+            board_bottom_right: (BOARD_SIZE.0 as usize, BOARD_SIZE.1 as usize),
             x_offset: 0,
             y_offset: 0,
             player,
@@ -72,7 +73,7 @@ impl World {
     // draws initial world from board (0 offsets)
     pub fn draw_world(
         world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize],
-        board: &mut [[[f32; 4]; 2*WORLD_SIZE.0 as usize]; 2*WORLD_SIZE.1 as usize]
+        board: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize]
     ) {
         for i_coord in 0..WORLD_SIZE.0 {
             for j_coord in 0..WORLD_SIZE.1 {
@@ -211,7 +212,7 @@ impl World {
     }
 
     // generates the center boss room for map
-    pub fn gen_boss(world: &mut [[[f32; 4]; 2*WORLD_SIZE.0 as usize]; 2*WORLD_SIZE.1 as usize]) {
+    pub fn gen_boss(world: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize]) {
         // x and y of center of map
         let x: usize = (WORLD_SIZE.0 as usize) / 2 - 1;
         let y: usize = (WORLD_SIZE.1 as usize) / 2 - 1;
@@ -233,7 +234,7 @@ impl World {
     // generates water tiles around the map
     pub fn gen_water(
         rng: &mut ThreadRng,
-        world: &mut [[[f32; 4]; 2*WORLD_SIZE.0 as usize]; 2*WORLD_SIZE.1 as usize],
+        world: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
     ) {
         let mut lakes_added = 0;
         const TOTAL_LAKES: i16 = 5;
@@ -254,7 +255,7 @@ impl World {
         x: i16,
         y: i16,
         dist: i16,
-        world: &mut [[[f32; 4]; 2*WORLD_SIZE.0 as usize]; 2*WORLD_SIZE.1 as usize],
+        world: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
     ) {
         // sets curr tile to water
         if world[x as usize][y as usize] == tile::FLOOR {
