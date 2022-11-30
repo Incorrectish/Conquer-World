@@ -6,12 +6,11 @@ use crate::{
     projectile::Projectile,
     random,
     tile::{self, FLOOR},
-    WORLD_SIZE,
-    BOARD_SIZE
+    BOARD_SIZE, WORLD_SIZE,
 };
 
-use std::cmp::{max, min};
 use rand::rngs::ThreadRng;
+use std::cmp::{max, min};
 
 pub struct World {
     // world to store the state of tiles in between frames
@@ -30,7 +29,7 @@ pub struct World {
     pub board_bottom_right: (usize, usize),
 
     // offset in x and y direction for world
-    // for example, if x_offset = 25 and y_offset = 10, board will span from 
+    // for example, if x_offset = 25 and y_offset = 10, board will span from
     // 25 <= x < 25 + WORLD_SIZE.0 and 10 <= y < 10 + WORLD_SIZE.1
     pub x_offset: usize,
     pub y_offset: usize,
@@ -73,7 +72,7 @@ impl World {
     // draws initial world from board (0 offsets)
     pub fn draw_world(
         world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize],
-        board: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize]
+        board: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
     ) {
         for i_coord in 0..WORLD_SIZE.0 {
             for j_coord in 0..WORLD_SIZE.1 {
@@ -103,9 +102,10 @@ impl World {
     // world. takes in the world, x, and y, and returns true if the coordinates are inside the
     // world, and false otherwise
     pub fn coordinates_are_within_world(world: &mut World, x: usize, y: usize) -> bool {
-        x <= world.bottom_right.0
+        // POTENTIAL ERRORS WITH </<=
+        x < world.bottom_right.0
             && x >= world.top_left.0
-            && y <= world.bottom_right.1
+            && y < world.bottom_right.1
             && y >= world.top_left.1
     }
 
@@ -145,13 +145,14 @@ impl World {
 
         let new_position = Self::new_position(x, y, direction, world, speed);
 
-
         // if the new position is the same as the old position, movement is impossible and this
         // function returns false as it wasn't able to move the player or projectile, either
-        // because it reached the bounds or the end of the map 
-        
+        // because it reached the bounds or the end of the map
 
-        if new_position == (x, y) || !world.can_travel_to(entity_type.clone(), new_position.0, new_position.1) {
+        if !Self::coordinates_are_within_world(world, new_position.0, new_position.1)
+            || new_position == (x, y)
+            || !world.can_travel_to(entity_type.clone(), new_position.0, new_position.1)
+        {
             return false;
         }
         // TODO: refactor the colors to be some sort of enum
@@ -159,14 +160,14 @@ impl World {
         // remove the player from the current tile and place it on the new tile
         // this isn't needed because the travel is checked above
         // if world.world[new_position.1][new_position.0] == FLOOR {
-            // TODO: refactor to remove covered tile, layer approach created by Ishan and Michael
-            // something like: dynamic[y][x] = static[y][x]?????, michael this won't work unless
-            // you fix
+        // TODO: refactor to remove covered tile, layer approach created by Ishan and Michael
+        // something like: dynamic[y][x] = static[y][x]?????, michael this won't work unless
+        // you fix
         world.world[new_position.1][new_position.0] = world.world[y][x];
         world.world[y][x] = world.board[y][x]; // static stuff
                                                //
 
-                                               // dynamic board doesn't exist. TODO: michael fix
+        // dynamic board doesn't exist. TODO: michael fix
         match entity_type {
             Entity::Player => world.player.pos = new_position,
             Entity::Enemy(i) => world.enemies[i].pos = new_position,
@@ -188,10 +189,15 @@ impl World {
         }
     }
 
-    
     // This very simply gets the new position from the old, by checking the direction and the
     // bounds. Should be refactored to give a travel distance instead of just one
-    pub fn new_position(mut x: usize, mut y: usize, direction: Direction, world: &mut Self, travel_distance: usize) -> (usize, usize) {
+    pub fn new_position(
+        mut x: usize,
+        mut y: usize,
+        direction: Direction,
+        world: &mut Self,
+        travel_distance: usize,
+    ) -> (usize, usize) {
         match direction {
             Direction::North => {
                 // may be a bug in here because I can't math TODO: verify
@@ -199,10 +205,16 @@ impl World {
                 y = max(y as i16 - travel_distance as i16, world.top_left.1 as i16) as usize;
             }
             Direction::South => {
-                y = min(y as i16 + travel_distance as i16, world.bottom_right.1 as i16) as usize;
+                y = min(
+                    y as i16 + travel_distance as i16,
+                    world.bottom_right.1 as i16,
+                ) as usize;
             }
             Direction::East => {
-                x = min(x as i16 + travel_distance as i16, world.bottom_right.0 as i16) as usize;
+                x = min(
+                    x as i16 + travel_distance as i16,
+                    world.bottom_right.0 as i16,
+                ) as usize;
             }
             Direction::West => {
                 x = max(x as i16 - travel_distance as i16, world.top_left.0 as i16) as usize;
@@ -283,7 +295,5 @@ impl World {
     }
 
     // checks to see if there is an adjacent lake with 1 space of padding i.e.
-    fn check_adjacent_lake(x: i16, y:i16, world: &mut World) {
-
-    }
+    fn check_adjacent_lake(x: i16, y: i16, world: &mut World) {}
 }
