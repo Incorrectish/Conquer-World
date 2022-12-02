@@ -16,6 +16,7 @@ const PLAYER_MELEE_DAMAGE: usize = 1;
 const MELEE_ATTACK_KEYCODE: VirtualKeyCode = KeyCode::A;
 const PROJECTILE_ATTACK_KEYCODE: VirtualKeyCode = KeyCode::Space;
 const PLAYER_PROJECTILE_SPEED: usize = 1;
+const PLAYER_PROJECTILE_DAMAGE: usize = 1;
 const PERMISSIBLE_TILES: [[f32; 4]; 1] = [tile::FLOOR];
 
 // This is with the covered tile model, but we could use the static/dynamic board paradighm or
@@ -38,7 +39,7 @@ pub struct Player {
     color: [f32; 4],
 
     // Stores player health: for player death and such
-    health: usize,
+    pub health: usize,
 
     // planned energy, used for healing, projectiles, (teleportation?), building
     energy: usize,
@@ -128,6 +129,7 @@ impl Player {
             projectile_spawn_pos.0,
             projectile_spawn_pos.1,
             PLAYER_PROJECTILE_SPEED,
+            PLAYER_PROJECTILE_DAMAGE,
             world.player.direction.clone(),
             world,
         );

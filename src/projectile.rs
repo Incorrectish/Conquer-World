@@ -7,16 +7,18 @@ pub struct Projectile {
     pub speed: usize,
     pub direction: Direction,
     color: [f32; 4],
+    pub damage: usize,
     // maybe add an alignment so projectiles from enemies cannot damage themselves and projectiles
     // from players cannot damage themselves
 }
 
 impl Projectile {
-    pub fn new(x: usize, y: usize, speed: usize, direction: Direction, world: &mut World) -> Self {
+    pub fn new(x: usize, y: usize, speed: usize, damage: usize, direction: Direction, world: &mut World) -> Self {
         let color = [1., 0., 0., 0.5];
         let temp = Projectile {
             pos: (x, y),
             speed,
+            damage,
             direction,
             color,
         };
