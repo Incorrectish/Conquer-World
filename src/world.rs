@@ -171,6 +171,8 @@ impl World {
         match entity_type {
             Entity::Player => world.player.pos = new_position,
             Entity::Enemy(i) => world.enemies[i].pos = new_position,
+            // TODO: SUPER CHANGES MUST GO ON HERE BECAUSE RIGHT NOW IT JUST GOES OVER THE ENEMY
+            // WHICH MEANS ENEMY IS ERASED FROM THE BOARD 
             Entity::Projectile(i) => world.projectiles[i].pos = new_position,
         }
         // entity.set_covered_tile(world.world[entity.get_y()][entity.get_x()]);

@@ -1,6 +1,6 @@
 use crate::{direction::Direction, entity::Entity, player::Player, tile, world::World, WORLD_SIZE};
 
-const PERMISSIBLE_TILES: [[f32; 4]; 2] = [tile::WATER, tile::FLOOR];
+const PERMISSIBLE_TILES: [[f32; 4]; 4] = [tile::WATER, tile::FLOOR, tile::PLAYER, tile::ENEMY];
 
 pub struct Projectile {
     pub pos: (usize, usize),

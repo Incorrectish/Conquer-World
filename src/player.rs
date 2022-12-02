@@ -39,6 +39,9 @@ pub struct Player {
 
     // Stores player health: for player death and such
     health: usize,
+
+    // planned energy, used for healing, projectiles, (teleportation?), building
+    energy: usize,
     //
 }
 
@@ -50,6 +53,7 @@ impl Player {
             speed: 1,
             color: tile::PLAYER,
             health: MAX_PLAYER_HEALTH,
+            energy: 0,
         };
         world[temp.pos.1][temp.pos.0] = temp.color;
         temp

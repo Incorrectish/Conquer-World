@@ -80,7 +80,6 @@ impl Enemy {
         for index in (0..world.enemies.len()).rev() {
             if world.enemies[index].health <= 0 {
                 Enemy::kill(world, index);
-                world.enemies.remove(index);
             }
         }
     }
@@ -90,6 +89,11 @@ impl Enemy {
         world.world[world.enemies[index].pos.1][world.enemies[index].pos.0] =
             world.board[world.enemies[index].pos.1][world.enemies[index].pos.0];
         world.enemies.remove(index);
+    }
+
+    pub fn update_enemy(world: &mut World, index: usize) {
+        let delta_pos = (world.player.pos.0 - world.enemies[index].pos.0, world.player.pos.1 - world.enemies[index].pos.1);
+        
     }
 
     pub fn can_travel_to(tile: [f32; 4]) -> bool {
