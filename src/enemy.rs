@@ -22,7 +22,9 @@ pub struct Enemy {
     color: [f32; 4],
 
     // Stores enemy health: for enemy death and such
-    pub health: usize,
+    health: usize,
+
+    resistance: f32,
 }
 
 impl Enemy {
@@ -37,9 +39,19 @@ impl Enemy {
             speed: 1,
             color: tile::ENEMY,
             health: ENEMY_HEALTH,
+            resistance: 1.0,
         };
         world[y][x] = temp.color;
         temp
+    }
+
+    pub fn health(&self) -> usize {
+        self.health
+    }
+
+    pub fn damage(&mut self, damage: usize) {
+        // potentially modify the damage done with the multiplier
+        self.health -= damage;
     }
 
     // TODO: rewrite to make the travel function the same as player travel

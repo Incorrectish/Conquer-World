@@ -39,7 +39,7 @@ pub struct Player {
     color: [f32; 4],
 
     // Stores player health: for player death and such
-    pub health: usize,
+    health: usize,
 
     // planned energy, used for healing, projectiles, (teleportation?), building
     energy: usize,
@@ -47,6 +47,15 @@ pub struct Player {
 }
 
 impl Player {
+
+    pub fn health(&self) -> usize {
+        self.health
+    }
+
+    pub fn damage(&mut self, damage: usize) {
+        self.health -= damage
+    }
+
     pub fn new(world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize]) -> Self {
         let temp = Self {
             pos: (0, 0),
@@ -110,7 +119,7 @@ impl Player {
         // enemies and check if any of them are on the attacking tile, then damage them
         for enemy in &mut world.enemies {
             if enemy.pos == attacking_position {
-                enemy.health -= PLAYER_MELEE_DAMAGE;
+                enemy.damage(PLAYER_MELEE_DAMAGE);
             }
         }
     }

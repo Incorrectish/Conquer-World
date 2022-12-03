@@ -5,7 +5,7 @@ use crate::{
     player::Player,
     projectile::Projectile,
     random,
-    tile::{self, FLOOR, PLAYER, ENEMY},
+    tile::{self, ENEMY, FLOOR, PLAYER},
     BOARD_SIZE, WORLD_SIZE,
 };
 
@@ -73,7 +73,7 @@ impl World {
     pub fn draw_world(
         world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize],
         board: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
-        ) {
+    ) {
         for i_coord in 0..WORLD_SIZE.0 {
             for j_coord in 0..WORLD_SIZE.1 {
                 // ishan you can clean this up lol i'm still not super familiar with which
@@ -129,21 +129,21 @@ impl World {
                 world.player.direction.clone(),
                 world.player.speed,
                 None,
-                ),
+            ),
             Entity::Enemy(i) => (
                 world.enemies[i].pos.0,
                 world.enemies[i].pos.1,
                 world.enemies[i].direction.clone(),
                 world.enemies[i].speed,
                 Some(i),
-                ),
+            ),
             Entity::Projectile(i) => (
                 world.projectiles[i].pos.0,
                 world.projectiles[i].pos.1,
                 world.projectiles[i].direction.clone(),
                 world.projectiles[i].speed,
                 Some(i),
-                ),
+            ),
         };
 
         let new_position = Self::new_position(x, y, direction, world, speed);
@@ -154,26 +154,29 @@ impl World {
 
         if !Self::coordinates_are_within_world(world, new_position.0, new_position.1)
             || new_position == (x, y)
-                || !world.can_travel_to(entity_type.clone(), new_position.0, new_position.1)
-                {
-                    return false;
-                }
+            || !world.can_travel_to(entity_type.clone(), new_position.0, new_position.1)
+        {
+            return false;
+        }
 
-        // these conditions should only trigger if the entity type is a projectile 
+        // these conditions should only trigger if the entity type is a projectile
         if world.world[new_position.1][new_position.0] == tile::ENEMY {
             match index {
                 Some(i) => {
                     let enemy_idx = Self::get_enemy(new_position.0, new_position.1, world).unwrap();
-                    world.enemies[enemy_idx].health -= world.projectiles[index.unwrap()].damage;       
-                },
-                None => {unreachable!("Cannot have this conditional trigger because the tile has to be a projectile")},
+                    world.enemies[enemy_idx].damage(world.projectiles[index.unwrap()].damage);
+                }
+                None => {
+                    unreachable!("Cannot have this conditional trigger because the tile has to be a projectile")
+                }
             }
-            return false; 
+            return false;
         } else if world.world[new_position.1][new_position.0] == tile::PLAYER {
-            world.player.health -= world.projectiles[index.unwrap()].damage;
+            world
+                .player
+                .damage(world.projectiles[index.unwrap()].damage);
             return false;
         } else {
-
             // TODO: refactor the colors to be some sort of enum
             // If the new position is a tile that can be traveled to "all black" for now, then
             // remove the player from the current tile and place it on the new tile
@@ -183,17 +186,16 @@ impl World {
             // something like: dynamic[y][x] = static[y][x]?????, michael this won't work unless
             // you fix
 
-
             world.world[new_position.1][new_position.0] = world.world[y][x];
             world.world[y][x] = world.board[y][x]; // static stuff
                                                    //
 
-                                                   // dynamic board doesn't exist. TODO: michael fix
+            // dynamic board doesn't exist. TODO: michael fix
             match entity_type {
                 Entity::Player => world.player.pos = new_position,
                 Entity::Enemy(i) => world.enemies[i].pos = new_position,
                 // TODO: SUPER CHANGES MUST GO ON HERE BECAUSE RIGHT NOW IT JUST GOES OVER THE ENEMY
-                // WHICH MEANS ENEMY IS ERASED FROM THE BOARD 
+                // WHICH MEANS ENEMY IS ERASED FROM THE BOARD
                 Entity::Projectile(i) => world.projectiles[i].pos = new_position,
             }
             // entity.set_covered_tile(world.world[entity.get_y()][entity.get_x()]);
@@ -202,131 +204,131 @@ impl World {
 
             true
         }
-        }
-
-        // This method assumes that x and y are valid coordinates and does NOT check them
-        fn can_travel_to(&self, entity_type: Entity, x: usize, y: usize) -> bool {
-            match entity_type {
-                Entity::Player => Player::can_travel_to(self.world[y][x]),
-                Entity::Enemy(_) => Enemy::can_travel_to(self.world[y][x]),
-                Entity::Projectile(_) => Projectile::can_travel_to(self.world[y][x]),
-            }
-        }
-
-        // This very simply gets the new position from the old, by checking the direction and the
-        // bounds. Should be refactored to give a travel distance instead of just one
-        pub fn new_position(
-            mut x: usize,
-            mut y: usize,
-            direction: Direction,
-            world: &mut Self,
-            travel_distance: usize,
-            ) -> (usize, usize) {
-            match direction {
-                Direction::North => {
-                    // may be a bug in here because I can't math TODO: verify
-                    // we want to go as far up until we hit the bounds of the "world"
-                    y = max(y as i16 - travel_distance as i16, world.top_left.1 as i16) as usize;
-                }
-                Direction::South => {
-                    y = min(
-                        y as i16 + travel_distance as i16,
-                        world.bottom_right.1 as i16,
-                        ) as usize;
-                }
-                Direction::East => {
-                    x = min(
-                        x as i16 + travel_distance as i16,
-                        world.bottom_right.0 as i16,
-                        ) as usize;
-                }
-                Direction::West => {
-                    x = max(x as i16 - travel_distance as i16, world.top_left.0 as i16) as usize;
-                }
-            }
-            (x, y)
-        }
-
-        pub fn get_enemy(x: usize, y: usize, world: &mut World) -> Option<usize> {
-            for i in 0..world.enemies.len() {
-                if world.enemies[i].pos == (x, y) {
-                    return Some(i);
-                }
-            }
-            None
-        }
-
-        // generates the center boss room for map
-        pub fn gen_boss(world: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize]) {
-            // x and y of center of map
-            let x: usize = (WORLD_SIZE.0 as usize) / 2 - 1;
-            let y: usize = (WORLD_SIZE.1 as usize) / 2 - 1;
-
-            // builds a 8x8 square around the center of WALL tiles
-            for i in 0..8 {
-                for j in 0..8 {
-                    world[x - 3 + i][y - 3 + j] = tile::WALL;
-                }
-            }
-
-            // builds a 2x2 square in the center of PORTAL tiles
-            world[x][y] = tile::PORTAL;
-            world[x + 1][y] = tile::PORTAL;
-            world[x][y + 1] = tile::PORTAL;
-            world[x + 1][y + 1] = tile::PORTAL;
-        }
-
-        // generates water tiles around the map
-        pub fn gen_water(
-            rng: &mut ThreadRng,
-            world: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
-            ) {
-            let mut lakes_added = 0;
-            const TOTAL_LAKES: i16 = 5;
-            while lakes_added < TOTAL_LAKES {
-                let x = random::rand_range(rng, 5, WORLD_SIZE.0); // random x coordinate
-                let y = random::rand_range(rng, 5, WORLD_SIZE.1); // random y coordinate
-
-                Self::gen_lake_helper(rng, x, y, 0, world); // new lake centered at (x, y)
-                lakes_added += 1;
-            }
-        }
-
-        // Recursively generates lakes -- floodfill-esque idea around the center, but expansion is
-        // limited probabilistically (probability of expansion decreases as we range further from the
-        // center)
-        fn gen_lake_helper(
-            rng: &mut ThreadRng,
-            x: i16,
-            y: i16,
-            dist: i16,
-            world: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
-            ) {
-            // sets curr tile to water
-            if world[x as usize][y as usize] == tile::FLOOR {
-                world[x as usize][y as usize] = tile::WATER;
-            }
-
-            const DIRECTIONS: [[i16; 2]; 4] = [[0, 1], [0, -1], [1, 0], [-1, 0]]; // orthogonal dirs
-            for dir in DIRECTIONS {
-                // for each tile in an orthogonal direction
-                // With certain probability, continue expanding lake in that direction
-                if Self::prob_expand_lake(rng, dist) {
-                    let i = x + dir[0];
-                    let j = y + dir[1];
-                    // if in bounds, recursively call fn on adjacent tile (draws WATER at that tile)
-                    if i >= 0 && i < WORLD_SIZE.0 && j >= 0 && j < WORLD_SIZE.1 {
-                        Self::gen_lake_helper(rng, i, j, dist + 1, world);
-                    }
-                }
-            }
-        }
-
-        // Gets probability of continuing to expand lake outwards
-        fn prob_expand_lake(rng: &mut ThreadRng, dist: i16) -> bool {
-            random::bernoulli(rng, 1. - 0.2 * (dist as f32))
-        }
-
-        // checks to see if there is an adjacent lake with 1 space of padding i.e.
-        fn check_adjacent_lake(x: i16, y: i16, world: &mut World) {}
     }
+
+    // This method assumes that x and y are valid coordinates and does NOT check them
+    fn can_travel_to(&self, entity_type: Entity, x: usize, y: usize) -> bool {
+        match entity_type {
+            Entity::Player => Player::can_travel_to(self.world[y][x]),
+            Entity::Enemy(_) => Enemy::can_travel_to(self.world[y][x]),
+            Entity::Projectile(_) => Projectile::can_travel_to(self.world[y][x]),
+        }
+    }
+
+    // This very simply gets the new position from the old, by checking the direction and the
+    // bounds. Should be refactored to give a travel distance instead of just one
+    pub fn new_position(
+        mut x: usize,
+        mut y: usize,
+        direction: Direction,
+        world: &mut Self,
+        travel_distance: usize,
+    ) -> (usize, usize) {
+        match direction {
+            Direction::North => {
+                // may be a bug in here because I can't math TODO: verify
+                // we want to go as far up until we hit the bounds of the "world"
+                y = max(y as i16 - travel_distance as i16, world.top_left.1 as i16) as usize;
+            }
+            Direction::South => {
+                y = min(
+                    y as i16 + travel_distance as i16,
+                    world.bottom_right.1 as i16,
+                ) as usize;
+            }
+            Direction::East => {
+                x = min(
+                    x as i16 + travel_distance as i16,
+                    world.bottom_right.0 as i16,
+                ) as usize;
+            }
+            Direction::West => {
+                x = max(x as i16 - travel_distance as i16, world.top_left.0 as i16) as usize;
+            }
+        }
+        (x, y)
+    }
+
+    pub fn get_enemy(x: usize, y: usize, world: &mut World) -> Option<usize> {
+        for i in 0..world.enemies.len() {
+            if world.enemies[i].pos == (x, y) {
+                return Some(i);
+            }
+        }
+        None
+    }
+
+    // generates the center boss room for map
+    pub fn gen_boss(world: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize]) {
+        // x and y of center of map
+        let x: usize = (WORLD_SIZE.0 as usize) / 2 - 1;
+        let y: usize = (WORLD_SIZE.1 as usize) / 2 - 1;
+
+        // builds a 8x8 square around the center of WALL tiles
+        for i in 0..8 {
+            for j in 0..8 {
+                world[x - 3 + i][y - 3 + j] = tile::WALL;
+            }
+        }
+
+        // builds a 2x2 square in the center of PORTAL tiles
+        world[x][y] = tile::PORTAL;
+        world[x + 1][y] = tile::PORTAL;
+        world[x][y + 1] = tile::PORTAL;
+        world[x + 1][y + 1] = tile::PORTAL;
+    }
+
+    // generates water tiles around the map
+    pub fn gen_water(
+        rng: &mut ThreadRng,
+        world: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
+    ) {
+        let mut lakes_added = 0;
+        const TOTAL_LAKES: i16 = 5;
+        while lakes_added < TOTAL_LAKES {
+            let x = random::rand_range(rng, 5, WORLD_SIZE.0); // random x coordinate
+            let y = random::rand_range(rng, 5, WORLD_SIZE.1); // random y coordinate
+
+            Self::gen_lake_helper(rng, x, y, 0, world); // new lake centered at (x, y)
+            lakes_added += 1;
+        }
+    }
+
+    // Recursively generates lakes -- floodfill-esque idea around the center, but expansion is
+    // limited probabilistically (probability of expansion decreases as we range further from the
+    // center)
+    fn gen_lake_helper(
+        rng: &mut ThreadRng,
+        x: i16,
+        y: i16,
+        dist: i16,
+        world: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
+    ) {
+        // sets curr tile to water
+        if world[x as usize][y as usize] == tile::FLOOR {
+            world[x as usize][y as usize] = tile::WATER;
+        }
+
+        const DIRECTIONS: [[i16; 2]; 4] = [[0, 1], [0, -1], [1, 0], [-1, 0]]; // orthogonal dirs
+        for dir in DIRECTIONS {
+            // for each tile in an orthogonal direction
+            // With certain probability, continue expanding lake in that direction
+            if Self::prob_expand_lake(rng, dist) {
+                let i = x + dir[0];
+                let j = y + dir[1];
+                // if in bounds, recursively call fn on adjacent tile (draws WATER at that tile)
+                if i >= 0 && i < WORLD_SIZE.0 && j >= 0 && j < WORLD_SIZE.1 {
+                    Self::gen_lake_helper(rng, i, j, dist + 1, world);
+                }
+            }
+        }
+    }
+
+    // Gets probability of continuing to expand lake outwards
+    fn prob_expand_lake(rng: &mut ThreadRng, dist: i16) -> bool {
+        random::bernoulli(rng, 1. - 0.2 * (dist as f32))
+    }
+
+    // checks to see if there is an adjacent lake with 1 space of padding i.e.
+    fn check_adjacent_lake(x: i16, y: i16, world: &mut World) {}
+}
