@@ -113,7 +113,7 @@ impl Player {
             world.player.direction.clone(),
             world,
             world.player.speed,
-        );
+            );
 
         // We do not know what enemies are on the tile being attacked, so we need to go through the
         // enemies and check if any of them are on the attacking tile, then damage them
@@ -133,16 +133,18 @@ impl Player {
             world.player.direction.clone(),
             world,
             world.player.speed,
-        );
-        let projectile = Projectile::new(
-            projectile_spawn_pos.0,
-            projectile_spawn_pos.1,
-            PLAYER_PROJECTILE_SPEED,
-            PLAYER_PROJECTILE_DAMAGE,
-            world.player.direction.clone(),
-            world,
-        );
-        world.projectiles.push(projectile);
+            );
+        if projectile_spawn_pos != world.player.pos {
+            let projectile = Projectile::new(
+                projectile_spawn_pos.0,
+                projectile_spawn_pos.1,
+                PLAYER_PROJECTILE_SPEED,
+                PLAYER_PROJECTILE_DAMAGE,
+                world.player.direction.clone(),
+                world,
+                );
+            world.projectiles.push(projectile);
+        }
     }
 
     pub fn can_travel_to(tile: [f32; 4]) -> bool {
