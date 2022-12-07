@@ -22,7 +22,7 @@ impl Projectile {
             direction,
             color,
         };
-        world.world[y][x] = color;
+        world.world[y-world.y_offset][x-world.x_offset] = color;
         temp
     }
 
