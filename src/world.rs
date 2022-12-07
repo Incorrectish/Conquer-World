@@ -103,18 +103,18 @@ impl World {
     // world, and false otherwise
     pub fn coordinates_are_within_world(world: &mut World, x: usize, y: usize) -> bool {
         // POTENTIAL ERRORS WITH </<=
-        x < world.bottom_right.0
-            && x >= world.top_left.0
-            && y < world.bottom_right.1
-            && y >= world.top_left.1
+        x >= world.x_offset
+            && x < world.x_offset + WORLD_SIZE.1 as usize 
+            && y >= world.y_offset
+            && y < world.y_offset + WORLD_SIZE.0 as usize 
     }
 
     // Returns true if coordinates inside board (note distinction from world), false otherwise
     pub fn coordinates_are_within_board(world: &mut World, x: usize, y: usize) -> bool {
-        x <= world.board_bottom_right.0
-            && x >= world.board_top_left.0
-            && y <= world.board_bottom_right.1
-            && y >= world.board_top_left.1
+        x < world.board_bottom_right.1
+            && x >= world.board_top_left.1
+            && y < world.board_bottom_right.0
+            && y >= world.board_top_left.0
     }
 
     // this is the "move()" function but move is a reserved keyword so I just used the first
@@ -146,21 +146,45 @@ impl World {
             ),
         };
 
-        let new_position = Self::new_position(x, y, direction, world, speed);
+        let new_position = Self::new_position(x, y, &direction, world, speed);
 
         // if the new position is the same as the old position, movement is impossible and this
         // function returns false as it wasn't able to move the player or projectile, either
         // because it reached the bounds or the end of the map
-
-        if !Self::coordinates_are_within_world(world, new_position.0, new_position.1)
+        
+        if !Self::coordinates_are_within_board(world, new_position.0, new_position.1)
             || new_position == (x, y)
-            || !world.can_travel_to(entity_type.clone(), new_position.0, new_position.1)
+            || (Self::coordinates_are_within_world(world, new_position.0, new_position.1)
+            && !world.can_travel_to(entity_type.clone(), new_position.0, new_position.1))
         {
             return false;
         }
+        
+        // value of what was originally at tile
+        let original_value = world.world[y-world.y_offset][x-world.x_offset];
+
+        if Self::coordinates_are_within_board(world, new_position.0, new_position.1)
+            && !Self::coordinates_are_within_world(world, new_position.0, new_position.1)
+        {
+            match direction {
+                Direction::North => {
+                    world.y_offset = max(0, world.y_offset - WORLD_SIZE.0 as usize);
+                }
+                Direction::East => {
+                    world.x_offset = min(world.board_bottom_right.1 - WORLD_SIZE.1 as usize, world.x_offset + WORLD_SIZE.1 as usize);
+                }
+                Direction::West => {
+                    world.x_offset = max(0, world.x_offset - WORLD_SIZE.1 as usize);
+                }
+                Direction::South => {
+                    world.y_offset = min(world.board_bottom_right.0 - WORLD_SIZE.0 as usize, world.y_offset + WORLD_SIZE.0 as usize);
+                }
+            }
+            Self::refresh_world(world);
+        }
 
         // these conditions should only trigger if the entity type is a projectile
-        if world.world[new_position.1][new_position.0] == tile::ENEMY {
+        if world.world[new_position.1-world.y_offset][new_position.0-world.x_offset] == tile::ENEMY {
             match index {
                 Some(i) => {
                     let enemy_idx = Self::get_enemy(new_position.0, new_position.1, world).unwrap();
@@ -171,7 +195,7 @@ impl World {
                 }
             }
             return false;
-        } else if world.world[new_position.1][new_position.0] == tile::PLAYER {
+        } else if world.world[new_position.1-world.y_offset][new_position.0-world.x_offset] == tile::PLAYER {
             world
                 .player
                 .damage(world.projectiles[index.unwrap()].damage);
@@ -186,8 +210,10 @@ impl World {
             // something like: dynamic[y][x] = static[y][x]?????, michael this won't work unless
             // you fix
 
-            world.world[new_position.1][new_position.0] = world.world[y][x];
-            world.world[y][x] = world.board[y][x]; // static stuff
+            world.world[new_position.1-world.y_offset][new_position.0-world.x_offset] = original_value;
+            if Self::coordinates_are_within_world(world, x, y) {
+                world.world[y-world.y_offset][x-world.x_offset] = world.board[y][x]; // static stuff
+            }
                                                    //
 
             // dynamic board doesn't exist. TODO: michael fix
@@ -209,9 +235,9 @@ impl World {
     // This method assumes that x and y are valid coordinates and does NOT check them
     fn can_travel_to(&self, entity_type: Entity, x: usize, y: usize) -> bool {
         match entity_type {
-            Entity::Player => Player::can_travel_to(self.world[y][x]),
-            Entity::Enemy(_) => Enemy::can_travel_to(self.world[y][x]),
-            Entity::Projectile(_) => Projectile::can_travel_to(self.world[y][x]),
+            Entity::Player => Player::can_travel_to(self.world[y-self.y_offset][x-self.x_offset]),
+            Entity::Enemy(_) => Enemy::can_travel_to(self.world[y-self.y_offset][x-self.x_offset]),
+            Entity::Projectile(_) => Projectile::can_travel_to(self.world[y-self.y_offset][x-self.x_offset]),
         }
     }
 
@@ -220,7 +246,7 @@ impl World {
     pub fn new_position(
         mut x: usize,
         mut y: usize,
-        direction: Direction,
+        direction: &Direction,
         world: &mut Self,
         travel_distance: usize,
     ) -> (usize, usize) {
@@ -228,22 +254,22 @@ impl World {
             Direction::North => {
                 // may be a bug in here because I can't math TODO: verify
                 // we want to go as far up until we hit the bounds of the "world"
-                y = max(y as i16 - travel_distance as i16, world.top_left.1 as i16) as usize;
+                y = max(y as i16 - travel_distance as i16, world.board_top_left.1 as i16) as usize;
             }
             Direction::South => {
                 y = min(
                     y as i16 + travel_distance as i16,
-                    world.bottom_right.1 as i16,
+                    world.board_bottom_right.1 as i16,
                 ) as usize;
             }
             Direction::East => {
                 x = min(
                     x as i16 + travel_distance as i16,
-                    world.bottom_right.0 as i16,
+                    world.board_bottom_right.0 as i16,
                 ) as usize;
             }
             Direction::West => {
-                x = max(x as i16 - travel_distance as i16, world.top_left.0 as i16) as usize;
+                x = max(x as i16 - travel_distance as i16, world.board_top_left.0 as i16) as usize;
             }
         }
         (x, y)
@@ -259,37 +285,38 @@ impl World {
     }
 
     // generates the center boss room for map
-    pub fn gen_boss(world: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize]) {
+    pub fn gen_boss(board: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize]) {
         // x and y of center of map
-        let x: usize = (WORLD_SIZE.0 as usize) / 2 - 1;
-        let y: usize = (WORLD_SIZE.1 as usize) / 2 - 1;
+        let x: usize = (BOARD_SIZE.0 as usize) / 2 - 1;
+        let y: usize = (BOARD_SIZE.1 as usize) / 2 - 1;
 
-        // builds a 8x8 square around the center of WALL tiles
-        for i in 0..8 {
-            for j in 0..8 {
-                world[x - 3 + i][y - 3 + j] = tile::WALL;
+        // builds a 12x12 square around the center of WALL tiles
+        for i in 0..12 {
+            for j in 0..12 {
+                board[x - 5 + i][y - 5 + j] = tile::WALL;
             }
         }
 
-        // builds a 2x2 square in the center of PORTAL tiles
-        world[x][y] = tile::PORTAL;
-        world[x + 1][y] = tile::PORTAL;
-        world[x][y + 1] = tile::PORTAL;
-        world[x + 1][y + 1] = tile::PORTAL;
+        // builds a 4x4 square in the center of PORTAL tiles
+        for i in 0..4 {
+            for j in 0..4 {
+                board[x - 1 + i][y - 1 + j] = tile::PORTAL;
+            }
+        }
     }
 
     // generates water tiles around the map
     pub fn gen_water(
         rng: &mut ThreadRng,
-        world: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
+        board: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
     ) {
         let mut lakes_added = 0;
-        const TOTAL_LAKES: i16 = 5;
+        const TOTAL_LAKES: i16 = 12;
         while lakes_added < TOTAL_LAKES {
-            let x = random::rand_range(rng, 5, WORLD_SIZE.0); // random x coordinate
-            let y = random::rand_range(rng, 5, WORLD_SIZE.1); // random y coordinate
+            let x = random::rand_range(rng, 5, BOARD_SIZE.0); // random x coordinate
+            let y = random::rand_range(rng, 5, BOARD_SIZE.1); // random y coordinate
 
-            Self::gen_lake_helper(rng, x, y, 0, world); // new lake centered at (x, y)
+            Self::gen_lake_helper(rng, x, y, 0, board); // new lake centered at (x, y)
             lakes_added += 1;
         }
     }
@@ -302,11 +329,11 @@ impl World {
         x: i16,
         y: i16,
         dist: i16,
-        world: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
+        board: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
     ) {
         // sets curr tile to water
-        if world[x as usize][y as usize] == tile::FLOOR {
-            world[x as usize][y as usize] = tile::WATER;
+        if board[x as usize][y as usize] == tile::FLOOR {
+            board[x as usize][y as usize] = tile::WATER;
         }
 
         const DIRECTIONS: [[i16; 2]; 4] = [[0, 1], [0, -1], [1, 0], [-1, 0]]; // orthogonal dirs
@@ -317,8 +344,8 @@ impl World {
                 let i = x + dir[0];
                 let j = y + dir[1];
                 // if in bounds, recursively call fn on adjacent tile (draws WATER at that tile)
-                if i >= 0 && i < WORLD_SIZE.0 && j >= 0 && j < WORLD_SIZE.1 {
-                    Self::gen_lake_helper(rng, i, j, dist + 1, world);
+                if i >= 0 && i < BOARD_SIZE.0 && j >= 0 && j < BOARD_SIZE.1 {
+                    Self::gen_lake_helper(rng, i, j, dist + 1, board);
                 }
             }
         }

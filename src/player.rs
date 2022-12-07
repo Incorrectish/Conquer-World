@@ -110,7 +110,7 @@ impl Player {
         let attacking_position = World::new_position(
             world.player.pos.0,
             world.player.pos.1,
-            world.player.direction.clone(),
+            &world.player.direction.clone(),
             world,
             world.player.speed,
             );
@@ -130,7 +130,7 @@ impl Player {
         let projectile_spawn_pos = World::new_position(
             world.player.pos.0,
             world.player.pos.1,
-            world.player.direction.clone(),
+            &world.player.direction.clone(),
             world,
             world.player.speed,
             );
