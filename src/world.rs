@@ -85,7 +85,13 @@ impl World {
         }
     }
 
-    // draws world from board based on offsets and stuff
+    // redraws entire world from board based on offsets and stuff
+    // used when camera shifts (so every position needs to be redrawn)
+    //  __________  ___  ____
+    // /_  __/ __ \/ _ \/ __ \
+    //  / / / /_/ / // / /_/ /
+    // /_/  \____/____/\____/ 
+    // TODO: ishan redraw entities too (i.e. projectiles, enemies, etc.)
     pub fn refresh_world(world: &mut World) {
         for i_coord in 0..WORLD_SIZE.0 {
             for j_coord in 0..WORLD_SIZE.1 {
@@ -110,6 +116,8 @@ impl World {
     }
 
     // Returns true if coordinates inside board (note distinction from world), false otherwise
+    // Distinction from coordinates_are_within_world() is important for shifting cameras when
+    // crossing edge
     pub fn coordinates_are_within_board(world: &mut World, x: usize, y: usize) -> bool {
         x < world.board_bottom_right.1
             && x >= world.board_top_left.1
@@ -148,10 +156,12 @@ impl World {
 
         let new_position = Self::new_position(x, y, &direction, world, speed);
 
+        // value of what was originally at tile before movement
+        let original_value = world.world[y-world.y_offset][x-world.x_offset];
+
         // if the new position is the same as the old position, movement is impossible and this
         // function returns false as it wasn't able to move the player or projectile, either
         // because it reached the bounds or the end of the map
-        
         if !Self::coordinates_are_within_board(world, new_position.0, new_position.1)
             || new_position == (x, y)
             || (Self::coordinates_are_within_world(world, new_position.0, new_position.1)
@@ -160,13 +170,17 @@ impl World {
             return false;
         }
         
-        // value of what was originally at tile
-        let original_value = world.world[y-world.y_offset][x-world.x_offset];
-
+        // Coordinates are still inside board, but not world (necessitates camera shift)
+        // TODO/POSSIBLE BUG: check if entity is Player and not Enemy/Projectile (haven't tested might
+        // cause problems)
         if Self::coordinates_are_within_board(world, new_position.0, new_position.1)
             && !Self::coordinates_are_within_world(world, new_position.0, new_position.1)
         {
-            match direction {
+            match direction { // shift based on direction of movement
+                // x_offset and y_offset explained in class definition (see above)
+                // max and min make sure that with the set of offsets the whole world is contained
+                // in the board; (this is only relevant if BOARD_SIZE is not a multiple of
+                // WORLD_SIZE)
                 Direction::North => {
                     world.y_offset = max(0, world.y_offset - WORLD_SIZE.0 as usize);
                 }
@@ -180,7 +194,7 @@ impl World {
                     world.y_offset = min(world.board_bottom_right.0 - WORLD_SIZE.0 as usize, world.y_offset + WORLD_SIZE.0 as usize);
                 }
             }
-            Self::refresh_world(world);
+            Self::refresh_world(world); // refresh world for new camera angle
         }
 
         // these conditions should only trigger if the entity type is a projectile
