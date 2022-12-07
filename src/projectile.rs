@@ -22,7 +22,7 @@ impl Projectile {
             direction,
             color,
         };
-        world.world[y][x] = color;
+        world.world[y-world.y_offset][x-world.x_offset] = color;
         temp
     }
 
@@ -46,8 +46,10 @@ impl Projectile {
     }
 
     pub fn kill(index: usize, world: &mut World) {
-        world.world[world.projectiles[index].pos.1][world.projectiles[index].pos.0] =
-            world.board[world.projectiles[index].pos.1][world.projectiles[index].pos.0] ;
+        if World::coordinates_are_within_world(world, world.projectiles[index].pos.0, world.projectiles[index].pos.1) {
+            world.world[world.projectiles[index].pos.1 - world.y_offset][world.projectiles[index].pos.0 - world.x_offset] =
+                world.board[world.projectiles[index].pos.1][world.projectiles[index].pos.0] ;
+        }
         world.projectiles.remove(index);
     }
 
