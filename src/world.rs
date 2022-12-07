@@ -156,9 +156,6 @@ impl World {
 
         let new_position = Self::new_position(x, y, &direction, world, speed);
 
-        // value of what was originally at tile before movement
-        let original_value = world.world[y-world.y_offset][x-world.x_offset];
-
         // if the new position is the same as the old position, movement is impossible and this
         // function returns false as it wasn't able to move the player or projectile, either
         // because it reached the bounds or the end of the map
@@ -171,6 +168,9 @@ impl World {
         {
             return false;
         }
+
+        // value of what was originally at tile before movement
+        let original_value = world.world[y-world.y_offset][x-world.x_offset];
         
         // Coordinates are still inside board, but not world (necessitates camera shift)
         // TODO/POSSIBLE BUG: check if entity is Player and not Enemy/Projectile (haven't tested might
