@@ -131,10 +131,10 @@ impl Player {
             world,
             1,
         );
-        if position != world.player.pos {
-            world.world[position.1][position.0] = tile::STRUCTURE;
-        } else if world.world[position.1][position.0] == tile::STRUCTURE {
+        if world.world[position.1][position.0] == tile::STRUCTURE {
             world.world[position.1][position.0] = world.board[position.1][position.0]
+        } else if position != world.player.pos {
+            world.world[position.1][position.0] = tile::STRUCTURE;
         }
     }
 
