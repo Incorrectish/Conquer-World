@@ -17,7 +17,7 @@ const MELEE_ATTACK_KEYCODE: VirtualKeyCode = KeyCode::A;
 const PROJECTILE_ATTACK_KEYCODE: VirtualKeyCode = KeyCode::Space;
 const PLAYER_PROJECTILE_SPEED: usize = 1;
 const PLAYER_PROJECTILE_DAMAGE: usize = 1;
-const PERMISSIBLE_TILES: [[f32; 4]; 1] = [tile::FLOOR];
+const PERMISSIBLE_TILES: [[f32; 4]; 1] = [tile::GRASS];
 
 // This is with the covered tile model, but we could use the static/dynamic board paradighm or
 // something else entirely

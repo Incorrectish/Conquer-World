@@ -1,12 +1,12 @@
 use crate::{direction::Direction, entity::Entity, player::Player, tile, world::World, WORLD_SIZE};
 
-const PERMISSIBLE_TILES: [[f32; 4]; 4] = [tile::WATER, tile::FLOOR, tile::PLAYER, tile::ENEMY];
+const PERMISSIBLE_TILES: [[f32; 4]; 4] = [tile::WATER, tile::GRASS, tile::PLAYER, tile::ENEMY];
 
 pub struct Projectile {
     pub pos: (usize, usize),
     pub speed: usize,
     pub direction: Direction,
-    color: [f32; 4],
+    pub color: [f32; 4],
     pub damage: usize,
     // maybe add an alignment so projectiles from enemies cannot damage themselves and projectiles
     // from players cannot damage themselves
@@ -14,15 +14,14 @@ pub struct Projectile {
 
 impl Projectile {
     pub fn new(x: usize, y: usize, speed: usize, damage: usize, direction: Direction, world: &mut World) -> Self {
-        let color = [1., 0., 0., 0.5];
         let temp = Projectile {
             pos: (x, y),
             speed,
             damage,
             direction,
-            color,
+            color: tile::PROJECTILE
         };
-        world.world[y-world.y_offset][x-world.x_offset] = color;
+        world.world[y-world.y_offset][x-world.x_offset] = temp.color;
         temp
     }
 

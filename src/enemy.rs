@@ -1,7 +1,7 @@
 use crate::{direction::Direction, tile, world::World, WORLD_SIZE};
 
 const ENEMY_HEALTH: usize = 5;
-const PERMISSIBLE_TILES: [[f32; 4]; 1] = [tile::FLOOR];
+const PERMISSIBLE_TILES: [[f32; 4]; 1] = [tile::GRASS];
 
 // This is basically the same as the enemy for now, but I am just testing an enemy system
 pub struct Enemy {
@@ -19,7 +19,7 @@ pub struct Enemy {
 
     // This is the enemy color. NOTE: both this and the previous attribute assume that the game
     // world is a set of tiles and the enemy is represented as a solid color
-    color: [f32; 4],
+    pub color: [f32; 4],
 
     // Stores enemy health: for enemy death and such
     health: usize,

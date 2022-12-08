@@ -47,10 +47,10 @@ pub struct World {
 impl World {
     pub fn new() -> Self {
         let mut rng = rand::thread_rng();
-        let mut board = [[tile::FLOOR; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize];
+        let mut board = [[tile::GRASS; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize];
         World::gen_boss(&mut board);
         World::gen_water(&mut rng, &mut board);
-        let mut world = [[tile::FLOOR; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
+        let mut world = [[tile::GRASS; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
         World::draw_world(&mut world, &mut board);
         let player = Player::new(&mut world);
         let enemies = vec![Enemy::new(&mut world, 10, 10)];
@@ -90,17 +90,41 @@ impl World {
     //  __________  ___  ____
     // /_  __/ __ \/ _ \/ __ \
     //  / / / /_/ / // / /_/ /
-    // /_/  \____/____/\____/ 
+    // /_/  \____/____/\____/
     // TODO: ishan redraw entities too (i.e. projectiles, enemies, etc.)
     pub fn refresh_world(world: &mut World) {
-        for i_coord in 0..WORLD_SIZE.0 {
-            for j_coord in 0..WORLD_SIZE.1 {
-                // ishan you can clean this up lol i'm still not super familiar with which
-                // dimension is which
-                let i = i_coord as usize;
-                let j = j_coord as usize;
-                world.world[i][j] = world.board[i + world.y_offset][j + world.x_offset];
+        for x in 0..WORLD_SIZE.0 as usize {
+            for y in 0..WORLD_SIZE.1 as usize {
+                world.world[y][x] = world.board[y + world.y_offset][x + world.x_offset];
             }
+        }
+        // ULTRA HACK TO GET AROUND MUTABLE POINTER STUFF, CAN BE SERIOUSLY OPTIMIZED TODO
+        let mut enemies_in_world = Vec::new();
+        for enemy in &world.enemies {
+            if enemy.pos.0 >= world.x_offset
+                && enemy.pos.0 < world.x_offset + WORLD_SIZE.1 as usize
+                && enemy.pos.1 >= world.y_offset
+                && enemy.pos.1 < world.y_offset + WORLD_SIZE.0 as usize
+            {
+                enemies_in_world.push((enemy.pos, enemy.color));
+            }
+        }
+        for enemy in enemies_in_world {
+            world.world[enemy.0.1][enemy.0.0] = enemy.1; 
+        }
+
+        let mut projectiles_in_world = Vec::new();
+        for projectile in &world.projectiles {
+            if projectile.pos.0 >= world.x_offset
+                && projectile.pos.0 < world.x_offset + WORLD_SIZE.1 as usize
+                && projectile.pos.1 >= world.y_offset
+                && projectile.pos.1 < world.y_offset + WORLD_SIZE.0 as usize
+            {
+                projectiles_in_world.push((projectile.pos, projectile.color));
+            }
+        }
+        for projectile in projectiles_in_world {
+            world.world[projectile.0.1][projectile.0.0] = projectile.1; 
         }
     }
 
@@ -110,9 +134,9 @@ impl World {
     pub fn coordinates_are_within_world(world: &mut World, x: usize, y: usize) -> bool {
         // POTENTIAL ERRORS WITH </<=
         x >= world.x_offset
-            && x < world.x_offset + WORLD_SIZE.1 as usize 
+            && x < world.x_offset + WORLD_SIZE.1 as usize
             && y >= world.y_offset
-            && y < world.y_offset + WORLD_SIZE.0 as usize 
+            && y < world.y_offset + WORLD_SIZE.0 as usize
     }
 
     // Returns true if coordinates inside board (note distinction from world), false otherwise
@@ -170,8 +194,8 @@ impl World {
         }
 
         // value of what was originally at tile before movement
-        let original_value = world.world[y-world.y_offset][x-world.x_offset];
-        
+        let original_value = world.world[y - world.y_offset][x - world.x_offset];
+
         // Coordinates are still inside board, but not world (necessitates camera shift)
         // TODO/POSSIBLE BUG: check if entity is Player and not Enemy/Projectile (haven't tested might
         // cause problems)
@@ -179,7 +203,8 @@ impl World {
             && !Self::coordinates_are_within_world(world, new_position.0, new_position.1)
             && entity_type == Entity::Player
         {
-            match direction { // shift based on direction of movement
+            match direction {
+                // shift based on direction of movement
                 // x_offset and y_offset explained in class definition (see above)
                 // max and min make sure that with the set of offsets the whole world is contained
                 // in the board; (this is only relevant if BOARD_SIZE is not a multiple of
@@ -188,20 +213,28 @@ impl World {
                     world.y_offset = max(0, world.y_offset - WORLD_SIZE.0 as usize);
                 }
                 Direction::East => {
-                    world.x_offset = min(world.board_bottom_right.1 - WORLD_SIZE.1 as usize, world.x_offset + WORLD_SIZE.1 as usize);
+                    world.x_offset = min(
+                        world.board_bottom_right.1 - WORLD_SIZE.1 as usize,
+                        world.x_offset + WORLD_SIZE.1 as usize,
+                    );
                 }
                 Direction::West => {
                     world.x_offset = max(0, world.x_offset - WORLD_SIZE.1 as usize);
                 }
                 Direction::South => {
-                    world.y_offset = min(world.board_bottom_right.0 - WORLD_SIZE.0 as usize, world.y_offset + WORLD_SIZE.0 as usize);
+                    world.y_offset = min(
+                        world.board_bottom_right.0 - WORLD_SIZE.0 as usize,
+                        world.y_offset + WORLD_SIZE.0 as usize,
+                    );
                 }
             }
             Self::refresh_world(world); // refresh world for new camera angle
         }
 
         // these conditions should only trigger if the entity type is a projectile
-        if world.world[new_position.1-world.y_offset][new_position.0-world.x_offset] == tile::ENEMY {
+        if world.world[new_position.1 - world.y_offset][new_position.0 - world.x_offset]
+            == tile::ENEMY
+        {
             match index {
                 Some(i) => {
                     let enemy_idx = Self::get_enemy(new_position.0, new_position.1, world).unwrap();
@@ -212,7 +245,9 @@ impl World {
                 }
             }
             return false;
-        } else if world.world[new_position.1-world.y_offset][new_position.0-world.x_offset] == tile::PLAYER {
+        } else if world.world[new_position.1 - world.y_offset][new_position.0 - world.x_offset]
+            == tile::PLAYER
+        {
             world
                 .player
                 .damage(world.projectiles[index.unwrap()].damage);
@@ -227,11 +262,13 @@ impl World {
             // something like: dynamic[y][x] = static[y][x]?????, michael this won't work unless
             // you fix
 
-            world.world[new_position.1-world.y_offset][new_position.0-world.x_offset] = original_value;
+            world.world[new_position.1 - world.y_offset][new_position.0 - world.x_offset] =
+                original_value;
             if Self::coordinates_are_within_world(world, x, y) {
-                world.world[y-world.y_offset][x-world.x_offset] = world.board[y][x]; // static stuff
+                world.world[y - world.y_offset][x - world.x_offset] = world.board[y][x];
+                // static stuff
             }
-                                                   //
+            //
 
             // dynamic board doesn't exist. TODO: michael fix
             match entity_type {
@@ -252,9 +289,15 @@ impl World {
     // This method assumes that x and y are valid coordinates and does NOT check them
     fn can_travel_to(&self, entity_type: Entity, x: usize, y: usize) -> bool {
         match entity_type {
-            Entity::Player => Player::can_travel_to(self.world[y-self.y_offset][x-self.x_offset]),
-            Entity::Enemy(_) => Enemy::can_travel_to(self.world[y-self.y_offset][x-self.x_offset]),
-            Entity::Projectile(_) => Projectile::can_travel_to(self.world[y-self.y_offset][x-self.x_offset]),
+            Entity::Player => {
+                Player::can_travel_to(self.world[y - self.y_offset][x - self.x_offset])
+            }
+            Entity::Enemy(_) => {
+                Enemy::can_travel_to(self.world[y - self.y_offset][x - self.x_offset])
+            }
+            Entity::Projectile(_) => {
+                Projectile::can_travel_to(self.world[y - self.y_offset][x - self.x_offset])
+            }
         }
     }
 
@@ -271,7 +314,10 @@ impl World {
             Direction::North => {
                 // may be a bug in here because I can't math TODO: verify
                 // we want to go as far up until we hit the bounds of the "world"
-                y = max(y as i16 - travel_distance as i16, world.board_top_left.1 as i16) as usize;
+                y = max(
+                    y as i16 - travel_distance as i16,
+                    world.board_top_left.1 as i16,
+                ) as usize;
             }
             Direction::South => {
                 y = min(
@@ -286,7 +332,10 @@ impl World {
                 ) as usize;
             }
             Direction::West => {
-                x = max(x as i16 - travel_distance as i16, world.board_top_left.0 as i16) as usize;
+                x = max(
+                    x as i16 - travel_distance as i16,
+                    world.board_top_left.0 as i16,
+                ) as usize;
             }
         }
         (x, y)
@@ -349,7 +398,7 @@ impl World {
         board: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
     ) {
         // sets curr tile to water
-        if board[x as usize][y as usize] == tile::FLOOR {
+        if board[x as usize][y as usize] == tile::GRASS {
             board[x as usize][y as usize] = tile::WATER;
         }
 
