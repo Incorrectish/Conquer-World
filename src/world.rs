@@ -156,25 +156,28 @@ impl World {
 
         let new_position = Self::new_position(x, y, &direction, world, speed);
 
-        // value of what was originally at tile before movement
-        let original_value = world.world[y-world.y_offset][x-world.x_offset];
-
         // if the new position is the same as the old position, movement is impossible and this
         // function returns false as it wasn't able to move the player or projectile, either
         // because it reached the bounds or the end of the map
         if !Self::coordinates_are_within_board(world, new_position.0, new_position.1)
             || new_position == (x, y)
+            || (!Self::coordinates_are_within_world(world, new_position.0, new_position.1)
+                && entity_type != Entity::Player)
             || (Self::coordinates_are_within_world(world, new_position.0, new_position.1)
-            && !world.can_travel_to(entity_type.clone(), new_position.0, new_position.1))
+                && !world.can_travel_to(entity_type.clone(), new_position.0, new_position.1))
         {
             return false;
         }
+
+        // value of what was originally at tile before movement
+        let original_value = world.world[y-world.y_offset][x-world.x_offset];
         
         // Coordinates are still inside board, but not world (necessitates camera shift)
         // TODO/POSSIBLE BUG: check if entity is Player and not Enemy/Projectile (haven't tested might
         // cause problems)
         if Self::coordinates_are_within_board(world, new_position.0, new_position.1)
             && !Self::coordinates_are_within_world(world, new_position.0, new_position.1)
+            && entity_type == Entity::Player
         {
             match direction { // shift based on direction of movement
                 // x_offset and y_offset explained in class definition (see above)
