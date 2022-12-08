@@ -14,9 +14,16 @@ use ggez::winit::event::VirtualKeyCode;
 const MAX_PLAYER_HEALTH: usize = 10;
 const PLAYER_MELEE_DAMAGE: usize = 1;
 const MELEE_ATTACK_KEYCODE: VirtualKeyCode = KeyCode::A;
+// TODO look over these values
+const HEAL_ABILITY_RETURN: usize = 2;
+const HEAL_KEYCODE: VirtualKeyCode = KeyCode::H;
+const LIGHTNING_KEYCODE: VirtualKeyCode = KeyCode::L;
+const BUILD_KEYCODE: VirtualKeyCode = KeyCode::B;
 const PROJECTILE_ATTACK_KEYCODE: VirtualKeyCode = KeyCode::Space;
 const PLAYER_PROJECTILE_SPEED: usize = 1;
 const PLAYER_PROJECTILE_DAMAGE: usize = 1;
+const PLAYER_INITIAL_SPEED: usize = 1;
+const PLAYER_INITIAL_ENERGY: usize = 5;
 const PERMISSIBLE_TILES: [[f32; 4]; 1] = [tile::GRASS];
 
 // This is with the covered tile model, but we could use the static/dynamic board paradighm or
@@ -47,7 +54,6 @@ pub struct Player {
 }
 
 impl Player {
-
     pub fn health(&self) -> usize {
         self.health
     }
@@ -60,10 +66,10 @@ impl Player {
         let temp = Self {
             pos: (0, 0),
             direction: Direction::North,
-            speed: 1,
+            speed: PLAYER_INITIAL_SPEED,
             color: tile::PLAYER,
             health: MAX_PLAYER_HEALTH,
-            energy: 0,
+            energy: PLAYER_INITIAL_ENERGY,
         };
         world[temp.pos.1][temp.pos.0] = temp.color;
         temp
@@ -96,11 +102,39 @@ impl Player {
                     Player::melee_attack(world);
                 }
                 PROJECTILE_ATTACK_KEYCODE => {
-                    Player::projectile_attack(world);
+                    if (world.player.energy > 0) {
+                        Player::projectile_attack(world);
+                        // world.player.energy -= 1;
+                        // commented out so I can test everything
+                    }
+                }
+                HEAL_KEYCODE => {
+                    if world.player.energy >= 5 {
+                        world.player.health += HEAL_ABILITY_RETURN;
+                        world.player.energy -= 5;
+                    }
+                }
+                BUILD_KEYCODE => {
+                    Player::build(world);
                 }
                 _ => {}
             },
             None => {}
+        }
+    }
+
+    pub fn build(world: &mut World) {
+        let position = World::new_position(
+            world.player.pos.0,
+            world.player.pos.1,
+            world.player.direction.clone(),
+            world,
+            1,
+        );
+        if position != world.player.pos {
+            world.world[position.1][position.0] = tile::STRUCTURE;
+        } else if world.world[position.1][position.0] == tile::STRUCTURE {
+            world.world[position.1][position.0] = world.board[position.1][position.0]
         }
     }
 
@@ -110,10 +144,10 @@ impl Player {
         let attacking_position = World::new_position(
             world.player.pos.0,
             world.player.pos.1,
-            &world.player.direction.clone(),
+            world.player.direction.clone(),
             world,
             world.player.speed,
-            );
+        );
 
         // We do not know what enemies are on the tile being attacked, so we need to go through the
         // enemies and check if any of them are on the attacking tile, then damage them
@@ -130,10 +164,10 @@ impl Player {
         let projectile_spawn_pos = World::new_position(
             world.player.pos.0,
             world.player.pos.1,
-            &world.player.direction.clone(),
+            world.player.direction.clone(),
             world,
             world.player.speed,
-            );
+        );
         if projectile_spawn_pos != world.player.pos {
             let projectile = Projectile::new(
                 projectile_spawn_pos.0,
@@ -142,7 +176,7 @@ impl Player {
                 PLAYER_PROJECTILE_DAMAGE,
                 world.player.direction.clone(),
                 world,
-                );
+            );
             world.projectiles.push(projectile);
         }
     }
