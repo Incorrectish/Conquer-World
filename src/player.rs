@@ -5,10 +5,11 @@ use crate::{
     projectile::Projectile,
     tile,
     world::World,
-    WORLD_SIZE,
+    WORLD_SIZE, BOARD_SIZE, TILE_SIZE
 };
 use ggez::input::keyboard::{KeyCode, KeyInput};
 use ggez::winit::event::VirtualKeyCode;
+use ggez::graphics::{self, Canvas};
 
 // Can change easily
 const MAX_PLAYER_HEALTH: usize = 10;
@@ -54,6 +55,20 @@ pub struct Player {
 }
 
 impl Player {
+    pub fn draw(&self, canvas: &mut graphics::Canvas, world: &World) {
+        let color = [1.0, 1.0, 1.0, 1.0];
+        canvas.draw(
+            &graphics::Quad,
+            graphics::DrawParam::new()
+                .dest_rect(graphics::Rect::new_i32(
+                    (self.pos.0 as i32 - world.x_offset as i32) * TILE_SIZE.0 as i32,
+                    (self.pos.1 as i32 - world.y_offset as i32) * TILE_SIZE.1 as i32,
+                    TILE_SIZE.0 as i32,
+                    TILE_SIZE.1 as i32
+                ))
+                .color(color),
+        )
+    }
     pub fn health(&self) -> usize {
         self.health
     }
@@ -190,3 +205,4 @@ impl Player {
         false
     }
 }
+

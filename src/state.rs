@@ -38,6 +38,7 @@ impl ggez::event::EventHandler<GameError> for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
         Ok(())
     }
+
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         // render the graphics with the rgb value, it will always be black though because the
         // self.r,g,b,a values never change from 0
@@ -46,26 +47,31 @@ impl ggez::event::EventHandler<GameError> for State {
             graphics::Color::from([self.r, self.g, self.b, self.a]),
         );
 
+
         // draw our state matrix "world" to the screen
         // We must partition our window into small sectors of 32 by 32 pixels and then for each
         // individual one, change each of the pixels to the color corresponding to its place in the
         // state matrix
-        for i in 0..WORLD_SIZE.1 {
-            for j in 0..WORLD_SIZE.0 {
-                canvas.draw(
-                    &graphics::Quad,
-                    graphics::DrawParam::new()
-                        .dest_rect(graphics::Rect::new_i32(
-                            j as i32 * TILE_SIZE.0 as i32,
-                            i as i32 * TILE_SIZE.1 as i32,
-                            TILE_SIZE.0 as i32,
-                            TILE_SIZE.1 as i32,
-                        ))
-                        .color(self.world.world[i as usize][j as usize]),
-                );
-            }
-        }
+        // for i in 0..WORLD_SIZE.1 {
+        //     for j in 0..WORLD_SIZE.0 {
+        //         canvas.draw(
+        //             &graphics::Quad,
+        //             graphics::DrawParam::new()
+        //                 .dest_rect(graphics::Rect::new_i32(
+        //                     j as i32 * TILE_SIZE.0 as i32,
+        //                     i as i32 * TILE_SIZE.1 as i32,
+        //                     TILE_SIZE.0 as i32,
+        //                     TILE_SIZE.1 as i32,
+        //                 ))
+        //                 .color(self.world.world[i as usize][j as usize]),
+        //         );
+        //     }
+            
+            
+        // }
+        self.world.draw(&mut canvas);
         canvas.finish(ctx)?;
+        ggez::timer::yield_now();
         Ok(())
     }
 

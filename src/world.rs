@@ -6,18 +6,36 @@ use crate::{
     projectile::Projectile,
     random,
     tile::{self, ENEMY, FLOOR, PLAYER},
-    BOARD_SIZE, WORLD_SIZE,
+    BOARD_SIZE, WORLD_SIZE, TILE_SIZE
 };
+
+use ggez::graphics::{self, Canvas};
 
 use rand::rngs::ThreadRng;
 use std::cmp::{max, min};
 
+pub struct GridLocation {
+    pub x: i32,
+    pub y: i32,
+}
+
+impl GridLocation {
+    pub fn new(x: i32, y: i32) -> Self {
+        GridLocation {
+            x,
+            y,
+        }
+    }
+}
 pub struct World {
     // world to store the state of tiles in between frames
     pub world: [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize],
 
     // board that stores the internal world
     pub board: [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
+
+    //List of all lake pixels
+    pub lakes: Vec<GridLocation>,
 
     // stores the bottom left and top right coordinates of the currently rendered world, useful for
     // querying whether a coordinate is in the current world
@@ -42,14 +60,17 @@ pub struct World {
 
     // list of all the projectiles in the world
     pub projectiles: Vec<Projectile>,
+
+
 }
 
 impl World {
     pub fn new() -> Self {
         let mut rng = rand::thread_rng();
         let mut board = [[tile::GRASS; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize];
+        let mut lakes = Vec::new();
         World::gen_boss(&mut board);
-        World::gen_water(&mut rng, &mut board);
+        World::gen_water(&mut rng, &mut board, &mut lakes);
         let mut world = [[tile::GRASS; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
         World::draw_world(&mut world, &mut board);
         let player = Player::new(&mut world);
@@ -66,6 +87,7 @@ impl World {
             player,
             enemies,
             projectiles: Vec::new(),
+            lakes,
         }
     }
 
@@ -83,6 +105,25 @@ impl World {
                 world[i][j] = board[i][j];
             }
         }
+    }
+    pub fn draw(&self, canvas: &mut graphics::Canvas)
+    {
+        let color = [0.145, 0.588, 0.8, 1.0];
+        for i in 0..self.lakes.len() as i32 {
+            let loc = &self.lakes[i as usize];
+            canvas.draw(
+                &graphics::Quad,
+                graphics::DrawParam::new()
+                    .dest_rect(graphics::Rect::new_i32(
+                        (loc.x - self.x_offset as i32) * TILE_SIZE.0 as i32,
+                        (loc.y - self.y_offset as i32) * TILE_SIZE.1 as i32,
+                        TILE_SIZE.0 as i32,
+                        TILE_SIZE.1 as i32
+                    ))
+                    .color(color),
+            )
+        }
+        self.player.draw(canvas, self);
     }
 
     // redraws entire world from board based on offsets and stuff
@@ -394,14 +435,14 @@ impl World {
     pub fn gen_water(
         rng: &mut ThreadRng,
         board: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
+        lakes: &mut Vec<GridLocation>,
     ) {
         let mut lakes_added = 0;
         const TOTAL_LAKES: i16 = 12;
         while lakes_added < TOTAL_LAKES {
             let x = random::rand_range(rng, 5, BOARD_SIZE.0); // random x coordinate
             let y = random::rand_range(rng, 5, BOARD_SIZE.1); // random y coordinate
-
-            Self::gen_lake_helper(rng, x, y, 0, board); // new lake centered at (x, y)
+            Self::gen_lake_helper(rng, x, y, 0, board, lakes); // new lake centered at (x, y)
             lakes_added += 1;
         }
     }
@@ -415,9 +456,12 @@ impl World {
         y: i16,
         dist: i16,
         board: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
+        lakes: &mut Vec<GridLocation>,
     ) {
         // sets curr tile to water
         if board[x as usize][y as usize] == tile::GRASS {
+            let loc = GridLocation::new(x as i32,y as i32);
+            lakes.push(loc);
             board[x as usize][y as usize] = tile::WATER;
         }
 
@@ -430,7 +474,7 @@ impl World {
                 let j = y + dir[1];
                 // if in bounds, recursively call fn on adjacent tile (draws WATER at that tile)
                 if i >= 0 && i < BOARD_SIZE.0 && j >= 0 && j < BOARD_SIZE.1 {
-                    Self::gen_lake_helper(rng, i, j, dist + 1, board);
+                    Self::gen_lake_helper(rng, i, j, dist + 1, board, lakes);
                 }
             }
         }
