@@ -50,7 +50,9 @@ pub struct Player {
 
     // planned energy, used for healing, projectiles, (teleportation?), building
     energy: usize,
-    //
+
+    // Queued position: for mouse clicks and so on
+    pub queued_position: Option<(usize, usize)>,
 }
 
 impl Player {
@@ -70,6 +72,7 @@ impl Player {
             color: tile::PLAYER,
             health: MAX_PLAYER_HEALTH,
             energy: PLAYER_INITIAL_ENERGY,
+            queued_position: None,
         };
         world[temp.pos.1][temp.pos.0] = temp.color;
         temp
@@ -117,9 +120,28 @@ impl Player {
                 BUILD_KEYCODE => {
                     Player::build(world);
                 }
+                LIGHTNING_KEYCODE => {
+                    Player::lightning(world);
+                }
                 _ => {}
             },
             None => {}
+        }
+    }
+
+    pub fn lightning(world: &mut World) {
+        if let Some(queued_position) = world.player.queued_position {
+            // TODO: Damage
+            let projectile = Projectile::new(
+                queued_position.0,
+                queued_position.1,
+                0,
+                3,
+                Direction::North,
+                world,
+                tile::LIGHTNING_PLACEHOLDER,
+            );
+            world.projectiles.push(projectile)
         }
     }
 
@@ -176,6 +198,7 @@ impl Player {
                 PLAYER_PROJECTILE_DAMAGE,
                 world.player.direction.clone(),
                 world,
+                tile::PROJECTILE,
             );
             world.projectiles.push(projectile);
         }

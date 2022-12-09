@@ -103,6 +103,7 @@ impl ggez::event::EventHandler<GameError> for State {
         _x: f32,
         _y: f32,
     ) -> Result<(), GameError> {
+        self.world.player.queued_position = Some((((_x/TILE_SIZE.0 as f32) as usize), ((_y/TILE_SIZE.1 as f32) as usize))) ;
         Ok(())
     }
 }
