@@ -110,7 +110,7 @@ impl World {
             }
         }
         for enemy in enemies_in_world {
-            world.world[enemy.0.1][enemy.0.0] = enemy.1; 
+            world.world[enemy.0.1 - world.y_offset][enemy.0.0 - world.x_offset] = enemy.1; 
         }
 
         let mut projectiles_in_world = Vec::new();
@@ -124,8 +124,10 @@ impl World {
             }
         }
         for projectile in projectiles_in_world {
-            world.world[projectile.0.1][projectile.0.0] = projectile.1; 
+            world.world[projectile.0.1 - world.y_offset][projectile.0.0 - world.x_offset] = projectile.1; 
         }
+
+        world.world[world.player.pos.1 - world.y_offset][world.player.pos.0 - world.x_offset] = tile::PLAYER;
     }
 
     // this function just returns whether a set of coordinates are within the bounds of the dynamic
@@ -185,104 +187,121 @@ impl World {
         // because it reached the bounds or the end of the map
         if !Self::coordinates_are_within_board(world, new_position.0, new_position.1)
             || new_position == (x, y)
-            || (!Self::coordinates_are_within_world(world, new_position.0, new_position.1)
-                && entity_type != Entity::Player)
+            //|| (!Self::coordinates_are_within_world(world, new_position.0, new_position.1)
+            //    && entity_type != Entity::Player)
             || (Self::coordinates_are_within_world(world, new_position.0, new_position.1)
                 && !world.can_travel_to(entity_type.clone(), new_position.0, new_position.1))
         {
             return false;
         }
-
-        // value of what was originally at tile before movement
-        let original_value = world.world[y - world.y_offset][x - world.x_offset];
-
         // Coordinates are still inside board, but not world (necessitates camera shift)
         // TODO/POSSIBLE BUG: check if entity is Player and not Enemy/Projectile (haven't tested might
         // cause problems)
-        if Self::coordinates_are_within_board(world, new_position.0, new_position.1)
+        else if Self::coordinates_are_within_board(world, new_position.0, new_position.1)
             && !Self::coordinates_are_within_world(world, new_position.0, new_position.1)
-            && entity_type == Entity::Player
         {
-            match direction {
-                // shift based on direction of movement
-                // x_offset and y_offset explained in class definition (see above)
-                // max and min make sure that with the set of offsets the whole world is contained
-                // in the board; (this is only relevant if BOARD_SIZE is not a multiple of
-                // WORLD_SIZE)
-                Direction::North => {
-                    world.y_offset = max(0, world.y_offset - WORLD_SIZE.0 as usize);
-                }
-                Direction::East => {
-                    world.x_offset = min(
-                        world.board_bottom_right.1 - WORLD_SIZE.1 as usize,
-                        world.x_offset + WORLD_SIZE.1 as usize,
-                    );
-                }
-                Direction::West => {
-                    world.x_offset = max(0, world.x_offset - WORLD_SIZE.1 as usize);
-                }
-                Direction::South => {
-                    world.y_offset = min(
-                        world.board_bottom_right.0 - WORLD_SIZE.0 as usize,
-                        world.y_offset + WORLD_SIZE.0 as usize,
-                    );
-                }
-            }
-            Self::refresh_world(world); // refresh world for new camera angle
-        }
-
-        // these conditions should only trigger if the entity type is a projectile
-        if world.world[new_position.1 - world.y_offset][new_position.0 - world.x_offset]
-            == tile::ENEMY
-        {
-            match index {
-                Some(i) => {
-                    let enemy_idx = Self::get_enemy(new_position.0, new_position.1, world).unwrap();
-                    world.enemies[enemy_idx].damage(world.projectiles[index.unwrap()].damage);
-                }
-                None => {
-                    unreachable!("Cannot have this conditional trigger because the tile has to be a projectile")
-                }
-            }
-            return false;
-        } else if world.world[new_position.1 - world.y_offset][new_position.0 - world.x_offset]
-            == tile::PLAYER
-        {
-            world
-                .player
-                .damage(world.projectiles[index.unwrap()].damage);
-            return false;
-        } else {
-            // TODO: refactor the colors to be some sort of enum
-            // If the new position is a tile that can be traveled to "all black" for now, then
-            // remove the player from the current tile and place it on the new tile
-            // this isn't needed because the travel is checked above
-            // if world.world[new_position.1][new_position.0] == FLOOR {
-            // TODO: refactor to remove covered tile, layer approach created by Ishan and Michael
-            // something like: dynamic[y][x] = static[y][x]?????, michael this won't work unless
-            // you fix
-
-            world.world[new_position.1 - world.y_offset][new_position.0 - world.x_offset] =
-                original_value;
-            if Self::coordinates_are_within_world(world, x, y) {
-                world.world[y - world.y_offset][x - world.x_offset] = world.board[y][x];
-                // static stuff
-            }
-            //
-
-            // dynamic board doesn't exist. TODO: michael fix
             match entity_type {
-                Entity::Player => world.player.pos = new_position,
-                Entity::Enemy(i) => world.enemies[i].pos = new_position,
-                // TODO: SUPER CHANGES MUST GO ON HERE BECAUSE RIGHT NOW IT JUST GOES OVER THE ENEMY
-                // WHICH MEANS ENEMY IS ERASED FROM THE BOARD
-                Entity::Projectile(i) => world.projectiles[i].pos = new_position,
+                Entity::Player => {
+                    match direction {
+                        // shift based on direction of movement
+                        // x_offset and y_offset explained in class definition (see above)
+                        // max and min make sure that with the set of offsets the whole world is contained
+                        // in the board; (this is only relevant if BOARD_SIZE is not a multiple of
+                        // WORLD_SIZE)
+                        Direction::North => {
+                            world.y_offset = max(0, world.y_offset - WORLD_SIZE.0 as usize);
+                        }
+                        Direction::East => {
+                            world.x_offset = min(
+                                world.board_bottom_right.1 - WORLD_SIZE.1 as usize,
+                                world.x_offset + WORLD_SIZE.1 as usize,
+                            );
+                        }
+                        Direction::West => {
+                            world.x_offset = max(0, world.x_offset - WORLD_SIZE.1 as usize);
+                        }
+                        Direction::South => {
+                            world.y_offset = min(
+                                world.board_bottom_right.0 - WORLD_SIZE.0 as usize,
+                                world.y_offset + WORLD_SIZE.0 as usize,
+                            );
+                        }
+                    }
+                    world.player.pos = new_position;
+                    Self::refresh_world(world); // refresh world for new camera angle
+                    return true;
+                }
+                Entity::Enemy(i) => {
+                    world.enemies[i].pos = new_position;
+                    if Self::coordinates_are_within_world(world, x, y) {
+                        world.world[y - world.y_offset][x - world.x_offset] = world.board[y][x];
+                    }
+                    return true;
+                }
+                Entity::Projectile(i) => {
+                    world.projectiles[i].pos = new_position;
+                    if Self::coordinates_are_within_world(world, x, y) {
+                        world.world[y - world.y_offset][x - world.x_offset] = world.board[y][x];
+                    }
+                    return true;
+                }
             }
-            // entity.set_covered_tile(world.world[entity.get_y()][entity.get_x()]);
-            // above line is unusable because of the thing
-            // refactor bot
+        }
+        else {
+            // these conditions should only trigger if the entity type is a projectile
+            if world.world[new_position.1 - world.y_offset][new_position.0 - world.x_offset]
+                == tile::ENEMY
+            {
+                match index {
+                    Some(i) => {
+                        let enemy_idx = Self::get_enemy(new_position.0, new_position.1, world).unwrap();
+                        world.enemies[enemy_idx].damage(world.projectiles[index.unwrap()].damage);
+                    }
+                    None => {
+                        unreachable!("Cannot have this conditional trigger because the tile has to be a projectile")
+                    }
+                }
+                return false;
+            } else if world.world[new_position.1 - world.y_offset][new_position.0 - world.x_offset]
+                == tile::PLAYER
+            {
+                world
+                    .player
+                    .damage(world.projectiles[index.unwrap()].damage);
+                return false;
+            } else {
+                // TODO: refactor the colors to be some sort of enum
+                // If the new position is a tile that can be traveled to "all black" for now, then
+                // remove the player from the current tile and place it on the new tile
+                // this isn't needed because the travel is checked above
+                // if world.world[new_position.1][new_position.0] == FLOOR {
+                // TODO: refactor to remove covered tile, layer approach created by Ishan and Michael
+                // something like: dynamic[y][x] = static[y][x]?????, michael this won't work unless
+                // you fix
 
-            true
+                let original_value = world.world[y-world.y_offset][x-world.x_offset];
+                world.world[new_position.1 - world.y_offset][new_position.0 - world.x_offset] =
+                    original_value;
+                if Self::coordinates_are_within_world(world, x, y) {
+                    world.world[y - world.y_offset][x - world.x_offset] = world.board[y][x];
+                    // static stuff
+                }
+                //
+
+                // dynamic board doesn't exist. TODO: michael fix
+                match entity_type {
+                    Entity::Player => world.player.pos = new_position,
+                    Entity::Enemy(i) => world.enemies[i].pos = new_position,
+                    // TODO: SUPER CHANGES MUST GO ON HERE BECAUSE RIGHT NOW IT JUST GOES OVER THE ENEMY
+                    // WHICH MEANS ENEMY IS ERASED FROM THE BOARD
+                    Entity::Projectile(i) => world.projectiles[i].pos = new_position,
+                }
+                // entity.set_covered_tile(world.world[entity.get_y()][entity.get_x()]);
+                // above line is unusable because of the thing
+                // refactor bot
+
+                true
+            }
         }
     }
 
