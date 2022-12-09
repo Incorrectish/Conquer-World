@@ -180,7 +180,7 @@ impl World {
             ),
         };
 
-        let new_position = Self::new_position(x, y, &direction, world, speed);
+        let new_position = Self::new_position(x, y, direction.clone(), world, speed);
 
         // if the new position is the same as the old position, movement is impossible and this
         // function returns false as it wasn't able to move the player or projectile, either
@@ -325,7 +325,7 @@ impl World {
     pub fn new_position(
         mut x: usize,
         mut y: usize,
-        direction: &Direction,
+        direction: Direction,
         world: &mut Self,
         travel_distance: usize,
     ) -> (usize, usize) {
