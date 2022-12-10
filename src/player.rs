@@ -11,7 +11,6 @@ use crate::{
 use ggez::input::keyboard::{KeyCode, KeyInput};
 use ggez::winit::event::VirtualKeyCode;
 use ggez::graphics::{self, Canvas};
-
 use std::{
     collections::HashMap,
 };
@@ -49,7 +48,7 @@ pub struct Player {
 
     // This is the player color. NOTE: both this and the previous attribute assume that the game
     // world is a set of tiles and the player is represented as a solid color
-    color: [f32; 4],
+    pub color: [f32; 4],
 
     // Stores player health: for player death and such
     health: usize,
@@ -60,20 +59,6 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn draw(&self, canvas: &mut graphics::Canvas, world: &World) {
-        let color = [1.0, 1.0, 1.0, 1.0];
-        canvas.draw(
-            &graphics::Quad,
-            graphics::DrawParam::new()
-                .dest_rect(graphics::Rect::new_i32(
-                    (self.pos.x as i32 - world.x_offset as i32) * TILE_SIZE.0 as i32,
-                    (self.pos.y as i32 - world.y_offset as i32) * TILE_SIZE.1 as i32,
-                    TILE_SIZE.0 as i32,
-                    TILE_SIZE.1 as i32
-                ))
-                .color(color),
-        )
-    }
     pub fn health(&self) -> usize {
         self.health
     }
@@ -82,16 +67,15 @@ impl Player {
         self.health -= damage
     }
 
-    pub fn new(world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize]) -> Self {
+    pub fn new() -> Self {
         let temp = Self {
             pos: Position::new(0, 0),
-            direction: Direction::North,
+            direction: Direction::South,
             speed: PLAYER_INITIAL_SPEED,
             color: tile::PLAYER,
             health: MAX_PLAYER_HEALTH,
             energy: PLAYER_INITIAL_ENERGY,
         };
-        world[temp.pos.y][temp.pos.x] = temp.color;
         temp
     }
 
@@ -192,27 +176,34 @@ impl Player {
                 PLAYER_PROJECTILE_SPEED,
                 PLAYER_PROJECTILE_DAMAGE,
                 world.player.direction.clone(),
-                world,
             );
+            world.entity_positions.insert(projectile.pos, (tile::PROJECTILE, Entity::Projectile(world.projectiles.len())));
             world.projectiles.push(projectile);
         }
     }
 
     pub fn can_travel_to(
-        tile: [f32; 4], 
         position: Position,
-        entity_positions: &HashMap<Position, ([f32; 4], Option<Entity>)>
+        entity_positions: &HashMap<Position, ([f32; 4], Entity)>,
+        terrain_positions: &HashMap<Position, [f32;4]>
     ) -> bool {
-        if entity_positions.contains_key(&position) {
-            return false;
-        }
-        for permissible_tile in PERMISSIBLE_TILES {
-            if tile == permissible_tile {
-                return true;
+        if entity_positions.contains_key(&position) || terrain_positions.contains_key(&position) {
+            let info = entity_positions.get(&position);
+            let info2 = terrain_positions.get(&position);
+            if info.is_some() {
+                if PERMISSIBLE_TILES.contains(&info.unwrap().0) {
+                    return true;
+                }
             }
 
+            if info2.is_some() {
+                if PERMISSIBLE_TILES.contains(&info2.unwrap()) {
+                    return true;
+                }
+            }
+            return false;
         }
-        false
+        true
     }
 }
 

@@ -69,6 +69,21 @@ impl ggez::event::EventHandler<GameError> for State {
         // }
 
         self.world.draw(&mut canvas);
+        // let level_dest = bevy::math::Vec2::new(10.0, 10.0);
+        // let score_dest = bevy::math::Vec2::new(200.0, 10.0);
+
+        // let level_str = format!("Level: 59");
+        // let score_str = format!("Score: 23423");
+
+        // canvas.draw(
+        //     &graphics::Text::new(level_str),
+        //     graphics::DrawParam::from(level_dest).color(tile::PORTAL),
+        // );
+
+        // canvas.draw(
+        //     &graphics::Text::new(score_str),
+        //     graphics::DrawParam::from(score_dest).color(tile::PORTAL),
+        // );
         canvas.finish(ctx)?;
         ggez::timer::yield_now();
         Ok(())

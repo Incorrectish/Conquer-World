@@ -63,6 +63,7 @@ impl Enemy {
         )
     }
 
+
     pub fn health(&self) -> usize {
         self.health
     }
@@ -121,24 +122,32 @@ impl Enemy {
         world.enemies.remove(index);
     }
 
-    pub fn update_enemy(world: &mut World, index: usize) {
+    pub fn move_enemy(world: &mut World, index: usize, pos: &mut Position) {
         let delta_pos = (world.player.pos.x - world.enemies[index].pos.x, world.player.pos.y - world.enemies[index].pos.y);
         
     }
 
     pub fn can_travel_to(
-        tile: [f32; 4], 
         position: Position,
-        entity_positions: &HashMap<Position, ([f32; 4], Option<Entity>)>
+        entity_positions: &HashMap<Position, ([f32; 4], Entity)>,
+        terrain_positions: &HashMap<Position, [f32;4]>
     ) -> bool {
-        if entity_positions.contains_key(&position) {
-            return false;
-        }
-        for permissible_tile in PERMISSIBLE_TILES {
-            if tile == permissible_tile {
-                return true;
+        if entity_positions.contains_key(&position) || terrain_positions.contains_key(&position) {
+            let info = entity_positions.get(&position);
+            let info2 = terrain_positions.get(&position);
+            if info.is_some() {
+                if PERMISSIBLE_TILES.contains(&info.unwrap().0) {
+                    return true;
+                }
+            } 
+            
+            if info2.is_some() {
+                if PERMISSIBLE_TILES.contains(&info2.unwrap()) {
+                    return true;
+                }
             }
 
+            return false;
         }
         true
     }
