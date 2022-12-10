@@ -14,6 +14,7 @@ mod random;
 mod state;
 mod tile;
 mod world;
+mod utils;
 
 use crate::state::State;
 

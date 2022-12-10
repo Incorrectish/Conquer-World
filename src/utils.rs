@@ -4,15 +4,16 @@ pub struct Entity2 {
 }
 
 impl Entity2 {
-    pub fn new(x: i32, y: i32) -> Self {
+    pub fn new(x: usize, y: usize, color: [f32; 4]) -> Self {
         Entity2 {
-            x,
-            y,
+            position: Position::new(x, y),
+            color,
         }
     }
 }
 
 
+#[derive(Eq, Hash, PartialEq)]
 pub struct Position {
     pub x: usize, 
     pub y: usize,

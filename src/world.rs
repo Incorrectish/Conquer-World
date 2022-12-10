@@ -6,36 +6,27 @@ use crate::{
     projectile::Projectile,
     random,
     tile::{self, ENEMY, FLOOR, PLAYER},
-    BOARD_SIZE, WORLD_SIZE, TILE_SIZE
+    utils::Position,
+    BOARD_SIZE, TILE_SIZE, WORLD_SIZE,
 };
 
 use ggez::graphics::{self, Canvas};
 
 use rand::rngs::ThreadRng;
-use std::cmp::{max, min};
 
-pub struct GridLocation {
-    pub x: i32,
-    pub y: i32,
-}
+use std::{
+    cmp::{max, min},
+    collections::HashMap,
+};
 
-impl GridLocation {
-    pub fn new(x: i32, y: i32) -> Self {
-        GridLocation {
-            x,
-            y,
-        }
-    }
-}
+const TOTAL_LAKES: i16 = 12;
+
 pub struct World {
     // world to store the state of tiles in between frames
     pub world: [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize],
 
     // board that stores the internal world
     pub board: [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
-
-    //List of all lake pixels
-    pub lakes: Vec<GridLocation>,
 
     // stores the bottom left and top right coordinates of the currently rendered world, useful for
     // querying whether a coordinate is in the current world
@@ -61,16 +52,19 @@ pub struct World {
     // list of all the projectiles in the world
     pub projectiles: Vec<Projectile>,
 
+    // Hashmap of positions to colors
+    pub positions_to_entities: HashMap<Position, ([f32; 4], Option<Entity>)>,
 
+    pub rng: ThreadRng,
 }
 
 impl World {
     pub fn new() -> Self {
         let mut rng = rand::thread_rng();
+        let mut positions_to_entities = HashMap::new();
         let mut board = [[tile::GRASS; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize];
-        let mut lakes = Vec::new();
         World::gen_boss(&mut board);
-        World::gen_water(&mut rng, &mut board, &mut lakes);
+        World::gen_water(&mut rng, &mut board, &mut positions_to_entities);
         let mut world = [[tile::GRASS; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
         World::draw_world(&mut world, &mut board);
         let player = Player::new(&mut world);
@@ -87,7 +81,8 @@ impl World {
             player,
             enemies,
             projectiles: Vec::new(),
-            lakes,
+            positions_to_entities,
+            rng,
         }
     }
 
@@ -102,25 +97,25 @@ impl World {
                 // dimension is which
                 let i = i_coord as usize;
                 let j = j_coord as usize;
-                world[i][j] = board[i][j];
+                world[j][i] = board[j][i];
             }
         }
     }
-    pub fn draw(&self, canvas: &mut graphics::Canvas)
-    {
-        let color = tile::WATER;
-        for loc in &self.lakes {
-            canvas.draw(
-                &graphics::Quad,
-                graphics::DrawParam::new()
-                    .dest_rect(graphics::Rect::new_i32(
-                        (loc.x - self.x_offset as i32) * TILE_SIZE.0 as i32,
-                        (loc.y - self.y_offset as i32) * TILE_SIZE.1 as i32,
-                        TILE_SIZE.0 as i32,
-                        TILE_SIZE.1 as i32
-                    ))
-                    .color(color),
-            )
+    pub fn draw(&self, canvas: &mut graphics::Canvas) {
+        for (loc, color) in &self.positions_to_entities {
+            if self.y_offset < loc.y && self.x_offset < loc.x {
+                canvas.draw(
+                    &graphics::Quad,
+                    graphics::DrawParam::new()
+                        .dest_rect(graphics::Rect::new_i32(
+                            (loc.x - self.x_offset) as i32 * TILE_SIZE.0 as i32,
+                            (loc.y - self.y_offset) as i32 * TILE_SIZE.1 as i32,
+                            TILE_SIZE.0 as i32,
+                            TILE_SIZE.1 as i32,
+                        ))
+                        .color(color.0),
+                )
+            }
         }
         self.player.draw(canvas, self);
     }
@@ -150,7 +145,7 @@ impl World {
             }
         }
         for enemy in enemies_in_world {
-            world.world[enemy.0.1 - world.y_offset][enemy.0.0 - world.x_offset] = enemy.1; 
+            world.world[enemy.0 .1 - world.y_offset][enemy.0 .0 - world.x_offset] = enemy.1;
         }
 
         let mut projectiles_in_world = Vec::new();
@@ -164,10 +159,12 @@ impl World {
             }
         }
         for projectile in projectiles_in_world {
-            world.world[projectile.0.1 - world.y_offset][projectile.0.0 - world.x_offset] = projectile.1; 
+            world.world[projectile.0 .1 - world.y_offset][projectile.0 .0 - world.x_offset] =
+                projectile.1;
         }
 
-        world.world[world.player.pos.1 - world.y_offset][world.player.pos.0 - world.x_offset] = tile::PLAYER;
+        world.world[world.player.pos.1 - world.y_offset][world.player.pos.0 - world.x_offset] =
+            tile::PLAYER;
     }
 
     // this function just returns whether a set of coordinates are within the bounds of the dynamic
@@ -286,15 +283,15 @@ impl World {
                     return true;
                 }
             }
-        }
-        else {
+        } else {
             // these conditions should only trigger if the entity type is a projectile
             if world.world[new_position.1 - world.y_offset][new_position.0 - world.x_offset]
                 == tile::ENEMY
             {
                 match index {
                     Some(i) => {
-                        let enemy_idx = Self::get_enemy(new_position.0, new_position.1, world).unwrap();
+                        let enemy_idx =
+                            Self::get_enemy(new_position.0, new_position.1, world).unwrap();
                         world.enemies[enemy_idx].damage(world.projectiles[index.unwrap()].damage);
                     }
                     None => {
@@ -319,7 +316,7 @@ impl World {
                 // something like: dynamic[y][x] = static[y][x]?????, michael this won't work unless
                 // you fix
 
-                let original_value = world.world[y-world.y_offset][x-world.x_offset];
+                let original_value = world.world[y - world.y_offset][x - world.x_offset];
                 world.world[new_position.1 - world.y_offset][new_position.0 - world.x_offset] =
                     original_value;
                 if Self::coordinates_are_within_world(world, x, y) {
@@ -434,14 +431,13 @@ impl World {
     pub fn gen_water(
         rng: &mut ThreadRng,
         board: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
-        lakes: &mut Vec<GridLocation>,
+        positions_to_entities: &mut HashMap<Position, ([f32; 4], Option<Entity>)>,
     ) {
         let mut lakes_added = 0;
-        const TOTAL_LAKES: i16 = 12;
         while lakes_added < TOTAL_LAKES {
             let x = random::rand_range(rng, 5, BOARD_SIZE.0); // random x coordinate
             let y = random::rand_range(rng, 5, BOARD_SIZE.1); // random y coordinate
-            Self::gen_lake_helper(rng, x, y, 0, board, lakes); // new lake centered at (x, y)
+            Self::gen_lake_helper(rng, x, y, 0, board, positions_to_entities); // new lake centered at (x, y)
             lakes_added += 1;
         }
     }
@@ -455,13 +451,13 @@ impl World {
         y: i16,
         dist: i16,
         board: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
-        lakes: &mut Vec<GridLocation>,
+        positions_to_entities: &mut HashMap<Position, ([f32; 4], Option<Entity>)>,
     ) {
         // sets curr tile to water
         if board[y as usize][x as usize] == tile::GRASS {
-            let loc = GridLocation::new(x as i32,y as i32);
-            lakes.push(loc);
+            let loc = Position::new(x as usize, y as usize);
             board[y as usize][x as usize] = tile::WATER;
+            positions_to_entities.insert(loc, (tile::WATER, None));
         }
 
         const DIRECTIONS: [[i16; 2]; 4] = [[0, 1], [0, -1], [1, 0], [-1, 0]]; // orthogonal dirs
@@ -473,7 +469,7 @@ impl World {
                 let j = y + dir[1];
                 // if in bounds, recursively call fn on adjacent tile (draws WATER at that tile)
                 if i >= 0 && i < BOARD_SIZE.0 && j >= 0 && j < BOARD_SIZE.1 {
-                    Self::gen_lake_helper(rng, i, j, dist + 1, board, lakes);
+                    Self::gen_lake_helper(rng, i, j, dist + 1, board, positions_to_entities);
                 }
             }
         }
