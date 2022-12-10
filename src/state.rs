@@ -44,7 +44,7 @@ impl ggez::event::EventHandler<GameError> for State {
         // self.r,g,b,a values never change from 0
         let mut canvas = graphics::Canvas::from_frame(
             ctx,
-            graphics::Color::from([self.r, self.g, self.b, self.a]),
+            graphics::Color::from(tile::GRASS),
         );
 
 
@@ -65,10 +65,9 @@ impl ggez::event::EventHandler<GameError> for State {
         //                 ))
         //                 .color(self.world.world[i as usize][j as usize]),
         //         );
-        //     }
-            
-            
+        //     }            
         // }
+
         self.world.draw(&mut canvas);
         canvas.finish(ctx)?;
         ggez::timer::yield_now();

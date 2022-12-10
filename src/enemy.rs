@@ -1,12 +1,15 @@
-use crate::{direction::Direction, tile, world::World, WORLD_SIZE};
-
+use crate::{direction::Direction, tile, world::World, WORLD_SIZE, utils::Position, entity::Entity, TILE_SIZE};
+use ggez::graphics::{self, Canvas};
+use std::{
+    collections::HashMap,
+};
 const ENEMY_HEALTH: usize = 5;
 const PERMISSIBLE_TILES: [[f32; 4]; 1] = [tile::GRASS];
 
 // This is basically the same as the enemy for now, but I am just testing an enemy system
 pub struct Enemy {
     // This is the position in the form (x, y)
-    pub pos: (usize, usize),
+    pub pos: Position,
 
     // The direction that the enemy is facing at the moment
     // It isn't needed for movement, and the way I wrote movement is a bit convoluted to allow this
@@ -34,7 +37,7 @@ impl Enemy {
         y: usize,
     ) -> Self {
         let temp = Self {
-            pos: (x, y),
+            pos: Position::new(x, y),
             direction: Direction::North,
             speed: 1,
             color: tile::ENEMY,
@@ -43,6 +46,21 @@ impl Enemy {
         };
         world[y][x] = temp.color;
         temp
+    }
+
+    pub fn draw(&self, canvas: &mut graphics::Canvas, world: &World) {
+        let color = tile::ENEMY;
+        canvas.draw(
+            &graphics::Quad,
+            graphics::DrawParam::new()
+                .dest_rect(graphics::Rect::new_i32(
+                    (self.pos.x as i32 - world.x_offset as i32) * TILE_SIZE.0 as i32,
+                    (self.pos.y as i32 - world.y_offset as i32) * TILE_SIZE.1 as i32,
+                    TILE_SIZE.0 as i32,
+                    TILE_SIZE.1 as i32
+                ))
+                .color(color),
+        )
     }
 
     pub fn health(&self) -> usize {
@@ -98,22 +116,30 @@ impl Enemy {
 
     pub fn kill(world: &mut World, index: usize) {
         // for now all it does is remove the tile on the world "board"
-        world.world[world.enemies[index].pos.1][world.enemies[index].pos.0] =
-            world.board[world.enemies[index].pos.1][world.enemies[index].pos.0];
+        world.world[world.enemies[index].pos.y][world.enemies[index].pos.x] =
+            world.board[world.enemies[index].pos.y][world.enemies[index].pos.x];
         world.enemies.remove(index);
     }
 
     pub fn update_enemy(world: &mut World, index: usize) {
-        let delta_pos = (world.player.pos.0 - world.enemies[index].pos.0, world.player.pos.1 - world.enemies[index].pos.1);
+        let delta_pos = (world.player.pos.x - world.enemies[index].pos.x, world.player.pos.y - world.enemies[index].pos.y);
         
     }
 
-    pub fn can_travel_to(tile: [f32; 4]) -> bool {
+    pub fn can_travel_to(
+        tile: [f32; 4], 
+        position: Position,
+        entity_positions: &HashMap<Position, ([f32; 4], Option<Entity>)>
+    ) -> bool {
+        if entity_positions.contains_key(&position) {
+            return false;
+        }
         for permissible_tile in PERMISSIBLE_TILES {
             if tile == permissible_tile {
                 return true;
             }
+
         }
-        false
+        true
     }
 }

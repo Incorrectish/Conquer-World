@@ -5,11 +5,16 @@ use crate::{
     projectile::Projectile,
     tile,
     world::World,
-    WORLD_SIZE, BOARD_SIZE, TILE_SIZE
+    WORLD_SIZE, BOARD_SIZE, TILE_SIZE,
+    utils::Position
 };
 use ggez::input::keyboard::{KeyCode, KeyInput};
 use ggez::winit::event::VirtualKeyCode;
 use ggez::graphics::{self, Canvas};
+
+use std::{
+    collections::HashMap,
+};
 
 // Can change easily
 const MAX_PLAYER_HEALTH: usize = 10;
@@ -31,7 +36,7 @@ const PERMISSIBLE_TILES: [[f32; 4]; 1] = [tile::GRASS];
 // something else entirely
 pub struct Player {
     // This is the position in the form (x, y)
-    pub pos: (usize, usize),
+    pub pos: Position,
 
     // The direction that the player is facing at the moment
     // It isn't needed for movement, and the way I wrote movement is a bit convoluted to allow this
@@ -61,8 +66,8 @@ impl Player {
             &graphics::Quad,
             graphics::DrawParam::new()
                 .dest_rect(graphics::Rect::new_i32(
-                    (self.pos.0 as i32 - world.x_offset as i32) * TILE_SIZE.0 as i32,
-                    (self.pos.1 as i32 - world.y_offset as i32) * TILE_SIZE.1 as i32,
+                    (self.pos.x as i32 - world.x_offset as i32) * TILE_SIZE.0 as i32,
+                    (self.pos.y as i32 - world.y_offset as i32) * TILE_SIZE.1 as i32,
                     TILE_SIZE.0 as i32,
                     TILE_SIZE.1 as i32
                 ))
@@ -79,14 +84,14 @@ impl Player {
 
     pub fn new(world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize]) -> Self {
         let temp = Self {
-            pos: (0, 0),
+            pos: Position::new(0, 0),
             direction: Direction::North,
             speed: PLAYER_INITIAL_SPEED,
             color: tile::PLAYER,
             health: MAX_PLAYER_HEALTH,
             energy: PLAYER_INITIAL_ENERGY,
         };
-        world[temp.pos.1][temp.pos.0] = temp.color;
+        world[temp.pos.y][temp.pos.x] = temp.color;
         temp
     }
 
@@ -140,16 +145,15 @@ impl Player {
 
     pub fn build(world: &mut World) {
         let position = World::new_position(
-            world.player.pos.0,
-            world.player.pos.1,
+            world.player.pos,
             world.player.direction.clone(),
             world,
             1,
         );
-        if world.world[position.1][position.0] == tile::STRUCTURE {
-            world.world[position.1][position.0] = world.board[position.1][position.0]
+        if world.world[position.x][position.x] == tile::STRUCTURE {
+            world.world[position.y][position.x] = world.board[position.y][position.x]
         } else if position != world.player.pos {
-            world.world[position.1][position.0] = tile::STRUCTURE;
+            world.world[position.y][position.x] = tile::STRUCTURE;
         }
     }
 
@@ -157,8 +161,7 @@ impl Player {
         // gets the position that the attack will be applied to, one tile forward of the player in
         // the direction that they are facing
         let attacking_position = World::new_position(
-            world.player.pos.0,
-            world.player.pos.1,
+            world.player.pos,
             world.player.direction.clone(),
             world,
             world.player.speed,
@@ -177,16 +180,15 @@ impl Player {
     // and such should be determined by the projectile object itself
     pub fn projectile_attack(world: &mut World) {
         let projectile_spawn_pos = World::new_position(
-            world.player.pos.0,
-            world.player.pos.1,
+            world.player.pos,
             world.player.direction.clone(),
             world,
             world.player.speed,
         );
         if projectile_spawn_pos != world.player.pos {
             let projectile = Projectile::new(
-                projectile_spawn_pos.0,
-                projectile_spawn_pos.1,
+                projectile_spawn_pos.x,
+                projectile_spawn_pos.y,
                 PLAYER_PROJECTILE_SPEED,
                 PLAYER_PROJECTILE_DAMAGE,
                 world.player.direction.clone(),
@@ -196,11 +198,19 @@ impl Player {
         }
     }
 
-    pub fn can_travel_to(tile: [f32; 4]) -> bool {
+    pub fn can_travel_to(
+        tile: [f32; 4], 
+        position: Position,
+        entity_positions: &HashMap<Position, ([f32; 4], Option<Entity>)>
+    ) -> bool {
+        if entity_positions.contains_key(&position) {
+            return false;
+        }
         for permissible_tile in PERMISSIBLE_TILES {
             if tile == permissible_tile {
                 return true;
             }
+
         }
         false
     }
