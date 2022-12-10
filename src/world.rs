@@ -109,8 +109,7 @@ impl World {
     pub fn draw(&self, canvas: &mut graphics::Canvas)
     {
         let color = tile::WATER;
-        for i in 0..self.lakes.len() as i32 {
-            let loc = &self.lakes[i as usize];
+        for loc in &self.lakes {
             canvas.draw(
                 &graphics::Quad,
                 graphics::DrawParam::new()
