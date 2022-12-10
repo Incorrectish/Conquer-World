@@ -108,7 +108,7 @@ impl World {
     }
     pub fn draw(&self, canvas: &mut graphics::Canvas)
     {
-        let color = [0.145, 0.588, 0.8, 1.0];
+        let color = tile::WATER;
         for i in 0..self.lakes.len() as i32 {
             let loc = &self.lakes[i as usize];
             canvas.draw(
@@ -459,10 +459,10 @@ impl World {
         lakes: &mut Vec<GridLocation>,
     ) {
         // sets curr tile to water
-        if board[x as usize][y as usize] == tile::GRASS {
+        if board[y as usize][x as usize] == tile::GRASS {
             let loc = GridLocation::new(x as i32,y as i32);
             lakes.push(loc);
-            board[x as usize][y as usize] = tile::WATER;
+            board[y as usize][x as usize] = tile::WATER;
         }
 
         const DIRECTIONS: [[i16; 2]; 4] = [[0, 1], [0, -1], [1, 0], [-1, 0]]; // orthogonal dirs
