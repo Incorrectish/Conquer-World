@@ -93,10 +93,14 @@ impl World {
         enemies: &mut Vec<Enemy>,
     ) {
         for _ in 0..10 {
+            // the loop just generates new positions until it finds an open one, and it inserts an
+            // enemy there
             loop {
                 let x = random::rand_range(rng, 0, BOARD_SIZE.0); // random x coordinate
                 let y = random::rand_range(rng, 0, BOARD_SIZE.1); // random y coordinate
                 let random_position = Position::new(x as usize, y as usize);
+
+                // if the random position is blank, then create an enemy there
                 if !terrain_positions.contains_key(&random_position)
                     && !entity_positions.contains_key(&random_position)
                 {
