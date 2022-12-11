@@ -4,7 +4,7 @@ use std::{
     collections::HashMap,
 };
 
-const PERMISSIBLE_TILES: [[f32; 4]; 4] = [tile::WATER, tile::GRASS, tile::PLAYER, tile::ENEMY];
+const PERMISSIBLE_TILES: [[f32; 4]; 5] = [tile::WATER, tile::GRASS, tile::PLAYER, tile::ENEMY, tile::PROJECTILE];
 
 pub struct Projectile {
     pub pos: Position,
@@ -31,7 +31,6 @@ impl Projectile {
     pub fn update(world: &mut World) {
         for index in (0..world.projectiles.len()).rev() {
             // if the projectile goes out of bounds, the position won't change
-
             // CURRENTLY THIS WON'T WORK ON IMPACTS BECAUSE PROJECTILE THIKS THAT ENEMIES/PLAYERS
             // ARE ILLEGAL TILES AND DESTROYS ITSELF. ADD TO PERMISSIBLE_TILES TO FIX THIS
             if !World::travel(world, Entity::Projectile(index)) {
@@ -60,14 +59,14 @@ impl Projectile {
         if entity_positions.contains_key(&position) || terrain_positions.contains_key(&position) {
             let info = entity_positions.get(&position);
             let info2 = terrain_positions.get(&position);
-            if info.is_some() {
-                if PERMISSIBLE_TILES.contains(&info.unwrap().0) {
+            if let Some(info) = info {
+                if PERMISSIBLE_TILES.contains(&info.0) {
                     return true;
                 }
             }
 
-            if info2.is_some() {
-                if PERMISSIBLE_TILES.contains(&info2.unwrap()) {
+            if let Some(info) = info2 {
+                if PERMISSIBLE_TILES.contains(&info) {
                     return true;
                 }
             }

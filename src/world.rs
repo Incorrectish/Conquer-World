@@ -198,19 +198,19 @@ impl World {
     pub fn coordinates_are_within_world(world: &mut World, position: Position) -> bool {
         // POTENTIAL ERRORS WITH </<=
         position.x >= world.x_offset
-            && position.x < world.x_offset + WORLD_SIZE.1 as usize
+            && position.x < world.x_offset + WORLD_SIZE.0 as usize
             && position.y >= world.y_offset
-            && position.y < world.y_offset + WORLD_SIZE.0 as usize
+            && position.y < world.y_offset + WORLD_SIZE.1 as usize
     }
 
     // Returns true if coordinates inside board (note distinction from world), false otherwise
     // Distinction from coordinates_are_within_world() is important for shifting cameras when
     // crossing edge
     pub fn coordinates_are_within_board(world: &mut World, position: Position) -> bool {
-        position.x < world.board_bottom_right.1
-            && position.x >= world.board_top_left.1
-            && position.y < world.board_bottom_right.0
-            && position.y >= world.board_top_left.0
+        position.x < world.board_bottom_right.0
+            && position.x >= world.board_top_left.0
+            && position.y < world.board_bottom_right.1
+            && position.y >= world.board_top_left.1
     }
 
     pub fn update_position(

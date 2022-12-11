@@ -96,11 +96,11 @@ impl ggez::event::EventHandler<GameError> for State {
         _repeated: bool,
     ) -> Result<(), GameError> {
         // Just takes in the user input and makes an action based off of it
-
         Player::use_input(input, &mut self.world);
+        Projectile::update(&mut self.world);
+
         // updates all the enemies in the world, for now only removes them once their health is
         // less than or equal to 0
-        Projectile::update(&mut self.world);
         Enemy::update(&mut self.world);
         
         Ok(())

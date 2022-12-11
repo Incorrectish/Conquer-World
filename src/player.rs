@@ -190,14 +190,14 @@ impl Player {
         if entity_positions.contains_key(&position) || terrain_positions.contains_key(&position) {
             let info = entity_positions.get(&position);
             let info2 = terrain_positions.get(&position);
-            if info.is_some() {
-                if PERMISSIBLE_TILES.contains(&info.unwrap().0) {
+            if let Some(info) = info {
+                if PERMISSIBLE_TILES.contains(&info.0) {
                     return true;
                 }
             }
 
-            if info2.is_some() {
-                if PERMISSIBLE_TILES.contains(&info2.unwrap()) {
+            if let Some(info) = info2 {
+                if PERMISSIBLE_TILES.contains(&info) {
                     return true;
                 }
             }
