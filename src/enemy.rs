@@ -59,40 +59,6 @@ impl Enemy {
         self.health -= damage;
     }
 
-    // TODO: rewrite to make the travel function the same as player travel
-    // pub fn travel(
-    //     &mut self,
-    //     world: &mut World,
-    // ) {
-    //     world.world[self.pos.1][self.pos.0] = self.covered_tile;
-    //     match self.direction {
-    //         Direction::North => {
-    //             if self.pos.1 > 0 {
-    //                 self.pos.1 -= 1
-    //             }
-    //         }
-    //         Direction::South => {
-    //             if self.pos.1 < (WORLD_SIZE.1 - 1) as usize {
-    //                 self.pos.1 += 1
-    //             }
-    //         }
-    //         Direction::East => {
-    //             if self.pos.0 < (WORLD_SIZE.0 - 1) as usize {
-    //                 self.pos.0 += 1
-    //             }
-    //         }
-    //         Direction::West => {
-    //             if self.pos.0 > 0 {
-    //                 self.pos.0 -= 1
-    //             }
-    //         }
-    //     }
-    //     self.covered_tile = world.world[self.pos.1][self.pos.0];
-    //     world.world[self.pos.1][self.pos.0] = self.color;
-    // }
-
-    // pub fn find_path(world: &mut World) -> VecDeQueue
-
     pub fn update(world: &mut World) {
         // thinking of using a hack to remove all the enemies at the position instead because two
         // enemies cannot be on the same tile, would avoid the f32 lack of equality
