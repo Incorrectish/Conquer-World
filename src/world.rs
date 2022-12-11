@@ -322,12 +322,7 @@ impl World {
 
     // generates the center boss room for map
     pub fn gen_boss(
-<<<<<<< HEAD
-        //board: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
-        terrain_positions: &mut HashMap<Position, [f32; 4]>
-=======
         terrain_positions: &mut HashMap<Position, [f32; 4]>,
->>>>>>> 4dadb339d06b3fd1c4f484b5a2ce6cafb256f013
     ) {
         // x and y of center of map
         let x: usize = (BOARD_SIZE.0 as usize) / 2 - 1;
@@ -336,10 +331,6 @@ impl World {
         // builds a 12x12 square around the center of WALL tiles
         for i in 0..12 {
             for j in 0..12 {
-<<<<<<< HEAD
-                //board[x - 5 + i][y - 5 + j] = tile::WALL;
-=======
->>>>>>> 4dadb339d06b3fd1c4f484b5a2ce6cafb256f013
                 let loc = Position::new(x - 5 + i as usize, y - 5 + j as usize);
                 terrain_positions.insert(loc, tile::WALL);
             }
@@ -348,10 +339,6 @@ impl World {
         // builds a 4x4 square in the center of PORTAL tiles
         for i in 0..4 {
             for j in 0..4 {
-<<<<<<< HEAD
-                //board[x - 1 + i][y - 1 + j] = tile::PORTAL;
-=======
->>>>>>> 4dadb339d06b3fd1c4f484b5a2ce6cafb256f013
                 let loc = Position::new(x - 1 + i as usize, y - 1 + j as usize);
                 terrain_positions.insert(loc, tile::PORTAL);
             }
@@ -361,22 +348,12 @@ impl World {
     // generates water tiles around the map
     pub fn gen_water(
         rng: &mut ThreadRng,
-<<<<<<< HEAD
-        //board: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
-=======
->>>>>>> 4dadb339d06b3fd1c4f484b5a2ce6cafb256f013
         terrain_positions: &mut HashMap<Position, [f32; 4]>,
     ) {
         let mut lakes_added = 0;
         while lakes_added < TOTAL_LAKES {
-<<<<<<< HEAD
-            let x = random::rand_range(rng, WORLD_SIZE.0 + 5, BOARD_SIZE.0 - WORLD_SIZE.0 - 5); // random x coordinate
-            let y = random::rand_range(rng, WORLD_SIZE.0 + 5, BOARD_SIZE.1 - WORLD_SIZE.1 - 5); // random y coordinate
-            // Self::gen_lake_helper(rng, x, y, 0, board, terrain_positions); // new lake centered at (x, y)
-=======
             let x = random::rand_range(rng, 5, BOARD_SIZE.0); // random x coordinate
             let y = random::rand_range(rng, 5, BOARD_SIZE.1); // random y coordinate
->>>>>>> 4dadb339d06b3fd1c4f484b5a2ce6cafb256f013
             Self::gen_lake_helper(rng, x, y, 0, terrain_positions); // new lake centered at (x, y)
             lakes_added += 1;
         }
@@ -390,19 +367,11 @@ impl World {
         x: i16,
         y: i16,
         dist: i16,
-<<<<<<< HEAD
-        //board: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
-=======
->>>>>>> 4dadb339d06b3fd1c4f484b5a2ce6cafb256f013
         terrain_positions: &mut HashMap<Position, [f32; 4]>,
     ) {
         // sets curr tile to water
         let loc = Position::new(x as usize, y as usize);
         if !terrain_positions.contains_key(&loc) {
-<<<<<<< HEAD
-            // board[y as usize][x as usize] = tile::WATER;
-=======
->>>>>>> 4dadb339d06b3fd1c4f484b5a2ce6cafb256f013
             terrain_positions.insert(loc, tile::WATER);
         }
 
@@ -415,10 +384,6 @@ impl World {
                 let j = y + dir[1];
                 // if in bounds, recursively call fn on adjacent tile (draws WATER at that tile)
                 if i >= 0 && i < BOARD_SIZE.0 && j >= 0 && j < BOARD_SIZE.1 {
-<<<<<<< HEAD
-                    // Self::gen_lake_helper(rng, i, j, dist + 1, board, terrain_positions);
-=======
->>>>>>> 4dadb339d06b3fd1c4f484b5a2ce6cafb256f013
                     Self::gen_lake_helper(rng, i, j, dist + 1, terrain_positions);
                 }
             }
