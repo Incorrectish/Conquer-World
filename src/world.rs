@@ -22,9 +22,6 @@ use std::{
 const TOTAL_LAKES: i16 = 12;
 
 pub struct World {
-    // world to store the state of tiles in between frames
-    pub world: [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize],
-
     // board that stores the internal world
     pub board: [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
 
@@ -65,16 +62,19 @@ impl World {
         let mut entity_positions = HashMap::new();
         let mut terrain_positions = HashMap::new();
         let mut board = [[tile::GRASS; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize];
-        let mut world = [[tile::GRASS; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
         World::gen_water(&mut rng, &mut board, &mut terrain_positions);
         World::gen_boss(&mut board, &mut terrain_positions);
-        World::draw_world(&mut world, &mut board);
-        let player = Player::new();       
-        let enemies = vec![Enemy::new(&mut world, 20, 20)];
+        let player = Player::new();
         entity_positions.insert(player.pos, (player.color, (Entity::Player)));
-        entity_positions.insert(enemies[0].pos, (enemies[0].color, Entity::Enemy(0)));
+        let mut enemies = Vec::new();
+        World::gen_enemies(
+            &mut rng,
+            &mut board,
+            &terrain_positions,
+            &mut entity_positions,
+            &mut enemies,
+        );
         World {
-            world,
             board,
             top_left: (0, 0),
             bottom_right: (WORLD_SIZE.0 as usize, WORLD_SIZE.1 as usize),
@@ -86,26 +86,35 @@ impl World {
             enemies,
             projectiles: Vec::new(),
             entity_positions,
-            terrain_positions, 
+            terrain_positions,
             rng,
         }
     }
 
-    // draws initial world from board (0 offsets)
-    pub fn draw_world(
-        world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize],
+    pub fn gen_enemies(
+        rng: &mut ThreadRng,
         board: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
+        terrain_positions: &HashMap<Position, [f32; 4]>,
+        entity_positions: &mut HashMap<Position, ([f32; 4], Entity)>,
+        enemies: &mut Vec<Enemy>,
     ) {
-        for i_coord in 0..WORLD_SIZE.0 {
-            for j_coord in 0..WORLD_SIZE.1 {
-                // ishan you can clean this up lol i'm still not super familiar with which
-                // dimension is which
-                let i = i_coord as usize;
-                let j = j_coord as usize;
-                world[j][i] = board[j][i];
+        for _ in 0..10 {
+            loop {
+                let x = random::rand_range(rng, 0, BOARD_SIZE.0); // random x coordinate
+                let y = random::rand_range(rng, 0, BOARD_SIZE.1); // random y coordinate
+                let random_position = Position::new(x as usize, y as usize);
+                if !terrain_positions.contains_key(&random_position)
+                    && !entity_positions.contains_key(&random_position)
+                {
+                    entity_positions
+                        .insert(random_position, (tile::ENEMY, Entity::Enemy(enemies.len())));
+                    enemies.push(Enemy::new(x as usize, y as usize, 1));
+                    break;
+                }
             }
         }
     }
+
     pub fn draw(&self, canvas: &mut graphics::Canvas) {
         for (loc, color) in &self.terrain_positions {
             if self.y_offset <= loc.y && self.x_offset <= loc.x {
@@ -120,7 +129,7 @@ impl World {
                         ))
                         .color(*color),
                 )
-            }  
+            }
         }
 
         for (loc, color) in &self.entity_positions {
@@ -136,7 +145,7 @@ impl World {
                         ))
                         .color(color.0),
                 )
-            }  
+            }
         }
     }
 
@@ -208,24 +217,19 @@ impl World {
             && position.y >= world.board_top_left.1
     }
 
-    pub fn update_position(
-        world: &mut World, 
-        prev_position: Position, 
-        new_position: Position, 
-    ) {
+    pub fn update_position(world: &mut World, prev_position: Position, new_position: Position) {
         let info = world.entity_positions.get(&prev_position);
         if let Some(contents) = info {
             let tile_color = contents.0;
             let tile_type = contents.1.clone();
-            world.entity_positions.insert(new_position, (tile_color, tile_type));
+            world
+                .entity_positions
+                .insert(new_position, (tile_color, tile_type));
             world.entity_positions.remove(&prev_position);
         }
     }
 
-    pub fn travel(
-        world: &mut World,
-        entity_type: Entity,
-    ) -> bool {
+    pub fn travel(world: &mut World, entity_type: Entity) -> bool {
         let (pos, direction, speed, index) = match entity_type.clone() {
             Entity::Player => (
                 world.player.pos,
@@ -254,7 +258,13 @@ impl World {
         } else {
             match entity_type {
                 Entity::Player => {
-                    if !Self::coordinates_are_within_world(world, new_position) && Player::can_travel_to(new_position, &world.entity_positions, &world.terrain_positions,) {
+                    if !Self::coordinates_are_within_world(world, new_position)
+                        && Player::can_travel_to(
+                            new_position,
+                            &world.entity_positions,
+                            &world.terrain_positions,
+                        )
+                    {
                         match direction {
                             Direction::North => {
                                 world.y_offset = max(0, world.y_offset - WORLD_SIZE.1 as usize);
@@ -275,8 +285,12 @@ impl World {
                                 );
                             }
                         }
-                    } 
-                    if Player::can_travel_to(new_position, &world.entity_positions, &world.terrain_positions) {
+                    }
+                    if Player::can_travel_to(
+                        new_position,
+                        &world.entity_positions,
+                        &world.terrain_positions,
+                    ) {
                         Self::update_position(world, world.player.pos, new_position);
                         world.player.pos = new_position;
                     }
@@ -288,7 +302,11 @@ impl World {
                 }
 
                 Entity::Projectile(i) => {
-                    if !Projectile::can_travel_to(new_position, &world.entity_positions, &world.terrain_positions) {
+                    if !Projectile::can_travel_to(
+                        new_position,
+                        &world.entity_positions,
+                        &world.terrain_positions,
+                    ) {
                         return false;
                     }
                     Self::update_position(world, world.projectiles[i].pos, new_position);
@@ -302,7 +320,7 @@ impl World {
     // this is the "move()" function but move is a reserved keyword so I just used the first
     // synonym I googled "travel()"
     // pub fn travel(
-    //     world: &mut World, 
+    //     world: &mut World,
     //     entity_type: Entity,
     //     ) -> bool {
     //     // You need to implement the layering system in order for this to work properly, as
@@ -454,7 +472,6 @@ impl World {
     // }
 
     // This method assumes that x and y are valid coordinates and does NOT check them
-    
 
     // This very simply gets the new position from the old, by checking the direction and the
     // bounds. Should be refactored to give a travel distance instead of just one
@@ -494,7 +511,7 @@ impl World {
                 ) as usize;
             }
         }
-        return Position::new(x,y);
+        return Position::new(x, y);
     }
 
     pub fn get_enemy(position: Position, world: &mut World) -> Option<usize> {
@@ -507,7 +524,10 @@ impl World {
     }
 
     // generates the center boss room for map
-    pub fn gen_boss(board: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize], terrain_positions: &mut HashMap<Position, [f32; 4]>) {
+    pub fn gen_boss(
+        board: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
+        terrain_positions: &mut HashMap<Position, [f32; 4]>,
+    ) {
         // x and y of center of map
         let x: usize = (BOARD_SIZE.0 as usize) / 2 - 1;
         let y: usize = (BOARD_SIZE.1 as usize) / 2 - 1;

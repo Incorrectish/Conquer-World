@@ -35,9 +35,9 @@ pub struct Enemy {
 
 impl Enemy {
     pub fn new(
-        world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize],
         x: usize,
         y: usize,
+        speed: usize,
     ) -> Self {
         let temp = Self {
             pos: Position::new(x, y),
@@ -47,7 +47,6 @@ impl Enemy {
             health: ENEMY_HEALTH,
             resistance: 1.0,
         };
-        world[y][x] = temp.color;
         temp
     }
 
@@ -109,9 +108,9 @@ impl Enemy {
 
     pub fn kill(world: &mut World, index: usize) {
         // for now all it does is remove the tile on the world "board"
-        world.world[world.enemies[index].pos.y][world.enemies[index].pos.x] =
-            world.board[world.enemies[index].pos.y][world.enemies[index].pos.x];
+        let pos = world.enemies[index].pos;
         world.enemies.remove(index);
+        world.entity_positions.remove(&pos);
     }
 
 

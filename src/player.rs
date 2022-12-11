@@ -119,7 +119,7 @@ impl Player {
                     }
                 }
                 BUILD_KEYCODE => {
-                    Player::build(world);
+                    // Player::build(world);
                 }
                 _ => {return false;}
             },
@@ -128,19 +128,19 @@ impl Player {
         return true;
     }
 
-    pub fn build(world: &mut World) {
-        let position = World::new_position(
-            world.player.pos,
-            world.player.direction.clone(),
-            world,
-            1,
-        );
-        if world.world[position.x][position.x] == tile::STRUCTURE {
-            world.world[position.y][position.x] = world.board[position.y][position.x]
-        } else if position != world.player.pos {
-            world.world[position.y][position.x] = tile::STRUCTURE;
-        }
-    }
+    // pub fn build(world: &mut World) {
+    //     let position = World::new_position(
+    //         world.player.pos,
+    //         world.player.direction.clone(),
+    //         world,
+    //         1,
+    //     );
+    //     if world.world[position.x][position.x] == tile::STRUCTURE {
+    //         world.world[position.y][position.x] = world.board[position.y][position.x]
+    //     } else if position != world.player.pos {
+    //         world.world[position.y][position.x] = tile::STRUCTURE;
+    //     }
+    // }
 
     pub fn melee_attack(world: &mut World) {
         // gets the position that the attack will be applied to, one tile forward of the player in
