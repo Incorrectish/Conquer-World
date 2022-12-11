@@ -219,14 +219,13 @@ impl World {
         new_position: Position, 
     ) {
         let info = world.entity_positions.get(&prev_position);
-        let mut tile_color = tile::GRASS;
-        let mut tile_type = Entity::Player;
         if let Some(contents) = info {
-            tile_color = contents.0;
-            tile_type = contents.1.clone();
+            let tile_color = contents.0;
+            let tile_type = contents.1.clone();
+            world.entity_positions.insert(new_position, (tile_color, tile_type));
+            world.entity_positions.remove(&prev_position);
         }
-        world.entity_positions.insert(new_position, (tile_color, tile_type));
-        world.entity_positions.remove(&prev_position);
+        
     }
 
     pub fn travel(
@@ -467,7 +466,7 @@ impl World {
     // This very simply gets the new position from the old, by checking the direction and the
     // bounds. Should be refactored to give a travel distance instead of just one
     pub fn new_position(
-        mut pos: Position,
+        pos: Position,
         direction: Direction,
         world: &mut Self,
         travel_distance: usize,

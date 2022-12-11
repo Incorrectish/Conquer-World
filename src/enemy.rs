@@ -128,8 +128,9 @@ impl Enemy {
     }
 
     pub fn can_travel_to(
+        tile: [f32; 4], 
         position: Position,
-        entity_positions: &HashMap<Position, ([f32; 4], Entity)>,
+        entity_positions: &HashMap<Position, ([f32; 4], Option<Entity>)>,
         terrain_positions: &HashMap<Position, [f32;4]>
     ) -> bool {
         if entity_positions.contains_key(&position) || terrain_positions.contains_key(&position) {
@@ -139,14 +140,13 @@ impl Enemy {
                 if PERMISSIBLE_TILES.contains(&info.unwrap().0) {
                     return true;
                 }
-            } 
-            
+            }
+
             if info2.is_some() {
                 if PERMISSIBLE_TILES.contains(&info2.unwrap()) {
                     return true;
                 }
             }
-
             return false;
         }
         true

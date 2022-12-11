@@ -64,14 +64,13 @@ impl Projectile {
                 if PERMISSIBLE_TILES.contains(&info.unwrap().0) {
                     return true;
                 }
-            } 
-            
+            }
+
             if info2.is_some() {
                 if PERMISSIBLE_TILES.contains(&info2.unwrap()) {
                     return true;
                 }
             }
-
             return false;
         }
         true
