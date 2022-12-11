@@ -35,9 +35,9 @@ pub struct Enemy {
 
 impl Enemy {
     pub fn new(
-        world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize],
         x: usize,
         y: usize,
+        speed: usize,
     ) -> Self {
         let temp = Self {
             pos: Position::new(x, y),
@@ -47,7 +47,6 @@ impl Enemy {
             health: ENEMY_HEALTH,
             resistance: 1.0,
         };
-        world[y][x] = temp.color;
         temp
     }
 
@@ -59,40 +58,6 @@ impl Enemy {
         // potentially modify the damage done with the multiplier
         self.health -= damage;
     }
-
-    // TODO: rewrite to make the travel function the same as player travel
-    // pub fn travel(
-    //     &mut self,
-    //     world: &mut World,
-    // ) {
-    //     world.world[self.pos.1][self.pos.0] = self.covered_tile;
-    //     match self.direction {
-    //         Direction::North => {
-    //             if self.pos.1 > 0 {
-    //                 self.pos.1 -= 1
-    //             }
-    //         }
-    //         Direction::South => {
-    //             if self.pos.1 < (WORLD_SIZE.1 - 1) as usize {
-    //                 self.pos.1 += 1
-    //             }
-    //         }
-    //         Direction::East => {
-    //             if self.pos.0 < (WORLD_SIZE.0 - 1) as usize {
-    //                 self.pos.0 += 1
-    //             }
-    //         }
-    //         Direction::West => {
-    //             if self.pos.0 > 0 {
-    //                 self.pos.0 -= 1
-    //             }
-    //         }
-    //     }
-    //     self.covered_tile = world.world[self.pos.1][self.pos.0];
-    //     world.world[self.pos.1][self.pos.0] = self.color;
-    // }
-
-    // pub fn find_path(world: &mut World) -> VecDeQueue
 
     pub fn update(world: &mut World) {
         // thinking of using a hack to remove all the enemies at the position instead because two
@@ -109,10 +74,9 @@ impl Enemy {
 
     pub fn kill(world: &mut World, index: usize) {
         // for now all it does is remove the tile on the world "board"
-        // TODO: refactor next two lines using terrain implementation
-        // world.world[world.enemies[index].pos.y][world.enemies[index].pos.x] =
-        //    world.board[world.enemies[index].pos.y][world.enemies[index].pos.x];
+        let pos = world.enemies[index].pos;
         world.enemies.remove(index);
+        world.entity_positions.remove(&pos);
     }
 
 
