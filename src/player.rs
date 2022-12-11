@@ -90,7 +90,7 @@ impl Player {
                 }
                 KeyCode::Up => {
                     world.player.direction = Direction::North;
-                    World::travel(world, Entity::Player);
+                     World::travel(world, Entity::Player);
                 }
                 KeyCode::Left => {
                     world.player.direction = Direction::West;
