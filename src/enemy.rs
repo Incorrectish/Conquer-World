@@ -139,7 +139,6 @@ impl Enemy {
     //BELOW -----------> Really Slow BFS method, doesn't even work half the time because the path is really long.
     pub fn move_enemy(index: usize, world: &mut World) {
         let mut travel_path = Self::get_best_path(index, world);
-        // dbg!(travel_path.len());
         let enemy = &world.enemies[index];
         let mut cur_pos = enemy.pos;
         for _ in 0..enemy.speed {
@@ -156,22 +155,25 @@ impl Enemy {
     pub fn get_best_path(index: usize, world: &mut World) -> LinkedList<Position> {
         let enemy = &world.enemies[index];
         let mut visited = [[false; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
-        let mut possible_paths = LinkedList::from([(enemy.pos, LinkedList::new())]);
+        let mut previous = [[Position::new(50, 50); WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
+        let mut queue = LinkedList::new();
+        queue.push_back(enemy.pos);
         // let mut iterations = 0;
+        visited[enemy.pos.y][enemy.pos.x] = true;
         // let target_iters = 5;
-        while !possible_paths.is_empty() {
-            if let Some((node, mut path)) = possible_paths.pop_front() {
-                path.push_back(node);
-                visited[node.y][node.x] = true;
+        while !queue.is_empty() {
+            if let Some(node) = queue.pop_front() {
 
                 if node == world.player.pos {
-                    return path;
+                    break;
                 }
 
-                let adjacent_nodes = Self::get_neighbors(world, node);
-                for item in adjacent_nodes {
-                    if !visited[item.y][item.x] {
-                        possible_paths.push_back((item, path.clone()));
+                let neighbors = Self::get_neighbors(world, node);
+                for next in neighbors {
+                    if !visited[next.y][next.x] {
+                        queue.push_back(next);
+                        visited[next.y][next.x] = true;
+                        previous[next.y][next.x] = node;
                     }
                 }
                 // iterations += 1;
@@ -181,7 +183,15 @@ impl Enemy {
                 // }
             }
         }
-        LinkedList::new()
+
+        let mut path = LinkedList::new();
+        let mut position = world.player.pos;
+        let enemy_pos = world.enemies[index].pos;
+        while (position != enemy_pos) {
+            path.push_front(position);
+            position = previous[position.y][position.x];
+        }
+        path
     }
 
     pub fn get_neighbors(world:&mut World, position: Position) -> Vec<Position> {
