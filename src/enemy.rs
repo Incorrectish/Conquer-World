@@ -109,8 +109,9 @@ impl Enemy {
 
     pub fn kill(world: &mut World, index: usize) {
         // for now all it does is remove the tile on the world "board"
-        world.world[world.enemies[index].pos.y][world.enemies[index].pos.x] =
-            world.board[world.enemies[index].pos.y][world.enemies[index].pos.x];
+        // TODO: refactor next two lines using terrain implementation
+        // world.world[world.enemies[index].pos.y][world.enemies[index].pos.x] =
+        //    world.board[world.enemies[index].pos.y][world.enemies[index].pos.x];
         world.enemies.remove(index);
     }
 

@@ -24,7 +24,7 @@ use crate::state::State;
 // Define the world size which is (width, height)
 pub const WORLD_SIZE: (i16, i16) = (50, 50);
 // Define the board size; for now, doubled dimensions of WORLD_SIZE
-pub const BOARD_SIZE: (i16, i16) = (100, 100);
+pub const BOARD_SIZE: (i16, i16) = (350, 350);
 // define the size of each tile which a square of pixels, size: (x, y) pixels.
 pub const TILE_SIZE: (i16, i16) = (16, 16);
 // define screen size in pixels. Will be grid size * tile size

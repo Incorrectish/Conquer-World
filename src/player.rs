@@ -90,7 +90,7 @@ impl Player {
                 }
                 KeyCode::Up => {
                     world.player.direction = Direction::North;
-                    World::travel(world, Entity::Player);
+                     World::travel(world, Entity::Player);
                 }
                 KeyCode::Left => {
                     world.player.direction = Direction::West;
@@ -120,7 +120,7 @@ impl Player {
                 }
                 BUILD_KEYCODE => {
                     Player::build(world);
-                }
+                },
                 _ => {return false;}
             },
             None => {return false;}
@@ -135,8 +135,9 @@ impl Player {
             world,
             1,
         );
-        if world.world[position.x][position.x] == tile::STRUCTURE {
-            world.world[position.y][position.x] = world.board[position.y][position.x]
+        if world.world[position.y][position.x] == tile::STRUCTURE {
+            // TODO: refactor this so that it doesn't used board (use the terrain hashmap)
+            // world.world[position.y][position.x] = world.board[position.y][position.x]
         } else if position != world.player.pos {
             world.world[position.y][position.x] = tile::STRUCTURE;
         }

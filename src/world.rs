@@ -26,7 +26,7 @@ pub struct World {
     pub world: [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize],
 
     // board that stores the internal world
-    pub board: [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
+    // pub board: [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
 
     // stores the bottom left and top right coordinates of the currently rendered world, useful for
     // querying whether a coordinate is in the current world
@@ -66,16 +66,17 @@ impl World {
         let mut terrain_positions = HashMap::new();
         let mut board = [[tile::GRASS; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize];
         let mut world = [[tile::GRASS; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
-        World::gen_water(&mut rng, &mut board, &mut terrain_positions);
-        World::gen_boss(&mut board, &mut terrain_positions);
-        World::draw_world(&mut world, &mut board);
+        World::gen_water(&mut rng, &mut terrain_positions);
+        World::gen_outer_boss_walls(&mut terrain_positions);
+        World::gen_boss(&mut terrain_positions);
+        World::draw_world(&mut world);
         let player = Player::new();       
         let enemies = vec![Enemy::new(&mut world, 20, 20)];
         entity_positions.insert(player.pos, (player.color, (Entity::Player)));
         entity_positions.insert(enemies[0].pos, (enemies[0].color, Entity::Enemy(0)));
         World {
             world,
-            board,
+            // board,
             top_left: (0, 0),
             bottom_right: (WORLD_SIZE.0 as usize, WORLD_SIZE.1 as usize),
             board_top_left: (0, 0),
@@ -94,7 +95,7 @@ impl World {
     // draws initial world from board (0 offsets)
     pub fn draw_world(
         world: &mut [[[f32; 4]; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize],
-        board: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
+        // board: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
     ) {
         for i_coord in 0..WORLD_SIZE.0 {
             for j_coord in 0..WORLD_SIZE.1 {
@@ -102,7 +103,7 @@ impl World {
                 // dimension is which
                 let i = i_coord as usize;
                 let j = j_coord as usize;
-                world[j][i] = board[j][i];
+                // world[j][i] = board[j][i];
             }
         }
     }
@@ -507,7 +508,10 @@ impl World {
     }
 
     // generates the center boss room for map
-    pub fn gen_boss(board: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize], terrain_positions: &mut HashMap<Position, [f32; 4]>) {
+    pub fn gen_boss(
+        //board: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
+        terrain_positions: &mut HashMap<Position, [f32; 4]>
+    ) {
         // x and y of center of map
         let x: usize = (BOARD_SIZE.0 as usize) / 2 - 1;
         let y: usize = (BOARD_SIZE.1 as usize) / 2 - 1;
@@ -515,7 +519,7 @@ impl World {
         // builds a 12x12 square around the center of WALL tiles
         for i in 0..12 {
             for j in 0..12 {
-                board[x - 5 + i][y - 5 + j] = tile::WALL;
+                //board[x - 5 + i][y - 5 + j] = tile::WALL;
                 let loc = Position::new(x - 5 + i as usize, y - 5 + j as usize);
                 terrain_positions.insert(loc, tile::WALL);
             }
@@ -524,7 +528,7 @@ impl World {
         // builds a 4x4 square in the center of PORTAL tiles
         for i in 0..4 {
             for j in 0..4 {
-                board[x - 1 + i][y - 1 + j] = tile::PORTAL;
+                //board[x - 1 + i][y - 1 + j] = tile::PORTAL;
                 let loc = Position::new(x - 1 + i as usize, y - 1 + j as usize);
                 terrain_positions.insert(loc, tile::PORTAL);
             }
@@ -534,14 +538,15 @@ impl World {
     // generates water tiles around the map
     pub fn gen_water(
         rng: &mut ThreadRng,
-        board: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
+        //board: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
         terrain_positions: &mut HashMap<Position, [f32; 4]>,
     ) {
         let mut lakes_added = 0;
         while lakes_added < TOTAL_LAKES {
-            let x = random::rand_range(rng, 5, BOARD_SIZE.0); // random x coordinate
-            let y = random::rand_range(rng, 5, BOARD_SIZE.1); // random y coordinate
-            Self::gen_lake_helper(rng, x, y, 0, board, terrain_positions); // new lake centered at (x, y)
+            let x = random::rand_range(rng, WORLD_SIZE.0 + 5, BOARD_SIZE.0 - WORLD_SIZE.0 - 5); // random x coordinate
+            let y = random::rand_range(rng, WORLD_SIZE.0 + 5, BOARD_SIZE.1 - WORLD_SIZE.1 - 5); // random y coordinate
+            // Self::gen_lake_helper(rng, x, y, 0, board, terrain_positions); // new lake centered at (x, y)
+            Self::gen_lake_helper(rng, x, y, 0, terrain_positions); // new lake centered at (x, y)
             lakes_added += 1;
         }
     }
@@ -554,13 +559,13 @@ impl World {
         x: i16,
         y: i16,
         dist: i16,
-        board: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
+        //board: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
         terrain_positions: &mut HashMap<Position, [f32; 4]>,
     ) {
         // sets curr tile to water
         let loc = Position::new(x as usize, y as usize);
         if !terrain_positions.contains_key(&loc) {
-            board[y as usize][x as usize] = tile::WATER;
+            // board[y as usize][x as usize] = tile::WATER;
             terrain_positions.insert(loc, tile::WATER);
         }
 
@@ -573,7 +578,8 @@ impl World {
                 let j = y + dir[1];
                 // if in bounds, recursively call fn on adjacent tile (draws WATER at that tile)
                 if i >= 0 && i < BOARD_SIZE.0 && j >= 0 && j < BOARD_SIZE.1 {
-                    Self::gen_lake_helper(rng, i, j, dist + 1, board, terrain_positions);
+                    // Self::gen_lake_helper(rng, i, j, dist + 1, board, terrain_positions);
+                    Self::gen_lake_helper(rng, i, j, dist + 1, terrain_positions);
                 }
             }
         }
@@ -584,6 +590,41 @@ impl World {
         random::bernoulli(rng, 1. - 0.2 * (dist as f32))
     }
 
-    // checks to see if there is an adjacent lake with 1 space of padding i.e.
-    fn check_adjacent_lake(x: i16, y: i16, world: &mut World) {}
+    fn gen_outer_boss_walls(
+        // board: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
+        terrain_positions: &mut HashMap<Position, [f32; 4]>
+    ) {
+        // the upper left corner of each mini boss room
+        const UP_LEFT_CORNERS: [[i16; 2]; 4] = [[WORLD_SIZE.0, WORLD_SIZE.1],
+                                                [WORLD_SIZE.0*5, WORLD_SIZE.1],
+                                                [WORLD_SIZE.0, WORLD_SIZE.1*5],
+                                                [WORLD_SIZE.0*5, WORLD_SIZE.1*5]];
+
+        for corner in UP_LEFT_CORNERS {
+            for i in 0..50 {
+                // generates a thickness 2 wall around each mini boss room square
+                let mut loc = Position::new(corner[1] as usize, (corner[0] + i) as usize);
+                terrain_positions.insert(loc, tile::WALL);
+                loc = Position::new((corner[1] + WORLD_SIZE.1 - 1) as usize, (corner[0] + i) as usize);
+                terrain_positions.insert(loc, tile::WALL);
+                loc = Position::new((corner[1] + i) as usize, corner[0] as usize);
+                terrain_positions.insert(loc, tile::WALL);
+                loc = Position::new((corner[1] + i) as usize, (corner[0] + WORLD_SIZE.0 - 1) as usize);
+                terrain_positions.insert(loc, tile::WALL);
+
+                let mut loc = Position::new((corner[1] - 1) as usize, (corner[0] + i) as usize);
+                terrain_positions.insert(loc, tile::WALL);
+                loc = Position::new((corner[1] + WORLD_SIZE.1) as usize, (corner[0] + i) as usize);
+                terrain_positions.insert(loc, tile::WALL);
+                loc = Position::new((corner[1] + i) as usize, (corner[0] - 1) as usize);
+                terrain_positions.insert(loc, tile::WALL);
+                loc = Position::new((corner[1] + i) as usize, (corner[0] + WORLD_SIZE.0) as usize);
+                terrain_positions.insert(loc, tile::WALL);
+            }
+        }
+        // in progress: creates a hole in the left wall of the upper left mini boss room
+        terrain_positions.remove(&Position::new(WORLD_SIZE.1 as usize, (WORLD_SIZE.0 + WORLD_SIZE.0 / 2) as usize));
+        terrain_positions.remove(&Position::new((WORLD_SIZE.1 - 1) as usize, (WORLD_SIZE.0 + WORLD_SIZE.0 / 2) as usize));
+    }
+
 }
