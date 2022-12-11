@@ -101,7 +101,9 @@ impl Enemy {
             if world.enemies[index].health <= 0 {
                 Enemy::kill(world, index);
             }
-            Self::move_enemy(index, world);
+            if World::coordinates_are_within_world(world, world.enemies[index].pos) {
+                Self::move_enemy(index, world);
+            }
         }
     }
 
@@ -145,7 +147,7 @@ impl Enemy {
         queue.push_back(enemy.pos);
 
         
-        visited[enemy.pos.y][enemy.pos.x] = true;
+        visited[enemy.pos.y - world.y_offset][enemy.pos.x - world.x_offset] = true;
         while !queue.is_empty() {
             if let Some(node) = queue.pop_front() {
 
@@ -158,12 +160,12 @@ impl Enemy {
                 // the queue
                 let neighbors = Self::get_neighbors(world, node);
                 for next in neighbors {
-                    if !visited[next.y][next.x] {
+                    if !visited[next.y - world.y_offset][next.x - world.x_offset] {
                         queue.push_back(next);
-                        visited[next.y][next.x] = true;
+                        visited[next.y - world.y_offset][next.x - world.x_offset] = true;
 
                         // mark the previous of the neighbor as the node to reconstruct the path
-                        previous[next.y][next.x] = node;
+                        previous[next.y - world.y_offset][next.x - world.x_offset] = node;
                     }
                 }
             }
@@ -178,10 +180,10 @@ impl Enemy {
 
             // if the position's or y is greater than the world size, that means that a path wasn't
             // found, as it means the previous position did not have a previous, so we break out
-            if position.x as i16 >= WORLD_SIZE.0 {
+            if (position.x - world.x_offset) as i16 >= WORLD_SIZE.0 {
                 break;
             }
-            position = previous[position.y][position.x];
+            position = previous[position.y - world.y_offset][position.x - world.x_offset];
         }
         path
     }
