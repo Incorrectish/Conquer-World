@@ -27,6 +27,9 @@ pub struct Enemy {
     // world is a set of tiles and the enemy is represented as a solid color
     pub color: [f32; 4],
 
+    //Enemy attack damage
+    pub attack_damage: usize,
+
     // Stores enemy health: for enemy death and such
     health: usize,
 
@@ -44,6 +47,7 @@ impl Enemy {
             direction: Direction::North,
             speed: 1,
             color: tile::ENEMY,
+            attack_damage: 1,
             health: ENEMY_HEALTH,
             resistance: 1.0,
         };
@@ -89,10 +93,15 @@ impl Enemy {
         let mut cur_pos = enemy.pos;
         for _ in 0..enemy.speed {
             if let Some(new_pos) = travel_path.pop_front() {
-                // simply updates the render queue
-                World::update_position(world, cur_pos, new_pos);
-                world.enemies[index].pos = new_pos;
-                cur_pos = new_pos;
+                if new_pos == world.player.pos {
+                    world.player.damage(world.enemies[index].attack_damage);
+                } else {
+                    // simply updates the render queue
+                    World::update_position(world, cur_pos, new_pos);
+                    world.enemies[index].pos = new_pos;
+                    cur_pos = new_pos;
+                }
+                
             } else {
                 break;
             }

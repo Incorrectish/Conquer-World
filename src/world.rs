@@ -60,6 +60,7 @@ impl World {
         let mut terrain_positions = HashMap::new();
         World::gen_water(&mut rng, &mut terrain_positions);
         World::gen_boss(&mut terrain_positions);
+        World::gen_outer_boss_walls(&mut terrain_positions);
         let player = Player::new();
         entity_positions.insert(player.pos, (player.color, (Entity::Player)));
         let mut enemies = Vec::new();

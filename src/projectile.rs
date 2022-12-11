@@ -4,7 +4,7 @@ use std::{
     collections::HashMap,
 };
 
-const PERMISSIBLE_TILES: [[f32; 4]; 5] = [tile::WATER, tile::GRASS, tile::PLAYER, tile::ENEMY, tile::PROJECTILE];
+const PERMISSIBLE_TILES: [[f32; 4]; 4] = [tile::WATER, tile::GRASS, tile::PLAYER, tile::PROJECTILE];
 
 pub struct Projectile {
     pub pos: Position,

@@ -64,7 +64,8 @@ impl Player {
     }
 
     pub fn damage(&mut self, damage: usize) {
-        self.health -= damage
+        self.health -= damage;
+        dbg!(self.health);
     }
 
     pub fn new() -> Self {
