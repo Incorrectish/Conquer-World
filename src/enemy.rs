@@ -155,10 +155,11 @@ impl Enemy {
     pub fn get_best_path(index: usize, world: &mut World) -> LinkedList<Position> {
         let enemy = &world.enemies[index];
         let mut visited = [[false; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
-        let mut previous = [[Position::new(50, 50); WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
+        let mut previous = [[Position::new(WORLD_SIZE.0 as usize, WORLD_SIZE.1 as usize); WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
         let mut queue = LinkedList::new();
         queue.push_back(enemy.pos);
         // let mut iterations = 0;
+        dbg!(enemy.pos);
         visited[enemy.pos.y][enemy.pos.x] = true;
         // let target_iters = 5;
         while !queue.is_empty() {
@@ -189,6 +190,9 @@ impl Enemy {
         let enemy_pos = world.enemies[index].pos;
         while (position != enemy_pos) {
             path.push_front(position);
+            if position.x as i16 >= WORLD_SIZE.0 {
+                break;
+            }
             position = previous[position.y][position.x];
         }
         path
