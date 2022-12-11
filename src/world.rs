@@ -7,7 +7,7 @@ use crate::{
     random,
     tile::{self, ENEMY, FLOOR, PLAYER},
     utils::Position,
-    BOARD_SIZE, TILE_SIZE, WORLD_SIZE,
+    BOARD_SIZE, TILE_SIZE, WORLD_SIZE, UNIVERSAL_OFFSET
 };
 
 use ggez::graphics::{self, Canvas};
@@ -71,10 +71,10 @@ impl World {
             &mut enemies,
         );
         World {
-            top_left: (0, 0),
-            bottom_right: (WORLD_SIZE.0 as usize, WORLD_SIZE.1 as usize),
-            board_top_left: (0, 0),
-            board_bottom_right: (BOARD_SIZE.0 as usize, BOARD_SIZE.1 as usize),
+            top_left: (0,0),
+            bottom_right: (WORLD_SIZE.0 as usize, (WORLD_SIZE.1) as usize),
+            board_top_left: (0,0),
+            board_bottom_right: (BOARD_SIZE.0 as usize, (BOARD_SIZE.1) as usize),
             x_offset: 0,
             y_offset: 0,
             player,
@@ -114,6 +114,22 @@ impl World {
     }
 
     pub fn draw(&self, canvas: &mut graphics::Canvas) {
+        for i in 0..WORLD_SIZE.0 {
+            for j in 0..UNIVERSAL_OFFSET {
+                canvas.draw(
+                    &graphics::Quad,
+                    graphics::DrawParam::new()
+                        .dest_rect(graphics::Rect::new_i32(
+                            (i) as i32 * TILE_SIZE.0 as i32,
+                            (j) as i32 * TILE_SIZE.1 as i32,
+                            TILE_SIZE.0 as i32,
+                            TILE_SIZE.1 as i32,
+                        ))
+                        .color([0.0,0.0,0.0,1.0]),
+                )
+            }
+        }
+        
         for (loc, color) in &self.terrain_positions {
             if self.y_offset <= loc.y && self.x_offset <= loc.x {
                 canvas.draw(
@@ -121,7 +137,7 @@ impl World {
                     graphics::DrawParam::new()
                         .dest_rect(graphics::Rect::new_i32(
                             (loc.x - self.x_offset) as i32 * TILE_SIZE.0 as i32,
-                            (loc.y - self.y_offset) as i32 * TILE_SIZE.1 as i32,
+                            (loc.y - self.y_offset + UNIVERSAL_OFFSET as usize) as i32 * TILE_SIZE.1 as i32,
                             TILE_SIZE.0 as i32,
                             TILE_SIZE.1 as i32,
                         ))
@@ -137,7 +153,7 @@ impl World {
                     graphics::DrawParam::new()
                         .dest_rect(graphics::Rect::new_i32(
                             (loc.x - self.x_offset) as i32 * TILE_SIZE.0 as i32,
-                            (loc.y - self.y_offset) as i32 * TILE_SIZE.1 as i32,
+                            (loc.y - self.y_offset + UNIVERSAL_OFFSET as usize) as i32 * TILE_SIZE.1 as i32,
                             TILE_SIZE.0 as i32,
                             TILE_SIZE.1 as i32,
                         ))
@@ -155,7 +171,7 @@ impl World {
         position.x >= world.x_offset
             && position.x < world.x_offset + WORLD_SIZE.0 as usize
             && position.y >= world.y_offset
-            && position.y < world.y_offset + WORLD_SIZE.1 as usize
+            && position.y < world.y_offset + (WORLD_SIZE.1) as usize
     }
 
     // Returns true if coordinates inside board (note distinction from world), false otherwise

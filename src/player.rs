@@ -6,7 +6,7 @@ use crate::{
     tile,
     world::World,
     WORLD_SIZE, BOARD_SIZE, TILE_SIZE,
-    utils::Position
+    utils::Position, UNIVERSAL_OFFSET,
 };
 use ggez::input::keyboard::{KeyCode, KeyInput};
 use ggez::winit::event::VirtualKeyCode;
@@ -70,7 +70,7 @@ impl Player {
 
     pub fn new() -> Self {
         let temp = Self {
-            pos: Position::new(0, 0),
+            pos: Position::new(0,0),
             direction: Direction::South,
             speed: PLAYER_INITIAL_SPEED,
             color: tile::PLAYER,
