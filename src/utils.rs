@@ -13,7 +13,7 @@ impl Entity2 {
 }
 
 
-#[derive(Eq, Hash, PartialEq, Copy, Clone)]
+#[derive(Eq, Hash, PartialEq, Copy, Clone, Debug)]
 
 pub struct Position {
     pub x: usize, 

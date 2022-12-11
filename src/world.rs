@@ -70,7 +70,7 @@ impl World {
         World::gen_boss(&mut board, &mut terrain_positions);
         World::draw_world(&mut world, &mut board);
         let player = Player::new();       
-        let enemies = vec![Enemy::new(&mut world, 10, 10)];
+        let enemies = vec![Enemy::new(&mut world, 20, 20)];
         entity_positions.insert(player.pos, (player.color, (Entity::Player)));
         entity_positions.insert(enemies[0].pos, (enemies[0].color, Entity::Enemy(0)));
         World {
@@ -217,8 +217,6 @@ impl World {
         if let Some(contents) = info {
             let tile_color = contents.0;
             let tile_type = contents.1.clone();
-            dbg!(new_position.x);
-            dbg!(new_position.y);
             world.entity_positions.insert(new_position, (tile_color, tile_type));
             world.entity_positions.remove(&prev_position);
         }

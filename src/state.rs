@@ -42,11 +42,7 @@ impl ggez::event::EventHandler<GameError> for State {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         // render the graphics with the rgb value, it will always be black though because the
         // self.r,g,b,a values never change from 0
-        let mut canvas = graphics::Canvas::from_frame(
-            ctx,
-            graphics::Color::from(tile::GRASS),
-        );
-
+        let mut canvas = graphics::Canvas::from_frame(ctx, graphics::Color::from(tile::GRASS));
 
         // draw our state matrix "world" to the screen
         // We must partition our window into small sectors of 32 by 32 pixels and then for each
@@ -65,7 +61,7 @@ impl ggez::event::EventHandler<GameError> for State {
         //                 ))
         //                 .color(self.world.world[i as usize][j as usize]),
         //         );
-        //     }            
+        //     }
         // }
 
         self.world.draw(&mut canvas);
@@ -96,13 +92,13 @@ impl ggez::event::EventHandler<GameError> for State {
         _repeated: bool,
     ) -> Result<(), GameError> {
         // Just takes in the user input and makes an action based off of it
-        Player::use_input(input, &mut self.world);
-        Projectile::update(&mut self.world);
+        if Player::use_input(input, &mut self.world) {
+            Projectile::update(&mut self.world);
 
-        // updates all the enemies in the world, for now only removes them once their health is
-        // less than or equal to 0
-        Enemy::update(&mut self.world);
-        
+            // updates all the enemies in the world, for now only removes them once their health is
+            // less than or equal to 0
+            Enemy::update(&mut self.world);
+        }
         Ok(())
     }
 

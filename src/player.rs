@@ -81,7 +81,7 @@ impl Player {
 
     // eventually this should be the functionality to like shoot projectiles and stuff but for now
     // it just handles like arrow keys
-    pub fn use_input(key: KeyInput, world: &mut World) {
+    pub fn use_input(key: KeyInput, world: &mut World) -> bool {
         match key.keycode {
             Some(key_pressed) => match key_pressed {
                 KeyCode::Down => {
@@ -121,10 +121,11 @@ impl Player {
                 BUILD_KEYCODE => {
                     Player::build(world);
                 }
-                _ => {}
+                _ => {return false;}
             },
-            None => {}
+            None => {return false;}
         }
+        return true;
     }
 
     pub fn build(world: &mut World) {
