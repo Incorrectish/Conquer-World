@@ -8,12 +8,10 @@ use crate::{
     WORLD_SIZE, BOARD_SIZE, TILE_SIZE,
     utils::Position, UNIVERSAL_OFFSET,
 };
+
+use::ggez::graphics;
 use ggez::input::keyboard::{KeyCode, KeyInput};
 use ggez::winit::event::VirtualKeyCode;
-use ggez::graphics::{self, Canvas};
-use std::{
-    collections::HashMap,
-};
 
 // Can change easily
 const MAX_PLAYER_HEALTH: usize = 30;
