@@ -14,8 +14,8 @@ use ggez::graphics;
 
 use rand::rngs::ThreadRng;
 
-use std::collections::HashMap;
 use std::cmp::min;
+use std::collections::HashMap;
 
 pub const BOSS_ROOMS: [Position; 5] = [
     Position::new(1, 1),
@@ -26,7 +26,7 @@ pub const BOSS_ROOMS: [Position; 5] = [
 ];
 const TOTAL_LAKES: i16 = 100;
 const TOTAL_MOUNTAINS: i16 = 75;
-const ENEMY_COUNT: usize = 1;
+const ENEMY_COUNT: usize = 0;
 
 pub struct World {
     //Stores which world the player is in
@@ -44,8 +44,8 @@ pub struct World {
     // offset in x and y direction for world
     // for example, if x_offset = 25 and y_offset = 10, board will span from
     // 25 <= x < 25 + WORLD_SIZE.0 and 10 <= y < 10 + WORLD_SIZE.1
-    pub x_offset: usize,
-    pub y_offset: usize,
+    // pub x_offset: usize,
+    // pub y_offset: usize,
 
     // store an instance of a player
     pub player: Player,
@@ -59,9 +59,13 @@ pub struct World {
     // Hashmap of positions to colors
     pub entity_positions: HashMap<Position, ([f32; 4], Entity)>,
     pub terrain_positions: HashMap<Position, [f32; 4]>,
-    pub entity_map: [[HashMap<Position, ([f32; 4], Entity)>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize]; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
-    pub terrain_map: [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize]; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
-    pub door_map: [[HashMap<Position, bool>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize]; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
+    pub entity_map: [[HashMap<Position, ([f32; 4], Entity)>;
+        (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
+        (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
+    pub terrain_map: [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
+        (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
+    pub door_map: [[HashMap<Position, bool>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
+        (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     pub rng: ThreadRng,
 }
 
@@ -70,20 +74,15 @@ impl World {
         let mut rng = rand::thread_rng();
         let mut entity_positions = HashMap::new();
         let terrain_positions = HashMap::new();
-        let mut entity_map:
-        [[HashMap<Position, ([f32; 4], Entity)>; 
-        (BOARD_SIZE.0 / WORLD_SIZE.0) as usize]; 
-        (BOARD_SIZE.1 / WORLD_SIZE.1) as usize] = Default::default();  
-        let mut terrain_map:
-            [[HashMap<Position, [f32; 4]>; 
-            (BOARD_SIZE.0 / WORLD_SIZE.0) as usize]; 
-            (BOARD_SIZE.1 / WORLD_SIZE.1) as usize] = Default::default();  
-        let mut door_map: 
-            [[HashMap<Position, bool>;
-            (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
+        let mut entity_map: [[HashMap<Position, ([f32; 4], Entity)>;
+            (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
+            (BOARD_SIZE.1 / WORLD_SIZE.1) as usize] = Default::default();
+        let mut terrain_map: [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
+            (BOARD_SIZE.1 / WORLD_SIZE.1) as usize] = Default::default();
+        let mut door_map: [[HashMap<Position, bool>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
             (BOARD_SIZE.0 / WORLD_SIZE.0) as usize] = Default::default();
         World::gen_boss(&mut terrain_map);
-        World::gen_outer_boss_walls(&mut terrain_map); 
+        World::gen_outer_boss_walls(&mut terrain_map);
         World::gen_lake(&mut rng, &mut terrain_map);
         World::gen_mountain(&mut rng, &mut terrain_map);
         let player = Player::new();
@@ -97,8 +96,6 @@ impl World {
             bottom_right: (WORLD_SIZE.0 as usize, (WORLD_SIZE.1) as usize),
             board_top_left: (0, 0),
             board_bottom_right: (BOARD_SIZE.0 as usize, (BOARD_SIZE.1) as usize),
-            x_offset: 0,
-            y_offset: 0,
             player,
             enemies,
             projectiles: Vec::new(),
@@ -125,11 +122,13 @@ impl World {
             // the loop just generates new positions until it finds an open one, and it inserts an
             // enemy there
             loop {
-                let x = random::rand_range(rng, 0, WORLD_SIZE.0); // random x coordinate
-                let y = random::rand_range(rng, 0, WORLD_SIZE.1); // random y coordinate
+
                 // let x = random::rand_range(rng, 0, BOARD_SIZE.0); // random x coordinate
                 // let y = random::rand_range(rng, 0, BOARD_SIZE.1); // random y coordinate
-                let world_loc = Position::new((x / WORLD_SIZE.0) as usize, (y / WORLD_SIZE.1) as usize);
+                let x = random::rand_range(rng, 0, WORLD_SIZE.0); // random x coordinate
+                let y = random::rand_range(rng, 0, WORLD_SIZE.1); // random y coordinate
+                let world_loc =
+                    Position::new((x / WORLD_SIZE.0) as usize, (y / WORLD_SIZE.1) as usize);
                 let random_loc = Position::new(
                     (x - (50 * world_loc.x as i16)) as usize,
                     (y - (50 * world_loc.y as i16)) as usize,
@@ -145,7 +144,13 @@ impl World {
                         random_loc,
                         (tile::BASIC_ENEMY, Entity::Enemy(enemies.len())),
                     );
-                    enemies.push(Enemy::new(x as usize, y as usize, 1, tile::BASIC_ENEMY, world_loc));
+                    enemies.push(Enemy::new(
+                        x as usize,
+                        y as usize,
+                        1,
+                        tile::BASIC_ENEMY,
+                        world_loc,
+                    ));
                     break;
                 }
             }
@@ -271,14 +276,25 @@ impl World {
 
         //Draw every pixel that is contained in the entity HashMap
         let curr_world_entity_map = &self.entity_map[self.world_position.y][self.world_position.x];
+
         for (loc, color) in curr_world_entity_map {
+            // if (loc.y < (self.world_position.y * WORLD_SIZE.1 as usize) && (self.world_position.x * WORLD_SIZE.0 as usize) > 0) {
+                // dbg!(loc);
+                // dbg!(color.0);
+                // dbg!(self.world_position);
+            // }
             canvas.draw(
                 &graphics::Quad,
                 graphics::DrawParam::new()
                     .dest_rect(graphics::Rect::new_i32(
-                        loc.x as i32 * TILE_SIZE.0 as i32,
-                        (loc.y as usize + UNIVERSAL_OFFSET as usize) as i32
-                            * TILE_SIZE.1 as i32,
+                        (loc.x as i32 * TILE_SIZE.0 as i32) as i32,
+                        ((loc.y + UNIVERSAL_OFFSET as usize) as i32) * TILE_SIZE.1 as i32,
+                        // (loc.x - (self.world_position.x * WORLD_SIZE.0 as usize)) as i32
+                        //     * TILE_SIZE.0 as i32,
+                        // (loc.y - (self.world_position.y * WORLD_SIZE.1 as usize)
+                        //     + UNIVERSAL_OFFSET as usize) as i32
+                        //     * TILE_SIZE.1 as i32,
+
                         TILE_SIZE.0 as i32,
                         TILE_SIZE.1 as i32,
                     ))
@@ -348,6 +364,7 @@ impl World {
 
         let new_position = Self::new_position(pos, direction.clone(), world, speed); //Get where the entity is supposed to go
 
+        // dbg!(new_position);
         if !Self::coordinates_are_within_board(world, new_position.1) || new_position.0 == pos {
             //If new location is not within the board, returns false
             return false;
@@ -573,7 +590,8 @@ impl World {
         x: i16,
         y: i16,
         dist: i16,
-        terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize]; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
+        terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
+                 (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     ) {
         // sets curr tile to water
         let world_loc = Position::new((x / 50) as usize, (y / 50) as usize);
@@ -583,7 +601,7 @@ impl World {
         );
         let world_map = &mut terrain_map[world_loc.y][world_loc.x];
 
-        let tile: [f32; 4]; 
+        let tile: [f32; 4];
 
         if (world_loc.x == 1 || world_loc.x == 3 || world_loc.x == 5)
             && (world_loc.y == 1 || world_loc.y == 3 || world_loc.y == 5)
@@ -625,7 +643,7 @@ impl World {
                 color[0] + random::rand_fraction(rng) * 2.0 * MAX_DIFF - MAX_DIFF,
                 color[1] + random::rand_fraction(rng) * 2.0 * MAX_DIFF - MAX_DIFF,
                 color[2] + random::rand_fraction(rng) * 2.0 * MAX_DIFF - MAX_DIFF,
-                color[3]
+                color[3],
             ];
         } else if color == tile::LAVA {
             const MAX_DIFF_1: f32 = 0.01;
@@ -634,7 +652,7 @@ impl World {
                 color[0] + random::rand_fraction(rng) * 2.0 * MAX_DIFF_1 - MAX_DIFF_1,
                 color[1] + random::rand_fraction(rng) * 2.0 * MAX_DIFF_2 - MAX_DIFF_2,
                 color[2] + random::rand_fraction(rng) * 2.0 * MAX_DIFF_1 - MAX_DIFF_1,
-                color[3]
+                color[3],
             ];
         }
         return color;
@@ -707,12 +725,15 @@ impl World {
     // separate function to generate doors on the walls
     // terrain_map stores boolean so that it can be toggled on and off
     fn gen_doors(
-        terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize]; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize]
-    ) {}
+        terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
+                 (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
+    ) {
+    }
 
     pub fn gen_mountain(
         rng: &mut ThreadRng,
-        terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize]; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
+        terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
+                 (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     ) {
         let mut mountains_added = 0;
         while mountains_added < TOTAL_MOUNTAINS {
@@ -731,11 +752,15 @@ impl World {
         x: i16,
         y: i16,
         dist: i16,
-        terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize]; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize]
+        terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
+                 (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     ) {
         // sets curr tile to water
         let world_loc = Position::new((x / 50) as usize, (y / 50) as usize);
-        let loc = Position::new((x - (50 * world_loc.x as i16)) as usize, (y - (50 * world_loc.y as i16)) as usize);
+        let loc = Position::new(
+            (x - (50 * world_loc.x as i16)) as usize,
+            (y - (50 * world_loc.y as i16)) as usize,
+        );
         let world_map = &mut terrain_map[world_loc.y][world_loc.x];
         if !world_map.contains_key(&loc) {
             world_map.insert(loc, tile::MOUNTAIN[min(4, dist / 3) as usize]);
