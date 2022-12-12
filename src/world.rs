@@ -180,7 +180,7 @@ impl World {
         position.x >= world.x_offset
             && position.x < world.x_offset + WORLD_SIZE.0 as usize
             && position.y >= world.y_offset
-            && position.y < world.y_offset + (WORLD_SIZE.1) as usize
+            && position.y < world.y_offset + WORLD_SIZE.1 as usize
     }
 
     // Returns true if coordinates inside board (note distinction from world), false otherwise

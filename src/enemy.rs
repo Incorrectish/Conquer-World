@@ -69,9 +69,10 @@ impl Enemy {
         for index in (0..world.enemies.len()).rev() {
             if world.enemies[index].health <= 0 {
                 Enemy::kill(world, index);
-            }
-            if World::coordinates_are_within_world(world, world.enemies[index].pos) {
-                Self::move_enemy(index, world);
+            } else {
+                if World::coordinates_are_within_world(world, world.enemies[index].pos) {
+                    Self::move_enemy(index, world);
+                }
             }
         }
     }
