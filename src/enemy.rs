@@ -9,6 +9,7 @@ use std::{
 
 const ENEMY_HEALTH: usize = 5;
 const PERMISSIBLE_TILES: [[f32; 4]; 2] = [tile::GRASS, tile::PROJECTILE_PLAYER];
+const PERMISSIBLE_TILES_DODGING: [[f32; 4]; 1] = [tile::GRASS];
 
 // This is basically the same as the enemy for now, but I am just testing an enemy system
 pub struct Enemy {
@@ -43,7 +44,7 @@ impl Enemy {
         y: usize,
         speed: usize,
         color: [f32; 4],
-    ) -> Self {
+        ) -> Self {
         let temp = Self {
             pos: Position::new(x, y),
             direction: Direction::North,
@@ -104,12 +105,12 @@ impl Enemy {
                     world.enemies[index].pos = new_pos;
                     cur_pos = new_pos;
                 }
-                
+
             } else {
                 break;
             }
         }
-     }        
+    }        
 
     pub fn get_best_path(index: usize, world: &mut World) -> LinkedList<Position> {
         let enemy = &world.enemies[index];
@@ -123,7 +124,7 @@ impl Enemy {
         let mut queue = LinkedList::new();
         queue.push_back(enemy.pos);
 
-        
+
         visited[enemy.pos.y - world.y_offset][enemy.pos.x - world.x_offset] = true;
         while !queue.is_empty() {
             if let Some(node) = queue.pop_front() {
@@ -135,7 +136,11 @@ impl Enemy {
 
                 // standard bfs stuff, for each neighbor, if it hasn't been visited, put it into
                 // the queue
-                let neighbors = Self::get_neighbors(world, node);
+                let can_dodge_projectiles = match world.enemies[index].color {
+                    tile::BOMBER => true,
+                    _ => false,
+                };
+                let neighbors = Self::get_neighbors(world, node, can_dodge_projectiles);
                 for next in neighbors {
                     if !visited[next.y - world.y_offset][next.x - world.x_offset] {
                         queue.push_back(next);
@@ -165,7 +170,7 @@ impl Enemy {
         path
     }
 
-    pub fn get_neighbors(world:&mut World, position: Position) -> Vec<Position> {
+    pub fn get_neighbors(world: &mut World, position: Position, can_dodge_projectiles: bool) -> Vec<Position> {
         let directions = [Direction::North, Direction::South, Direction::West, Direction::East];
         let mut moves = Vec::new();
 
@@ -177,10 +182,10 @@ impl Enemy {
             // neighbors
             if Self::can_travel_to(
                 pos, &world.entity_positions, 
-                &world.terrain_positions) 
+                &world.terrain_positions, can_dodge_projectiles) 
                 && World::coordinates_are_within_world(world, pos) 
                 {
-                    moves.push(pos);
+                        moves.push(pos);
                 }
         }
         return moves;
@@ -189,21 +194,35 @@ impl Enemy {
     pub fn can_travel_to(
         position: Position,
         entity_positions: &HashMap<Position, ([f32; 4], Entity)>,
-        terrain_positions: &HashMap<Position, [f32;4]>
-    ) -> bool {
+        terrain_positions: &HashMap<Position, [f32;4]>,
+        can_dodge_projectiles: bool,
+        ) -> bool {
 
         // check if there are any static or dynamic entities in the position
         if entity_positions.contains_key(&position) || terrain_positions.contains_key(&position) {
             let info = entity_positions.get(&position);
             let info2 = terrain_positions.get(&position);
-            if let Some(info) = info {
-                if PERMISSIBLE_TILES.contains(&info.0) {
-                    return true;
+            if can_dodge_projectiles {
+                if let Some(info) = info {
+                    if PERMISSIBLE_TILES_DODGING.contains(&info.0) {
+                        return true;
+                    }
                 }
-            }
-            if let Some(info) = info2 {
-                if PERMISSIBLE_TILES.contains(&info) {
-                    return true;
+                if let Some(info) = info2 {
+                    if PERMISSIBLE_TILES_DODGING.contains(&info) {
+                        return true;
+                    }
+                }
+            } else {
+                if let Some(info) = info {
+                    if PERMISSIBLE_TILES.contains(&info.0) {
+                        return true;
+                    }
+                }
+                if let Some(info) = info2 {
+                    if PERMISSIBLE_TILES.contains(&info) {
+                        return true;
+                    }
                 }
             }
             return false;

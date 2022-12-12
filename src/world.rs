@@ -21,7 +21,7 @@ use std::{
 
 const TOTAL_LAKES: i16 = 50;
 pub const BOSS_ROOMS: [Position; 5] = [Position::new(1, 1), Position::new(1, 5), Position::new(3, 3), Position::new(5, 1), Position::new(5, 5)];
-
+const ENEMY_COUNT: usize = 100;
 
 
 
@@ -104,7 +104,7 @@ impl World {
         entity_positions: &mut HashMap<Position, ([f32; 4], Entity)>,
         enemies: &mut Vec<Enemy>,
     ) {
-        for _ in 0..10 {
+        for _ in 0..ENEMY_COUNT {
             // the loop just generates new positions until it finds an open one, and it inserts an
             // enemy there
             loop {
