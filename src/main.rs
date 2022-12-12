@@ -1,8 +1,6 @@
 use ggez::{
     event,
-    graphics::{self, Canvas},
-    input::keyboard::{KeyCode, KeyInput},
-    Context, GameResult,
+    GameResult,
 };
 
 mod direction;
