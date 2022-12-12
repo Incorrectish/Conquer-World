@@ -60,7 +60,7 @@ impl World {
         let mut terrain_positions = HashMap::new();
         World::gen_water(&mut rng, &mut terrain_positions);
         World::gen_boss(&mut terrain_positions);
-        World::gen_outer_boss_walls(&mut terrain_positions);
+        // World::gen_outer_boss_walls(&mut terrain_positions);
         let player = Player::new();
         entity_positions.insert(player.pos, (player.color, (Entity::Player)));
         let mut enemies = Vec::new();
@@ -129,6 +129,9 @@ impl World {
                 )
             }
         }
+
+        self.player.draw_health(canvas);
+        self.player.draw_energy(canvas);
         
         for (loc, color) in &self.terrain_positions {
             if self.y_offset <= loc.y && self.x_offset <= loc.x {
@@ -197,7 +200,7 @@ impl World {
     }
 
     pub fn travel(world: &mut World, entity_type: Entity) -> bool {
-        let (pos, direction, speed, index) = match entity_type.clone() {
+        let (pos, direction, speed, index) = match entity_type {
             Entity::Player => (
                 world.player.pos,
                 world.player.direction.clone(),
@@ -413,7 +416,6 @@ impl World {
     }
 
     fn gen_outer_boss_walls(
-        // board: &mut [[[f32; 4]; BOARD_SIZE.0 as usize]; BOARD_SIZE.1 as usize],
         terrain_positions: &mut HashMap<Position, [f32; 4]>
     ) {
         // the upper left corner of each mini boss room

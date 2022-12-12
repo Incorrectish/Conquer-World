@@ -59,6 +59,96 @@ pub struct Player {
 }
 
 impl Player {
+    pub fn draw_health(&self, canvas: &mut graphics::Canvas) {
+        let outline = [(2,0),(3,0),(4,0),(5,0),(7,0),(8,0),(9,0),(10,0),(1,1),(6,1),(11,1),(0,2),(12,2),(0,3),(12,3),(0,4),(12,4),(0,5),(12,5),(0,6),(12,6),(1,7),(11,7),(2,8),(10,8),(3,9),(9,9),(4,10),(8,10),(5,11),(7,11),(6,12)];
+        for i in 0..5 {
+            for coord in outline {
+                canvas.draw(
+                    &graphics::Quad,
+                    graphics::DrawParam::new()
+                        .dest_rect(graphics::Rect::new_i32(
+                            ((coord.0) as i32 + 1) * 4 + i*60,
+                            ((coord.1) as i32 + 2) * 4,
+                            4,
+                            4,
+                        ))
+                        .color([1.0,1.0,1.0,1.0]),
+                )
+            }
+            Self::color_heart(&self, canvas, outline, i);
+        }   
+    }
+
+    pub fn draw_energy(&self, canvas: &mut graphics::Canvas) {
+        let outline = [(3,0),(4,0),(5,0),(6,0),(7,0),(8,0),(9,0),(3,1),(9,1),(2,2),(8,2),(2,3),(7,3),(1,4),(6,4),(1,5),(5,5),(6,5),(7,5),(8,5),(0,6),(8,6),(0,7),(1,7),(2,7),(3,7),(7,7),(3,8),(6,8),(2,9),(5,9),(2,10),(4,10),(1,11),(3,11),(1,12),(2,12)];
+        for i in 0..5 {
+            for coord in outline {
+                canvas.draw(
+                    &graphics::Quad,
+                    graphics::DrawParam::new()
+                        .dest_rect(graphics::Rect::new_i32(
+                            ((coord.0) as i32 + 130) * 4 + i*48,
+                            ((coord.1) as i32 + 2) * 4,
+                            4,
+                            4,
+                        ))
+                        .color([1.0,1.0,1.0,1.0]),
+                )
+            }
+            Self::color_energy(&self, canvas, outline, i);
+        }  
+    }
+ 
+    pub fn color_heart(&self, canvas: &mut graphics::Canvas, outline: [(usize,usize); 32], iteration: i32) {
+        let health_check: i32 = self.health as i32 - (iteration as i32 * 2);
+        if(health_check > 0) {
+            for i in 8..outline.len()-2 {
+                if outline[i].1 == outline[i+1].1 {
+                    let mut offset = 1;
+                    while outline[i].0+offset != outline[i+1].0 {
+                        if (health_check != 1) || outline[i].0+offset <= 6 {
+                            canvas.draw(
+                                &graphics::Quad,
+                                graphics::DrawParam::new()
+                                    .dest_rect(graphics::Rect::new_i32(
+                                        ((outline[i].0+offset) as i32 + 1) * 4 + iteration*60,
+                                        ((outline[i].1) as i32 + 2) * 4,
+                                        4,
+                                        4,
+                                    ))
+                                    .color([1.0,0.1,0.1,1.0]),
+                            );
+                        }   
+                        offset += 1;
+                    }
+                }
+            }
+        }   
+    }
+
+    pub fn color_energy(&self, canvas: &mut graphics::Canvas, outline: [(usize,usize); 37], iteration: i32) {
+        for i in 7..outline.len()-1 {
+            if outline[i].1 == outline[i+1].1 {
+                let mut offset = 1;
+                while outline[i].0+offset != outline[i+1].0 {
+                    canvas.draw(
+                        &graphics::Quad,
+                        graphics::DrawParam::new()
+                            .dest_rect(graphics::Rect::new_i32(
+                                ((outline[i].0+offset) as i32 + 130) * 4 + iteration*48,
+                                ((outline[i].1) as i32 + 2) * 4,
+                                4,
+                                4,
+                            ))
+                            .color([1.0,0.8,0.0,1.0]),
+                    );
+                    offset += 1;
+                }
+                
+            }
+        }
+    }
+
     pub fn health(&self) -> usize {
         self.health
     }

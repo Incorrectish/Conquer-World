@@ -23,7 +23,7 @@ use crate::state::State;
 
 
 //Offset to leave extra space on top of screen for health/energy indicators
-pub const UNIVERSAL_OFFSET: i16 = 3;
+pub const UNIVERSAL_OFFSET: i16 = 4;
 
 // Define the world size which is (width, height)
 pub const WORLD_SIZE: (i16, i16) = (50, 50);
