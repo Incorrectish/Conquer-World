@@ -19,7 +19,7 @@ use std::{
     collections::HashMap,
 };
 
-const TOTAL_LAKES: i16 = 50;
+const TOTAL_LAKES: i16 = 100;
 const TOTAL_MOUNTAINS: i16 = 75;
 pub const BOSS_ROOMS: [Position; 5] = [Position::new(1, 1), Position::new(1, 5), Position::new(3, 3), Position::new(5, 1), Position::new(5, 5)];
 const ENEMY_COUNT: usize = 100;
