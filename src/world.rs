@@ -20,6 +20,10 @@ use std::{
 };
 
 const TOTAL_LAKES: i16 = 50;
+pub const BOSS_ROOMS: [Position; 5] = [Position::new(1, 1), Position::new(1, 5), Position::new(3, 3), Position::new(5, 1), Position::new(5, 5)];
+
+
+
 
 pub struct World {
     //Stores which world the player is in
@@ -306,7 +310,7 @@ impl World {
                         )
                     {                                   
                         let mut curr_player_map = &mut world.entity_map[world.world_position.y][world.world_position.x];
-                        curr_player_map.remove(&new_position);
+                        curr_player_map.remove(&new_position.0);
                         match direction { //Shifts camera using x and y offsets depending on which way the player is moving
                             Direction::North => {
                                 world.world_position = Position::new(world.world_position.x, world.world_position.y - 1);
