@@ -57,7 +57,7 @@ pub struct Player {
     energy: usize,
 
     // This is the position queued by mouse clicks, used for teleportation, etc
-    queued_position: Option<Position>,
+    pub queued_position: Option<Position>,
 }
 
 impl Player {
@@ -275,11 +275,29 @@ impl Player {
                 BUILD_KEYCODE => {
                     Player::build(world);
                 }
+                LIGHTNING_KEYCODE => {
+                    Player::lightning(world);
+                }
                 _ => {return false;}
             },
             None => {return false;}
         }
         return true;
+    }
+
+    pub fn lightning(world: &mut World) {
+        if let Some(queued_position) = world.player.queued_position {
+            // TODO: Damage
+            let projectile = Projectile::new(
+                queued_position.x,
+                queued_position.y,
+                0,
+                3,
+                Direction::North,
+                tile::LIGHTNING_PLACEHOLDER,
+            );
+            world.projectiles.push(projectile)
+        }
     }
 
     pub fn build(world: &mut World) {
@@ -343,6 +361,7 @@ impl Player {
                 PLAYER_PROJECTILE_SPEED,
                 PLAYER_PROJECTILE_DAMAGE,
                 world.player.direction.clone(),
+                tile::PROJECTILE_PLAYER,
             );
             for index in 0..world.enemies.len()  { //Check if it's spawning on enemy, if so damage the enenmy and not spawn a projectile
                 if projectile_spawn_pos == world.enemies[index].pos {
@@ -350,7 +369,7 @@ impl Player {
                     return;
                 }
             }
-            world.entity_positions.insert(projectile.pos, (tile::PROJECTILE, Entity::Projectile(world.projectiles.len())));
+            world.entity_positions.insert(projectile.pos, (tile::PROJECTILE_PLAYER, Entity::Projectile(world.projectiles.len())));
             world.projectiles.push(projectile);
         }
     }

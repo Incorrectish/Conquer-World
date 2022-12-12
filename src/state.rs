@@ -1,7 +1,13 @@
 use crate::direction::Direction;
 use crate::enemy::Enemy;
 use crate::player::Player;
-use crate::{projectile::Projectile, tile, world::{World, BOSS_ROOMS}, SCREEN_SIZE, TILE_SIZE, WORLD_SIZE};
+use crate::utils::Position;
+use crate::{
+    projectile::Projectile,
+    tile,
+    world::{World, BOSS_ROOMS},
+    SCREEN_SIZE, TILE_SIZE, WORLD_SIZE,
+};
 use ggez::{
     event,
     graphics::{self, Canvas},
@@ -112,6 +118,12 @@ impl ggez::event::EventHandler<GameError> for State {
         _x: f32,
         _y: f32,
     ) -> Result<(), GameError> {
+        self.world.player.queued_position = Some(
+            Position::new(
+                (_x / TILE_SIZE.0 as f32) as usize,
+                (_y / TILE_SIZE.1 as f32) as usize,
+            ),
+        );
         Ok(())
     }
 }

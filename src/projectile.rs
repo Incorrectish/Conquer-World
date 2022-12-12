@@ -4,7 +4,7 @@ use std::{
     collections::HashMap,
 };
 
-const PERMISSIBLE_TILES: [[f32; 4]; 4] = [tile::WATER, tile::GRASS, tile::PLAYER, tile::PROJECTILE];
+const PERMISSIBLE_TILES: [[f32; 4]; 4] = [tile::WATER, tile::GRASS, tile::PLAYER, tile::PROJECTILE_PLAYER];
 
 pub struct Projectile {
     pub pos: Position,
@@ -17,13 +17,13 @@ pub struct Projectile {
 }
 
 impl Projectile {
-    pub fn new(x: usize, y: usize, speed: usize, damage: usize, direction: Direction) -> Self {
+    pub fn new(x: usize, y: usize, speed: usize, damage: usize, direction: Direction, color: [f32; 4]) -> Self {
         let temp = Projectile {
             pos: Position::new(x, y),
             speed,
             damage,
             direction,
-            color: tile::PROJECTILE
+            color
         };
         temp
     }

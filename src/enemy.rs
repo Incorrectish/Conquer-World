@@ -1,4 +1,4 @@
-use crate::{direction::Direction, tile::{self, PROJECTILE}, world::World, WORLD_SIZE, utils::Position, entity::Entity, TILE_SIZE};
+use crate::{direction::Direction, tile::{self, PROJECTILE_PLAYER}, world::World, WORLD_SIZE, utils::Position, entity::Entity, TILE_SIZE};
 use ggez::graphics::{self, Canvas};
 use std::{
     collections::HashMap,
@@ -8,7 +8,7 @@ use std::{
 
 
 const ENEMY_HEALTH: usize = 5;
-const PERMISSIBLE_TILES: [[f32; 4]; 2] = [tile::GRASS, tile::PROJECTILE];
+const PERMISSIBLE_TILES: [[f32; 4]; 2] = [tile::GRASS, tile::PROJECTILE_PLAYER];
 
 // This is basically the same as the enemy for now, but I am just testing an enemy system
 pub struct Enemy {
