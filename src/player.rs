@@ -18,6 +18,8 @@ use std::{
 // Can change easily
 const MAX_PLAYER_HEALTH: usize = 30;
 const PLAYER_MELEE_DAMAGE: usize = 1;
+const TELEPORTATION_COST: usize = 10;
+const HEAL_COST: usize = 5;
 const MELEE_ATTACK_KEYCODE: VirtualKeyCode = KeyCode::A;
 // TODO look over these values
 const HEAL_ABILITY_RETURN: usize = 2;
@@ -268,9 +270,9 @@ impl Player {
                 //     }
                 // }
                 HEAL_KEYCODE => {
-                    if world.player.energy >= 5 {
+                    if world.player.energy >= HEAL_COST {
                         world.player.health += HEAL_ABILITY_RETURN;
-                        world.player.energy -= 5;
+                        world.player.energy -= HEAL_COST;
                     }
                 }
                 // BUILD_KEYCODE => {
@@ -281,9 +283,9 @@ impl Player {
                 }
 
                 TELEPORT_KEYCODE => {
-                    if world.player.energy > 5 && world.player.queued_position.is_some() {
+                    if world.player.energy >= TELEPORTATION_COST && world.player.queued_position.is_some() {
                         Self::teleport(world);
-                        world.player.energy -= 5;
+                        world.player.energy -= TELEPORTATION_COST;
                     }
                 } 
                 _ => {return false;}
