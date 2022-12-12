@@ -140,6 +140,9 @@ impl World {
                 }
             }
         }
+        for room_coord in BOSS_ROOMS {
+            
+        }
     }
 
     //Draws the map on the top right and corner of the world
