@@ -184,9 +184,6 @@ impl Enemy {
         for direction in directions {
             let (new_pos, _) = World::new_position(position, direction, world, 1);
 
-            dbg!(new_pos);
-            dbg!(position);
-
             // if the new position is valid(correct tiles & within bounds) add it to the potential
             // neighbors
             if Self::can_travel_to(
