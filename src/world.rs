@@ -20,6 +20,7 @@ use std::{
 };
 
 const TOTAL_LAKES: i16 = 50;
+const TOTAL_MOUNTAINS: i16 = 75;
 pub const BOSS_ROOMS: [Position; 5] = [Position::new(1, 1), Position::new(1, 5), Position::new(3, 3), Position::new(5, 1), Position::new(5, 5)];
 
 
@@ -56,6 +57,7 @@ pub struct World {
     pub entity_positions: HashMap<Position, ([f32; 4], Entity)>,
     pub terrain_positions: HashMap<Position, [f32; 4]>,
     pub terrain_map: [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize]; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
+    pub door_map: [[HashMap<Position, bool>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize]; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     pub rng: ThreadRng,
 }
 
@@ -65,12 +67,17 @@ impl World {
         let mut entity_positions = HashMap::new();      
         let terrain_positions = HashMap::new();
         let mut terrain_map:
-        [[HashMap<Position, [f32; 4]>; 
-        (BOARD_SIZE.0 / WORLD_SIZE.0) as usize]; 
-        (BOARD_SIZE.1 / WORLD_SIZE.1) as usize] = Default::default();  
+            [[HashMap<Position, [f32; 4]>; 
+            (BOARD_SIZE.0 / WORLD_SIZE.0) as usize]; 
+            (BOARD_SIZE.1 / WORLD_SIZE.1) as usize] = Default::default();  
+        let mut door_map: 
+            [[HashMap<Position, bool>;
+            (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
+            (BOARD_SIZE.0 / WORLD_SIZE.0) as usize] = Default::default();
         World::gen_boss(&mut terrain_map);
         World::gen_outer_boss_walls(&mut terrain_map); 
         World::gen_water(&mut rng, &mut terrain_map);
+        World::gen_mountain(&mut rng, &mut terrain_map);
         let player = Player::new();
         entity_positions.insert(player.pos, (player.color, (Entity::Player)));
         let mut enemies = Vec::new();
@@ -94,6 +101,7 @@ impl World {
             entity_positions,
             terrain_map,
             terrain_positions,
+            door_map,
             rng,
         }
     }
@@ -477,7 +485,7 @@ impl World {
         let loc = Position::new((x - (50 * world_loc.x as i16)) as usize, (y - (50 * world_loc.y as i16)) as usize);
         let world_map = &mut terrain_map[world_loc.y][world_loc.x];
         if !world_map.contains_key(&loc) {
-            world_map.insert(loc, tile::WATER);
+            world_map.insert(loc, Self::related_color(rng, tile::WATER));
         }
 
         const DIRECTIONS: [[i16; 2]; 4] = [[0, 1], [0, -1], [1, 0], [-1, 0]]; // orthogonal dirs
@@ -497,8 +505,20 @@ impl World {
 
     // Gets probability of continuing to expand lake outwards
     fn prob_expand_lake(rng: &mut ThreadRng, dist: i16) -> bool {
-        random::bernoulli(rng, 1. - 0.2 * (dist as f32))
+        random::bernoulli(rng, 1. - 0.15 * (dist as f32))
     }
+
+    // adds a little variability to lake color
+    fn related_color(rng: &mut ThreadRng, color: [f32; 4]) -> [f32; 4] {
+        const MAX_DIFF: f32 = 0.05;
+        [
+            color[0] + random::rand_fraction(rng) * 2.0 * MAX_DIFF,
+            color[1] + random::rand_fraction(rng) * 2.0 * MAX_DIFF,
+            color[2] + random::rand_fraction(rng) * 2.0 * MAX_DIFF,
+            color[3]
+        ]
+    }
+
     //TODO: make faster, makes the game really slow rn
     fn gen_outer_boss_walls(
         terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize]; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize]
@@ -552,10 +572,7 @@ impl World {
                 // terrain_positions.insert(loc, tile::WALL);
                 // loc = Position::new((corner[1] + WORLD_SIZE.1) as usize, (corner[0] + i) as usize);
                 // terrain_positions.insert(loc, tile::WALL);
-                // loc = Position::new((corner[1] + i) as usize, (corner[0] - 1) as usize);
-                // terrain_positions.insert(loc, tile::WALL);
-                // loc = Position::new((corner[1] + i) as usize, (corner[0] + WORLD_SIZE.0) as usize);
-                // terrain_positions.insert(loc, tile::WALL);
+                // loc = Position::new((corner[1] + i) as usize, (corner[0] - 1) as usize); terrain_positions.insert(loc, tile::WALL); loc = Position::new((corner[1] + i) as usize, (corner[0] + WORLD_SIZE.0) as usize); terrain_positions.insert(loc, tile::WALL);
             }
         }
         // in progress: creates a hole in the left wall of the upper left mini boss room
@@ -563,4 +580,60 @@ impl World {
         // terrain_positions.remove(&Position::new((WORLD_SIZE.1 - 1) as usize, (WORLD_SIZE.0 + WORLD_SIZE.0 / 2) as usize));
     }
 
+    // separate function to generate doors on the walls
+    // terrain_map stores boolean so that it can be toggled on and off
+    fn gen_doors(
+        terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize]; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize]
+    ) {}
+
+    pub fn gen_mountain(
+        rng: &mut ThreadRng,
+        terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize]; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
+    ) {
+        let mut mountains_added = 0;
+        while mountains_added < TOTAL_MOUNTAINS {
+            let x = random::rand_range(rng, 5, BOARD_SIZE.0); // random x coordinate
+            let y = random::rand_range(rng, 5, BOARD_SIZE.1); // random y coordinate
+            Self::gen_mountain_helper(rng, x, y, 0, terrain_map); // new lake centered at (x, y)
+            mountains_added += 1;
+        }
+    }
+
+    // Recursively generates lakes -- floodfill-esque idea around the center, but expansion is
+    // limited probabilistically (probability of expansion decreases as we range further from the
+    // center)
+    fn gen_mountain_helper(
+        rng: &mut ThreadRng,
+        x: i16,
+        y: i16,
+        dist: i16,
+        terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize]; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize]
+    ) {
+        // sets curr tile to water
+        let world_loc = Position::new((x / 50) as usize, (y / 50) as usize);
+        let loc = Position::new((x - (50 * world_loc.x as i16)) as usize, (y - (50 * world_loc.y as i16)) as usize);
+        let world_map = &mut terrain_map[world_loc.y][world_loc.x];
+        if !world_map.contains_key(&loc) {
+            world_map.insert(loc, tile::MOUNTAIN[min(4, dist / 3) as usize]);
+        }
+
+        const DIRECTIONS: [[i16; 2]; 4] = [[0, 1], [0, -1], [1, 0], [-1, 0]]; // orthogonal dirs
+        for dir in DIRECTIONS {
+            // for each tile in an orthogonal direction
+            // With certain probability, continue expanding lake in that direction
+            if Self::prob_expand_mountain(rng, dist) {
+                let i = x + dir[0];
+                let j = y + dir[1];
+                // if in bounds, recursively call fn on adjacent tile (draws WATER at that tile)
+                if i >= 0 && i < BOARD_SIZE.0 && j >= 0 && j < BOARD_SIZE.1 {
+                    Self::gen_mountain_helper(rng, i, j, dist + 1, terrain_map);
+                }
+            }
+        }
+    }
+
+    // Gets probability of continuing to expand lake outwards
+    fn prob_expand_mountain(rng: &mut ThreadRng, dist: i16) -> bool {
+        random::bernoulli(rng, 1. - 0.10 * (dist as f32))
+    }
 }
