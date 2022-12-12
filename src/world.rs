@@ -113,7 +113,9 @@ impl World {
         }
     }
 
+    //This function draws the whole entire world that is seen by the player
     pub fn draw(&self, canvas: &mut graphics::Canvas) {
+        //Draw the black bar on top that has the health/energy indicators
         for i in 0..WORLD_SIZE.0 {
             for j in 0..UNIVERSAL_OFFSET {
                 canvas.draw(
@@ -130,9 +132,11 @@ impl World {
             }
         }
 
+        //Draw health and energy indicators
         self.player.draw_health(canvas);
         self.player.draw_energy(canvas);
         
+        //Draw every pixel that is contained in the terrain HashMap
         for (loc, color) in &self.terrain_positions {
             if self.y_offset <= loc.y && self.x_offset <= loc.x {
                 canvas.draw(
@@ -148,7 +152,8 @@ impl World {
                 )
             }
         }
-
+        
+        //Draw every pixel that is contained in the entity HashMap
         for (loc, color) in &self.entity_positions {
             if self.y_offset <= loc.y && self.x_offset <= loc.x {
                 canvas.draw(
@@ -187,20 +192,24 @@ impl World {
             && position.y >= world.board_top_left.1
     }
 
+    //Takes in a previous location and new location Position object and updates that specific
+    //entity inside of the HashMap to move from the previous location to the new location
     pub fn update_position(world: &mut World, prev_position: Position, new_position: Position) {
-        let info = world.entity_positions.get(&prev_position);
+        let info = world.entity_positions.get(&prev_position); //Access contents of what was at previous position
         if let Some(contents) = info {
             let tile_color = contents.0;
             let tile_type = contents.1.clone();
             world
                 .entity_positions
-                .insert(new_position, (tile_color, tile_type));
-            world.entity_positions.remove(&prev_position);
+                .insert(new_position, (tile_color, tile_type)); //Insert same contents into new position
+            world.entity_positions.remove(&prev_position); //Remove old position
         }
     }
 
+    //This function runs calculations and moves an entity to where ever they are meant to go
+    //returns if it was successfully able to move there or not
     pub fn travel(world: &mut World, entity_type: Entity) -> bool {
-        let (pos, direction, speed, index) = match entity_type {
+        let (pos, direction, speed, index) = match entity_type { //Check what type of entity is moving and match the corresponding values
             Entity::Player => (
                 world.player.pos,
                 world.player.direction.clone(),
@@ -221,21 +230,21 @@ impl World {
             ),
         };
 
-        let new_position = Self::new_position(pos, direction.clone(), world, speed);
+        let new_position = Self::new_position(pos, direction.clone(), world, speed); //Get where the entity is supposed to go
 
-        if !Self::coordinates_are_within_board(world, new_position) || new_position == pos {
+        if !Self::coordinates_are_within_board(world, new_position) || new_position == pos { //If new location is not within the board, returns false
             return false;
         } else {
-            match entity_type {
+            match entity_type { //Determine entity time again as each behaves differently
                 Entity::Player => {
-                    if !Self::coordinates_are_within_world(world, new_position)
-                        && Player::can_travel_to(
+                    if !Self::coordinates_are_within_world(world, new_position) //If new position is not within world but the player can travel to it
+                        && Player::can_travel_to(                               //need to shift camera view for the user
                             new_position,
                             &world.entity_positions,
                             &world.terrain_positions,
                         )
                     {
-                        match direction {
+                        match direction { //Shifts camera using x and y offsets depending on which way the player is moving
                             Direction::North => {
                                 world.y_offset = max(0, world.y_offset - WORLD_SIZE.1 as usize);
                             }
@@ -256,7 +265,8 @@ impl World {
                             }
                         }
                     }
-                    if Player::can_travel_to(
+
+                    if Player::can_travel_to( //If the player can travel to the area, update its position in the HashMap and object
                         new_position,
                         &world.entity_positions,
                         &world.terrain_positions,
@@ -267,11 +277,11 @@ impl World {
                     return true;
                 }
 
-                Entity::Enemy(i) => {
+                Entity::Enemy(i) => { //Enemy movement is in the enemy.rs file TODO: move it over here
                     return true;
                 }
 
-                Entity::Projectile(i) => {
+                Entity::Projectile(i) => { 
                     if !Projectile::can_travel_to(
                         new_position,
                         &world.entity_positions,
@@ -279,7 +289,7 @@ impl World {
                     ) {
                         return false;
                     }
-                    Self::update_position(world, world.projectiles[i].pos, new_position);
+                    Self::update_position(world, world.projectiles[i].pos, new_position); //Update projectile position to new position it is moving to
                     world.projectiles[i].pos = new_position;
                     true
                 }
@@ -414,7 +424,7 @@ impl World {
     fn prob_expand_lake(rng: &mut ThreadRng, dist: i16) -> bool {
         random::bernoulli(rng, 1. - 0.2 * (dist as f32))
     }
-
+    //TODO: make faster, makes the game really slow rn
     fn gen_outer_boss_walls(
         terrain_positions: &mut HashMap<Position, [f32; 4]>
     ) {

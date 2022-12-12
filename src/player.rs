@@ -28,7 +28,7 @@ const PROJECTILE_ATTACK_KEYCODE: VirtualKeyCode = KeyCode::Space;
 const PLAYER_PROJECTILE_SPEED: usize = 1;
 const PLAYER_PROJECTILE_DAMAGE: usize = 1;
 const PLAYER_INITIAL_SPEED: usize = 1;
-const PLAYER_INITIAL_ENERGY: usize = 5;
+const PLAYER_INITIAL_ENERGY: usize = 10;
 const PERMISSIBLE_TILES: [[f32; 4]; 1] = [tile::GRASS];
 
 // This is with the covered tile model, but we could use the static/dynamic board paradighm or
@@ -59,26 +59,48 @@ pub struct Player {
 }
 
 impl Player {
+    pub fn health(&self) -> usize {
+        self.health
+    }
+
+    pub fn damage(&mut self, damage: usize) {
+        self.health -= damage;
+    }
+
+    pub fn new() -> Self {
+        let temp = Self {
+            pos: Position::new(0,0),
+            direction: Direction::South,
+            speed: PLAYER_INITIAL_SPEED,
+            color: tile::PLAYER,
+            health: MAX_PLAYER_HEALTH,
+            energy: PLAYER_INITIAL_ENERGY,
+        };
+        temp
+    }
+
+    //Draws hearts on open space above the screen
     pub fn draw_health(&self, canvas: &mut graphics::Canvas) {
-        let outline = [(2,0),(3,0),(4,0),(5,0),(7,0),(8,0),(9,0),(10,0),(1,1),(6,1),(11,1),(0,2),(12,2),(0,3),(12,3),(0,4),(12,4),(0,5),(12,5),(0,6),(12,6),(1,7),(11,7),(2,8),(10,8),(3,9),(9,9),(4,10),(8,10),(5,11),(7,11),(6,12)];
-        for i in 0..5 {
+        let outline = [(2,0),(3,0),(4,0),(5,0),(7,0),(8,0),(9,0),(10,0),(1,1),(6,1),(11,1),(0,2),(12,2),(0,3),(12,3),(0,4),(12,4),(0,5),(12,5),(0,6),(12,6),(1,7),(11,7),(2,8),(10,8),(3,9),(9,9),(4,10),(8,10),(5,11),(7,11),(6,12)]; //Manually input coordinates of the outline of the heart
+        for i in 0..5 { //Draw one heart each time in the loop
             for coord in outline {
                 canvas.draw(
                     &graphics::Quad,
                     graphics::DrawParam::new()
                         .dest_rect(graphics::Rect::new_i32(
-                            ((coord.0) as i32 + 1) * 4 + i*60,
-                            ((coord.1) as i32 + 2) * 4,
+                            ((coord.0) as i32 + 1) * 4 + i*60, //x coordinate of each outline pixel from array
+                            ((coord.1) as i32 + 2) * 4, //y coordinate of each outline pixel from array
                             4,
                             4,
                         ))
-                        .color([1.0,1.0,1.0,1.0]),
+                        .color([1.0,1.0,1.0,1.0]), //Color of outline
                 )
             }
-            Self::color_heart(&self, canvas, outline, i);
+            Self::color_heart(&self, canvas, outline, i); //Color in the heart
         }   
     }
 
+    //Draws energy symbols on space above screen, works exactly the same as draw_health() except has different outline positions
     pub fn draw_energy(&self, canvas: &mut graphics::Canvas) {
         let outline = [(3,0),(4,0),(5,0),(6,0),(7,0),(8,0),(9,0),(3,1),(9,1),(2,2),(8,2),(2,3),(7,3),(1,4),(6,4),(1,5),(5,5),(6,5),(7,5),(8,5),(0,6),(8,6),(0,7),(1,7),(2,7),(3,7),(7,7),(3,8),(6,8),(2,9),(5,9),(2,10),(4,10),(1,11),(3,11),(1,12),(2,12)];
         for i in 0..5 {
@@ -98,15 +120,17 @@ impl Player {
             Self::color_energy(&self, canvas, outline, i);
         }  
     }
- 
+
+    //Colors in the hearts based on current health
     pub fn color_heart(&self, canvas: &mut graphics::Canvas, outline: [(usize,usize); 32], iteration: i32) {
-        let health_check: i32 = self.health as i32 - (iteration as i32 * 2);
-        if(health_check > 0) {
-            for i in 8..outline.len()-2 {
-                if outline[i].1 == outline[i+1].1 {
+        let health_check: i32 = self.health as i32 - (iteration as i32 * 2); //Checks if you have half, full, or no healthpoints on specific heart
+        if health_check > 0 {
+            for i in 8..outline.len()-2 { //Skip first row of outline (first 8 pixels)
+                if outline[i].1 == outline[i+1].1 { //while the outline pixel and next outline pixel are on the same y axis
+                    //Color the pixels inbetween each outline position (fill in the heart)
                     let mut offset = 1;
                     while outline[i].0+offset != outline[i+1].0 {
-                        if (health_check != 1) || outline[i].0+offset <= 6 {
+                        if (health_check != 1) || outline[i].0+offset <= 6 { //If it is only half a heart, only color in half (stop at x position 6)
                             canvas.draw(
                                 &graphics::Quad,
                                 graphics::DrawParam::new()
@@ -126,48 +150,33 @@ impl Player {
         }   
     }
 
+    //Colors in the energies based on current energy
+    //Works exactly the same as color_heart(), but instead the half energy uses half the height, not the width
     pub fn color_energy(&self, canvas: &mut graphics::Canvas, outline: [(usize,usize); 37], iteration: i32) {
-        for i in 7..outline.len()-1 {
-            if outline[i].1 == outline[i+1].1 {
-                let mut offset = 1;
-                while outline[i].0+offset != outline[i+1].0 {
-                    canvas.draw(
-                        &graphics::Quad,
-                        graphics::DrawParam::new()
-                            .dest_rect(graphics::Rect::new_i32(
-                                ((outline[i].0+offset) as i32 + 130) * 4 + iteration*48,
-                                ((outline[i].1) as i32 + 2) * 4,
-                                4,
-                                4,
-                            ))
-                            .color([1.0,0.8,0.0,1.0]),
-                    );
-                    offset += 1;
+        let energy_check: i32 = self.energy as i32 - (iteration as i32 * 2);
+        if energy_check > 0 {
+            for i in 7..outline.len()-1 {
+                if outline[i].1 == outline[i+1].1 {
+                    let mut offset = 1;
+                    if (energy_check != 1) || outline[i+1].1 >= 5 {
+                        while outline[i].0+offset != outline[i+1].0 {
+                            canvas.draw(
+                                &graphics::Quad,
+                                graphics::DrawParam::new()
+                                    .dest_rect(graphics::Rect::new_i32(
+                                        ((outline[i].0+offset) as i32 + 130) * 4 + iteration*48,
+                                        ((outline[i].1) as i32 + 2) * 4,
+                                        4,
+                                        4,
+                                    ))
+                                    .color([0.0,0.6,0.98,1.0]),
+                            );
+                            offset += 1;
+                        }
+                    }
                 }
-                
             }
         }
-    }
-
-    pub fn health(&self) -> usize {
-        self.health
-    }
-
-    pub fn damage(&mut self, damage: usize) {
-        self.health -= damage;
-        dbg!(self.health);
-    }
-
-    pub fn new() -> Self {
-        let temp = Self {
-            pos: Position::new(0,0),
-            direction: Direction::South,
-            speed: PLAYER_INITIAL_SPEED,
-            color: tile::PLAYER,
-            health: MAX_PLAYER_HEALTH,
-            energy: PLAYER_INITIAL_ENERGY,
-        };
-        temp
     }
 
     // eventually this should be the functionality to like shoot projectiles and stuff but for now
