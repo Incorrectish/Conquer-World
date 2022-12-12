@@ -71,6 +71,8 @@ impl Enemy {
                 Enemy::kill(world, index);
             } else {
                 if world.world_position == world.enemies[index].world_pos {
+                    // dbg!(world.world_position);
+                    // dbg!(world.enemies[index].world_pos);
                     Self::move_enemy(index, world);
                 }
             }
@@ -93,6 +95,7 @@ impl Enemy {
         let mut cur_pos = enemy.pos;
         for _ in 0..enemy.speed {
             if let Some(new_pos) = travel_path.pop_front() {
+                // dbg!(new_pos);
                 if new_pos == world.player.pos {
                     world.player.damage(world.enemies[index].attack_damage);
                 } else {
@@ -126,7 +129,8 @@ impl Enemy {
         let mut queue = LinkedList::new();
         queue.push_back(enemy.pos);
 
-        visited[enemy.pos.y - world.y_offset][enemy.pos.x - world.x_offset] = true;
+        visited[enemy.pos.y][enemy.pos.x] = true;
+        // visited[enemy.pos.y - (world.world_position.y * WORLD_SIZE.1 as usize)][enemy.pos.x - (world.world_position.x * WORLD_SIZE.0 as usize)] = true;
         while !queue.is_empty() {
             if let Some(node) = queue.pop_front() {
                 if node == world.player.pos {
@@ -138,12 +142,20 @@ impl Enemy {
                 // the queue
                 let neighbors = Self::get_neighbors(world, node, can_dodge_projectiles, index);
                 for next in neighbors {
-                    if !visited[next.y - world.y_offset][next.x - world.x_offset] {
+                    // if !visited[next.y][next.x] {
+                    // if world.player.pos.y >= 48 {
+                    //     dbg!(next);
+                    //     dbg!(world.enemies[index].pos);
+                    // }
+                    // if !visited[next.y - (world.world_position.y * WORLD_SIZE.1 as usize)][next.x - (world.world_position.x * WORLD_SIZE.0 as usize)] {
+                    if !visited[next.y][next.x] {
                         queue.push_back(next);
-                        visited[next.y - world.y_offset][next.x - world.x_offset] = true;
+                        visited[next.y][next.x] = true;
+                        // visited[next.y - (world.world_position.y * WORLD_SIZE.1 as usize)][next.x - (world.world_position.x * WORLD_SIZE.0 as usize)] = true;
 
                         // mark the previous of the neighbor as the node to reconstruct the path
-                        previous[next.y - world.y_offset][next.x - world.x_offset] = node;
+                        previous[next.y][next.x] = node;
+                        // previous[next.y - (world.world_position.y * WORLD_SIZE.1 as usize)][next.x - (world.world_position.x * WORLD_SIZE.0 as usize)] = node;
                     }
                 }
             }
@@ -153,15 +165,17 @@ impl Enemy {
         let mut path = LinkedList::new();
         let mut position = world.player.pos;
         let enemy_pos = world.enemies[index].pos;
-        while (position != enemy_pos) {
+        while position != enemy_pos {
             path.push_front(position);
 
             // if the position's or y is greater than the world size, that means that a path wasn't
             // found, as it means the previous position did not have a previous, so we break out
-            if (position.x - world.x_offset) as i16 >= WORLD_SIZE.0 {
+            if position.x as i16 > WORLD_SIZE.0 {
+            // if (position.x - (world.world_position.x * WORLD_SIZE.1 as usize)) as i16 > WORLD_SIZE.0 {
                 break;
             }
-            position = previous[position.y - world.y_offset][position.x - world.x_offset];
+            position = previous[position.y][position.x];
+            // position = previous[position.y - (world.world_position.y * WORLD_SIZE.1 as usize)][position.x - (world.world_position.x * WORLD_SIZE.0 as usize)];
         }
         path
     }
