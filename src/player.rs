@@ -18,6 +18,8 @@ use std::{
 // Can change easily
 const MAX_PLAYER_HEALTH: usize = 30;
 const PLAYER_MELEE_DAMAGE: usize = 1;
+const TELEPORTATION_COST: usize = 10;
+const HEAL_COST: usize = 5;
 const MELEE_ATTACK_KEYCODE: VirtualKeyCode = KeyCode::A;
 // TODO look over these values
 const HEAL_ABILITY_RETURN: usize = 2;
@@ -97,7 +99,7 @@ impl Player {
                             5,
                             5,
                         ))
-                        .color([1.0,1.0,1.0,1.0]), //Color of outline
+                        .color([0.0,0.0,0.0,1.0]), //Color of outline
                 )
             }
             Self::color_heart(&self, canvas, outline, i); //Color in the heart
@@ -118,7 +120,7 @@ impl Player {
                             5,
                             5,
                         ))
-                        .color([1.0,1.0,1.0,1.0]),
+                        .color([0.0,0.0,0.0,1.0]),
                 )
             }
             Self::color_energy(&self, canvas, outline, i);
@@ -257,34 +259,33 @@ impl Player {
                 }
 
                 // Arbitrarily chosen for attack, can change later
-                MELEE_ATTACK_KEYCODE => {
-                    Player::melee_attack(world);
-                }
-                PROJECTILE_ATTACK_KEYCODE => {
-                    if (world.player.energy > 0) {
-                        Player::projectile_attack(world);
-                        world.player.energy -= 1;
-                        // commented out so I can test everything
-                    }
-                }
+                // MELEE_ATTACK_KEYCODE => {
+                //     Player::melee_attack(world);
+                // }
+                // PROJECTILE_ATTACK_KEYCODE => {
+                //     if (world.player.energy > 0) {
+                //         Player::projectile_attack(world);
+                //         world.player.energy -= 1;
+                //         // commented out so I can test everything
+                //     }
+                // }
                 HEAL_KEYCODE => {
-                    if world.player.energy >= 5 {
+                    if world.player.energy >= HEAL_COST {
                         world.player.health += HEAL_ABILITY_RETURN;
-                        world.player.energy -= 5;
+                        world.player.energy -= HEAL_COST;
                     }
                 }
-                // TODO add some energy costs for this
-                BUILD_KEYCODE => {
-                    Player::build(world);
-                }
+                // BUILD_KEYCODE => {
+                //     Player::build(world);
+                // }
                 LIGHTNING_KEYCODE => {
                     Player::lightning(world);
                 }
 
                 TELEPORT_KEYCODE => {
-                    if world.player.energy > 5 && world.player.queued_position.is_some() {
+                    if world.player.energy >= TELEPORTATION_COST && world.player.queued_position.is_some() {
                         Self::teleport(world);
-                        world.player.energy -= 5;
+                        world.player.energy -= TELEPORTATION_COST;
                     }
                 } 
                 _ => {return false;}
@@ -322,99 +323,96 @@ impl Player {
         }
     }
 
-    pub fn build(world: &mut World) {
-        let position = World::new_position(
-            world.player.pos,
-            world.player.direction.clone(),
-            world,
-            1,
-        );
+    // pub fn build(world: &mut World) {
+    //     let position = World::new_position(
+    //         world.player.pos,
+    //         world.player.direction.clone(),
+    //         world,
+    //         1,
+    //     );
 
-        // make sure there are no enemies       
-        if !world.entity_positions.contains_key(&position) {
-            // check if there is terrain at the position 
-            // If there is nothing, then build there
-            // If there is something, check if it's a build, and destroy it
-            match world.terrain_positions.get(&position) {
-                Some(color) => {
-                    if *color == tile::STRUCTURE {
-                        world.terrain_positions.remove(&position);
-                    }
-                } 
-                None => {
-                    world.terrain_positions.insert(position, tile::STRUCTURE);
-                }
-            }
-        }
-    }
+    //     // make sure there are no enemies       
+    //     if !world.entity_positions.contains_key(&position) {
+    //         // check if there is terrain at the position 
+    //         // If there is nothing, then build there
+    //         // If there is something, check if it's a build, and destroy it
+    //         match world.terrain_positions.get(&position) {
+    //             Some(color) => {
+    //                 if *color == tile::STRUCTURE {
+    //                     world.terrain_positions.remove(&position);
+    //                 }
+    //             } 
+    //             None => {
+    //                 world.terrain_positions.insert(position, tile::STRUCTURE);
+    //             }
+    //         }
+    //     }
+    // }
 
-    pub fn melee_attack(world: &mut World) {
-        // gets the position that the attack will be applied to, one tile forward of the player in
-        // the direction that they are facing
-        let attacking_position = World::new_position(
-            world.player.pos,
-            world.player.direction.clone(),
-            world,
-            world.player.speed,
-        );
+    // pub fn melee_attack(world: &mut World) {
+    //     // gets the position that the attack will be applied to, one tile forward of the player in
+    //     // the direction that they are facing
+    //     let attacking_position = World::new_position(
+    //         world.player.pos,
+    //         world.player.direction.clone(),
+    //         world,
+    //         world.player.speed,
+    //     );
 
-        // We do not know what enemies are on the tile being attacked, so we need to go through the
-        // enemies and check if any of them are on the attacking tile, then damage them
-        for enemy in &mut world.enemies {
-            if enemy.pos == attacking_position {
-                enemy.damage(PLAYER_MELEE_DAMAGE);
-            }
-        }
-    }
+    //     // We do not know what enemies are on the tile being attacked, so we need to go through the
+    //     // enemies and check if any of them are on the attacking tile, then damage them
+    //     for enemy in &mut world.enemies {
+    //         if enemy.pos == attacking_position {
+    //             enemy.damage(PLAYER_MELEE_DAMAGE);
+    //         }
+    //     }
+    // }
 
-    // This function should just spawn a projectile, the mechanics of dealing with the projectile
-    // and such should be determined by the projectile object itself
-    pub fn projectile_attack(world: &mut World) {
-        let projectile_spawn_pos = World::new_position(
-            world.player.pos,
-            world.player.direction.clone(),
-            world,
-            world.player.speed,
-        );
-        if projectile_spawn_pos != world.player.pos {
-            let projectile = Projectile::new(
-                projectile_spawn_pos.x,
-                projectile_spawn_pos.y,
-                PLAYER_PROJECTILE_SPEED,
-                PLAYER_PROJECTILE_DAMAGE,
-                world.player.direction.clone(),
-                tile::PROJECTILE_PLAYER,
-            );
-            for index in 0..world.enemies.len()  { //Check if it's spawning on enemy, if so damage the enenmy and not spawn a projectile
-                if projectile_spawn_pos == world.enemies[index].pos {
-                    world.enemies[index].damage(projectile.damage);
-                    return;
-                }
-            }
-            world.entity_positions.insert(projectile.pos, (tile::PROJECTILE_PLAYER, Entity::Projectile(world.projectiles.len())));
-            world.projectiles.push(projectile);
-        }
-    }
+    // // This function should just spawn a projectile, the mechanics of dealing with the projectile
+    // // and such should be determined by the projectile object itself
+    // pub fn projectile_attack(world: &mut World) {
+    //     let projectile_spawn_pos = World::new_position(
+    //         world.player.pos,
+    //         world.player.direction.clone(),
+    //         world,
+    //         world.player.speed,
+    //     );
+    //     if projectile_spawn_pos != world.player.pos {
+    //         let projectile = Projectile::new(
+    //             projectile_spawn_pos.x,
+    //             projectile_spawn_pos.y,
+    //             PLAYER_PROJECTILE_SPEED,
+    //             PLAYER_PROJECTILE_DAMAGE,
+    //             world.player.direction.clone(),
+    //             tile::PROJECTILE_PLAYER,
+    //         );
+    //         for index in 0..world.enemies.len()  { //Check if it's spawning on enemy, if so damage the enenmy and not spawn a projectile
+    //             if projectile_spawn_pos == world.enemies[index].pos {
+    //                 world.enemies[index].damage(projectile.damage);
+    //                 return;
+    //             }
+    //         }
+    //         world.entity_positions.insert(projectile.pos, (tile::PROJECTILE_PLAYER, Entity::Projectile(world.projectiles.len())));
+    //         world.projectiles.push(projectile);
+    //     }
+    // }
 
     pub fn can_travel_to(
         world: &mut World,
-        position: Position,
+        position_info: (Position, Position) //Where .0 is the position, and .1 is the world_position
     ) -> bool {
+        //Get the map on which the position is on
         let terrain_map = &world.terrain_map;
-        let curr_terrain_map = &terrain_map[world.world_position.y][world.world_position.x];
-        let entity_positions = &world.entity_positions;
-        //Temporary as for now and doesn't quite work. To fix need to revamp entity system as well
-        let terrain_pos = Position::new(position.x - (50 * world.world_position.x), position.y - (50 * world.world_position.y)); 
-        if entity_positions.contains_key(&position) || curr_terrain_map.contains_key(&terrain_pos) {
-            let info = entity_positions.get(&position);
-            let info2 = curr_terrain_map.get(&terrain_pos);
-            if let Some(info) = info {
+        let entity_map = &world.entity_map;
+        let curr_terrain_map = &terrain_map[position_info.1.y][position_info.1.x];
+        let curr_entity_map = &entity_map[position_info.1.y][position_info.1.x];
+        if curr_entity_map.contains_key(&position_info.0) || curr_terrain_map.contains_key(&position_info.0) {
+            if let Some(info) = curr_entity_map.get(&position_info.0) {
                 if PERMISSIBLE_TILES.contains(&info.0) {
                     return true;
                 }
             }
-
-            if let Some(info) = info2 {
+            if let Some(info) = curr_terrain_map.get(&position_info.0) {
                 if PERMISSIBLE_TILES.contains(&info) {
                     return true;
                 }
