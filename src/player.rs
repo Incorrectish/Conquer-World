@@ -88,10 +88,10 @@ impl Player {
                     &graphics::Quad,
                     graphics::DrawParam::new()
                         .dest_rect(graphics::Rect::new_i32(
-                            ((coord.0) as i32 + 1) * 4 + i*60, //x coordinate of each outline pixel from array
-                            ((coord.1) as i32 + 2) * 4, //y coordinate of each outline pixel from array
-                            4,
-                            4,
+                            ((coord.0) as i32 + 1) * 5 + i*70, //x coordinate of each outline pixel from array
+                            ((coord.1) as i32 + 2) * 5, //y coordinate of each outline pixel from array
+                            5,
+                            5,
                         ))
                         .color([1.0,1.0,1.0,1.0]), //Color of outline
                 )
@@ -109,10 +109,10 @@ impl Player {
                     &graphics::Quad,
                     graphics::DrawParam::new()
                         .dest_rect(graphics::Rect::new_i32(
-                            ((coord.0) as i32 + 80) * 4 + i*48,
-                            ((coord.1) as i32 + 2) * 4,
-                            4,
-                            4,
+                            ((coord.0) as i32 + 80) * 5 + i*53,
+                            ((coord.1) as i32 + 2) * 5,
+                            5,
+                            5,
                         ))
                         .color([1.0,1.0,1.0,1.0]),
                 )
@@ -162,10 +162,10 @@ impl Player {
                                 &graphics::Quad,
                                 graphics::DrawParam::new()
                                     .dest_rect(graphics::Rect::new_i32(
-                                        ((pos.0) as i32 + 1) * 4 + iteration*60,
-                                        ((pos.1) as i32 + 2) * 4,
-                                        4,
-                                        4,
+                                        ((pos.0) as i32 + 1) * 5 + iteration*70,
+                                        ((pos.1) as i32 + 2) * 5,
+                                        5,
+                                        5,
                                     ))
                                     .color(temp_heart_color),
                             ); 
@@ -215,10 +215,10 @@ impl Player {
                                 &graphics::Quad,
                                 graphics::DrawParam::new()
                                     .dest_rect(graphics::Rect::new_i32(
-                                        ((pos.0) as i32 + 80) * 4 + iteration*48,
-                                        ((pos.1) as i32 + 2) * 4,
-                                        4,
-                                        4,
+                                        ((pos.0) as i32 + 80) * 5 + iteration*53,
+                                        ((pos.1) as i32 + 2) * 5,
+                                        5,
+                                        5,
                                     ))
                                     .color(temp_energy_color),
                             ); 
@@ -353,13 +353,17 @@ impl Player {
     }
 
     pub fn can_travel_to(
+        world: &mut World,
         position: Position,
-        entity_positions: &HashMap<Position, ([f32; 4], Entity)>,
-        terrain_positions: &HashMap<Position, [f32;4]>
     ) -> bool {
-        if entity_positions.contains_key(&position) || terrain_positions.contains_key(&position) {
+        let terrain_map = &world.terrain_map;
+        let curr_terrain_map = &terrain_map[world.world_position.y][world.world_position.x];
+        let entity_positions = &world.entity_positions;
+        //Temporary as for now and doesn't quite work. To fix need to revamp entity system as well
+        let terrain_pos = Position::new(position.x - (50 * world.world_position.x), position.y - (50 * world.world_position.y)); 
+        if entity_positions.contains_key(&position) || curr_terrain_map.contains_key(&terrain_pos) {
             let info = entity_positions.get(&position);
-            let info2 = terrain_positions.get(&position);
+            let info2 = curr_terrain_map.get(&terrain_pos);
             if let Some(info) = info {
                 if PERMISSIBLE_TILES.contains(&info.0) {
                     return true;
