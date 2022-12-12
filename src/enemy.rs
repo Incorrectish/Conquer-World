@@ -93,6 +93,7 @@ impl Enemy {
         let mut cur_pos = enemy.pos;
         for _ in 0..enemy.speed {
             if let Some(new_pos) = travel_path.pop_front() {
+                dbg!(new_pos);
                 if new_pos == world.player.pos {
                     world.player.damage(world.enemies[index].attack_damage);
                 } else {
@@ -126,7 +127,7 @@ impl Enemy {
         let mut queue = LinkedList::new();
         queue.push_back(enemy.pos);
 
-        visited[enemy.pos.y - world.y_offset][enemy.pos.x - world.x_offset] = true;
+        visited[enemy.pos.y][enemy.pos.x] = true;
         while !queue.is_empty() {
             if let Some(node) = queue.pop_front() {
                 if node == world.player.pos {
@@ -138,12 +139,12 @@ impl Enemy {
                 // the queue
                 let neighbors = Self::get_neighbors(world, node, can_dodge_projectiles, index);
                 for next in neighbors {
-                    if !visited[next.y - world.y_offset][next.x - world.x_offset] {
+                    if !visited[next.y][next.x] {
                         queue.push_back(next);
-                        visited[next.y - world.y_offset][next.x - world.x_offset] = true;
+                        visited[next.y][next.x] = true;
 
                         // mark the previous of the neighbor as the node to reconstruct the path
-                        previous[next.y - world.y_offset][next.x - world.x_offset] = node;
+                        previous[next.y][next.x] = node;
                     }
                 }
             }
@@ -158,10 +159,10 @@ impl Enemy {
 
             // if the position's or y is greater than the world size, that means that a path wasn't
             // found, as it means the previous position did not have a previous, so we break out
-            if (position.x - world.x_offset) as i16 >= WORLD_SIZE.0 {
+            if (position.x) as i16 >= WORLD_SIZE.0 {
                 break;
             }
-            position = previous[position.y - world.y_offset][position.x - world.x_offset];
+            position = previous[position.y][position.x];
         }
         path
     }
@@ -187,9 +188,8 @@ impl Enemy {
             // if the new position is valid(correct tiles & within bounds) add it to the potential
             // neighbors
             if Self::can_travel_to(
-                new_pos,
-                &world.entity_positions,
-                &world.terrain_positions,
+                world,
+                (new_pos, world.world_position),
                 can_dodge_projectiles,
             ) && world.enemies[index].world_pos == world.world_position
             {
@@ -200,33 +200,34 @@ impl Enemy {
     }
 
     pub fn can_travel_to(
-        position: Position,
-        entity_positions: &HashMap<Position, ([f32; 4], Entity)>,
-        terrain_positions: &HashMap<Position, [f32; 4]>,
+        world: &mut World,
+        position_info: (Position, Position),
         can_dodge_projectiles: bool,
     ) -> bool {
+        let terrain_map = &world.terrain_map;
+        let entity_map = &world.entity_map;
+        let curr_terrain_map = &terrain_map[position_info.1.y][position_info.1.x];
+        let curr_entity_map = &entity_map[position_info.1.y][position_info.1.x];
         // check if there are any static or dynamic entities in the position
-        if entity_positions.contains_key(&position) || terrain_positions.contains_key(&position) {
-            let info = entity_positions.get(&position);
-            let info2 = terrain_positions.get(&position);
+        if curr_entity_map.contains_key(&position_info.0) || curr_terrain_map.contains_key(&position_info.0) {
             if can_dodge_projectiles {
-                if let Some(info) = info {
+                if let Some(info) = curr_entity_map.get(&position_info.0) {
                     if PERMISSIBLE_TILES_DODGING.contains(&info.0) {
                         return true;
                     }
                 }
-                if let Some(info) = info2 {
+                if let Some(info) = curr_terrain_map.get(&position_info.0) {
                     if PERMISSIBLE_TILES_DODGING.contains(&info) {
                         return true;
                     }
                 }
             } else {
-                if let Some(info) = info {
+                if let Some(info) = curr_entity_map.get(&position_info.0) {
                     if PERMISSIBLE_TILES.contains(&info.0) {
                         return true;
                     }
                 }
-                if let Some(info) = info2 {
+                if let Some(info) = curr_terrain_map.get(&position_info.0) {
                     if PERMISSIBLE_TILES.contains(&info) {
                         return true;
                     }

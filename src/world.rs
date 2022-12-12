@@ -26,7 +26,7 @@ pub const BOSS_ROOMS: [Position; 5] = [
 ];
 const TOTAL_LAKES: i16 = 100;
 const TOTAL_MOUNTAINS: i16 = 75;
-const ENEMY_COUNT: usize = 100;
+const ENEMY_COUNT: usize = 1;
 
 pub struct World {
     //Stores which world the player is in
@@ -125,8 +125,10 @@ impl World {
             // the loop just generates new positions until it finds an open one, and it inserts an
             // enemy there
             loop {
-                let x = random::rand_range(rng, 0, BOARD_SIZE.0); // random x coordinate
-                let y = random::rand_range(rng, 0, BOARD_SIZE.1); // random y coordinate
+                let x = random::rand_range(rng, 0, WORLD_SIZE.0); // random x coordinate
+                let y = random::rand_range(rng, 0, WORLD_SIZE.1); // random y coordinate
+                // let x = random::rand_range(rng, 0, BOARD_SIZE.0); // random x coordinate
+                // let y = random::rand_range(rng, 0, BOARD_SIZE.1); // random y coordinate
                 let world_loc = Position::new((x / WORLD_SIZE.0) as usize, (y / WORLD_SIZE.1) as usize);
                 let random_loc = Position::new(
                     (x - (50 * world_loc.x as i16)) as usize,
@@ -274,8 +276,8 @@ impl World {
                 &graphics::Quad,
                 graphics::DrawParam::new()
                     .dest_rect(graphics::Rect::new_i32(
-                        (loc.x - self.x_offset) as i32 * TILE_SIZE.0 as i32,
-                        (loc.y - self.y_offset + UNIVERSAL_OFFSET as usize) as i32
+                        loc.x as i32 * TILE_SIZE.0 as i32,
+                        (loc.y as usize + UNIVERSAL_OFFSET as usize) as i32
                             * TILE_SIZE.1 as i32,
                         TILE_SIZE.0 as i32,
                         TILE_SIZE.1 as i32,
