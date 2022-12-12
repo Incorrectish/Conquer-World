@@ -89,8 +89,7 @@ impl Enemy {
 
 
     // This just makes move along the best path for the speed, eg speed 2 = 2 moves along the best
-    // path
-<<<<<<< HEAD
+    // path        
     // pub fn move_enemy(index: usize, world: &mut World) {
     //     // This gets the shortest path
     //     let mut travel_path = Self::get_best_path(index, world);
@@ -106,35 +105,12 @@ impl Enemy {
     //                 world.enemies[index].pos = new_pos;
     //                 cur_pos = new_pos;
     //             }
-                
+
     //         } else {
     //             break;
     //         }
     //     }
-    //  }        
-=======
-    pub fn move_enemy(index: usize, world: &mut World) {
-        // This gets the shortest path
-        let mut travel_path = Self::get_best_path(index, world);
-        let enemy = &world.enemies[index];
-        let mut cur_pos = enemy.pos;
-        for _ in 0..enemy.speed {
-            if let Some(new_pos) = travel_path.pop_front() {
-                if new_pos == world.player.pos {
-                    world.player.damage(world.enemies[index].attack_damage);
-                } else {
-                    // simply updates the render queue
-                    World::update_position(world, cur_pos, new_pos);
-                    world.enemies[index].pos = new_pos;
-                    cur_pos = new_pos;
-                }
-
-            } else {
-                break;
-            }
-        }
-    }        
->>>>>>> 04d578a7ea813e1bf9141116a66464fabdd0d960
+    // }        
 
     // pub fn get_best_path(index: usize, world: &mut World) -> LinkedList<Position> {
     //     let enemy = &world.enemies[index];
@@ -148,44 +124,33 @@ impl Enemy {
     //     let mut queue = LinkedList::new();
     //     queue.push_back(enemy.pos);
 
-<<<<<<< HEAD
-        
-    //     visited[enemy.pos.y - world.y_offset][enemy.pos.x - world.x_offset] = true;
-    //     while !queue.is_empty() {
-    //         if let Some(node) = queue.pop_front() {
-=======
 
-        visited[enemy.pos.y - world.y_offset][enemy.pos.x - world.x_offset] = true;
-        while !queue.is_empty() {
-            if let Some(node) = queue.pop_front() {
->>>>>>> 04d578a7ea813e1bf9141116a66464fabdd0d960
+    // visited[enemy.pos.y - world.y_offset][enemy.pos.x - world.x_offset] = true;
+    // while !queue.is_empty() {
+    //     if let Some(node) = queue.pop_front() {
+    //         // reached the goal location, break and reconstruct path
+    //         if node == world.player.pos {
+    //             break;
+    //         }
 
-    //             // reached the goal location, break and reconstruct path
-    //             if node == world.player.pos {
-    //                 break;
-    //             }
-
-<<<<<<< HEAD
+    //         // standard bfs stuff, for each neighbor, if it hasn't been visited, put it into
+    //         // the queue
+    //         let neighbors = Self::get_neighbors(world, node);
+    //         for next in neighbors {
+    //             if !visited[next.y - world.y_offset][next.x - world.x_offset] {
+    //                 queue.push_back(next);
+    //                 visited[next.y - world.y_offset][next.x - world.x_offset] = true;
     //             // standard bfs stuff, for each neighbor, if it hasn't been visited, put it into
     //             // the queue
-    //             let neighbors = Self::get_neighbors(world, node);
+    //             let can_dodge_projectiles = match world.enemies[index].color {
+    //                 tile::BOMBER => true,
+    //                 _ => false,
+    //             };
+    //             let neighbors = Self::get_neighbors(world, node, can_dodge_projectiles);
     //             for next in neighbors {
     //                 if !visited[next.y - world.y_offset][next.x - world.x_offset] {
     //                     queue.push_back(next);
     //                     visited[next.y - world.y_offset][next.x - world.x_offset] = true;
-=======
-                // standard bfs stuff, for each neighbor, if it hasn't been visited, put it into
-                // the queue
-                let can_dodge_projectiles = match world.enemies[index].color {
-                    tile::BOMBER => true,
-                    _ => false,
-                };
-                let neighbors = Self::get_neighbors(world, node, can_dodge_projectiles);
-                for next in neighbors {
-                    if !visited[next.y - world.y_offset][next.x - world.x_offset] {
-                        queue.push_back(next);
-                        visited[next.y - world.y_offset][next.x - world.x_offset] = true;
->>>>>>> 04d578a7ea813e1bf9141116a66464fabdd0d960
 
     //                     // mark the previous of the neighbor as the node to reconstruct the path
     //                     previous[next.y - world.y_offset][next.x - world.x_offset] = node;
@@ -193,6 +158,7 @@ impl Enemy {
     //             }
     //         }
     //     }
+    // }
 
     //     // This uses the previous 2 dimensional array to reconstruct the best path
     //     let mut path = LinkedList::new();
@@ -211,21 +177,14 @@ impl Enemy {
     //     path
     // }
 
-<<<<<<< HEAD
+
     // pub fn get_neighbors(world:&mut World, position: Position) -> Vec<Position> {
     //     let directions = [Direction::North, Direction::South, Direction::West, Direction::East];
     //     let mut moves = Vec::new();
-=======
-    pub fn get_neighbors(world: &mut World, position: Position, can_dodge_projectiles: bool) -> Vec<Position> {
-        let directions = [Direction::North, Direction::South, Direction::West, Direction::East];
-        let mut moves = Vec::new();
->>>>>>> 04d578a7ea813e1bf9141116a66464fabdd0d960
-
     //     // loop through all the directions
     //     for direction in directions {
     //         let pos = World::new_position(position, direction, world, 1);
 
-<<<<<<< HEAD
     //         // if the new position is valid(correct tiles & within bounds) add it to the potential
     //         // neighbors
     //         if Self::can_travel_to(
@@ -238,20 +197,7 @@ impl Enemy {
     //     }
     //     return moves;
     // }
-=======
-            // if the new position is valid(correct tiles & within bounds) add it to the potential
-            // neighbors
-            if Self::can_travel_to(
-                pos, &world.entity_positions, 
-                &world.terrain_positions, can_dodge_projectiles) 
-                && World::coordinates_are_within_world(world, pos) 
-                {
-                        moves.push(pos);
-                }
-        }
-        return moves;
-    }
->>>>>>> 04d578a7ea813e1bf9141116a66464fabdd0d960
+    
 
     pub fn can_travel_to(
         position: Position,

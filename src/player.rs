@@ -399,21 +399,20 @@ impl Player {
 
     pub fn can_travel_to(
         world: &mut World,
-        position_info: (Position, Position)
+        position_info: (Position, Position) //Where .0 is the position, and .1 is the world_position
     ) -> bool {
+        //Get the map on which the position is on
         let terrain_map = &world.terrain_map;
         let entity_map = &world.entity_map;
         let curr_terrain_map = &terrain_map[position_info.1.y][position_info.1.x];
         let curr_entity_map = &entity_map[position_info.1.y][position_info.1.x];
         if curr_entity_map.contains_key(&position_info.0) || curr_terrain_map.contains_key(&position_info.0) {
-            let info = curr_entity_map.get(&position_info.0);
-            let info2 = curr_terrain_map.get(&position_info.0);
-            if let Some(info) = info {
+            if let Some(info) = curr_entity_map.get(&position_info.0) {
                 if PERMISSIBLE_TILES.contains(&info.0) {
                     return true;
                 }
             }
-            if let Some(info) = info2 {
+            if let Some(info) = curr_terrain_map.get(&position_info.0) {
                 if PERMISSIBLE_TILES.contains(&info) {
                     return true;
                 }

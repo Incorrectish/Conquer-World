@@ -83,8 +83,8 @@ impl World {
         let mut enemies = Vec::new();
         World::gen_enemies(
             &mut rng,
-            &terrain_positions,
-            &mut entity_positions,
+            &mut terrain_map,
+            &mut entity_map,
             &mut enemies,
         );
         World {
@@ -108,8 +108,14 @@ impl World {
 
     pub fn gen_enemies(
         rng: &mut ThreadRng,
-        terrain_positions: &HashMap<Position, [f32; 4]>,
-        entity_positions: &mut HashMap<Position, ([f32; 4], Entity)>,
+        terrain_map: &mut [[HashMap<Position, [f32; 4]>; 
+        (BOARD_SIZE.0 / WORLD_SIZE.0) as usize]; 
+        (BOARD_SIZE.1 / WORLD_SIZE.1) as usize],
+
+        entity_map: &mut [[HashMap<Position, ([f32; 4], Entity)>; 
+        (BOARD_SIZE.0 / WORLD_SIZE.0) as usize]; 
+        (BOARD_SIZE.1 / WORLD_SIZE.1) as usize],
+        
         enemies: &mut Vec<Enemy>,
     ) {
         for _ in 0..ENEMY_COUNT {
@@ -118,14 +124,17 @@ impl World {
             loop {
                 let x = random::rand_range(rng, 0, BOARD_SIZE.0); // random x coordinate
                 let y = random::rand_range(rng, 0, BOARD_SIZE.1); // random y coordinate
-                let random_position = Position::new(x as usize, y as usize);
+                let world_loc = Position::new((x / 50) as usize, (y / 50) as usize);
+                let random_loc = Position::new((x - (50 * world_loc.x as i16)) as usize, (y - (50 * world_loc.y as i16)) as usize);
+                let world_map_entity = &mut entity_map[world_loc.y][world_loc.x];
+                let world_map_terrain =  &mut terrain_map[world_loc.y][world_loc.x];
 
                 // if the random position is blank, then create an enemy there
-                if !terrain_positions.contains_key(&random_position)
-                    && !entity_positions.contains_key(&random_position)
+                if !world_map_terrain.contains_key(&random_loc)
+                    && !world_map_entity.contains_key(&random_loc)
                 {
-                    entity_positions
-                        .insert(random_position, (tile::BASIC_ENEMY, Entity::Enemy(enemies.len())));
+                    world_map_entity
+                        .insert(random_loc, (tile::BASIC_ENEMY, Entity::Enemy(enemies.len())));
                     enemies.push(Enemy::new(x as usize, y as usize, 1, tile::BASIC_ENEMY));
                     break;
                 }
@@ -261,9 +270,9 @@ impl World {
 
     //Takes in a previous location and new location Position object and updates that specific
     //entity inside of the HashMap to move from the previous location to the new location
-    pub fn update_position(world: &mut World, prev_position: Position, new_position_info: (Position, Position)) {
+    pub fn update_position(world: &mut World, prev_position:Position, new_position_info: (Position, Position)) {
         let curr_world = &mut world.entity_map[new_position_info.1.y][new_position_info.1.x];
-        let info = curr_world.get(&prev_position); //Access contents of what was at previous position
+        let info =&curr_world.get(&prev_position); //Access contents of what was at previous position
         if let Some(contents) = info {
             let tile_color = contents.0;
             let tile_type = contents.1.clone();
@@ -304,15 +313,17 @@ impl World {
         } else {
             match entity_type { //Determine entity time again as each behaves differently
                 Entity::Player => {
-                    if !Self::coordinates_are_within_world(world, new_position.1) //If new position is not within world but the player can travel to it
-                        && Player::can_travel_to(                               //need to shift camera view for the user
+                    //If new position is not within world but the player can travel to it
+                    //Necessitates camera shift
+                    if !Self::coordinates_are_within_world(world, new_position.1) 
+                        && Player::can_travel_to(                       
                             world,
                             new_position,
                         )
                     {                
                         let mut curr_player_map = &mut world.entity_map[world.world_position.y][world.world_position.x];
                         curr_player_map.remove(&pos);
-                        match direction { //Shifts camera using x and y offsets depending on which way the player is moving
+                        match direction { //Shifts world_position and puts player on first tile on next screen
                             Direction::North => {
                                 world.world_position = Position::new(new_position.1.x, new_position.1.y);
                                 curr_player_map = &mut world.entity_map[world.world_position.y][world.world_position.x];
@@ -391,43 +402,43 @@ impl World {
         direction: Direction,
         world: &mut Self,
         travel_distance: usize,
-    ) -> (Position, Position) {
+    ) -> (Position, Position) { //Where .0 is the phyiscal coordinate position and .1 is the world_position
         let mut x = pos.x as i16;
         let mut y = pos.y as i16;
         let mut world_pos = world.world_position;
         match direction {
             Direction::North => {
-                y = y as i16 - travel_distance as i16;
-                if y < 0 {
-                    y = WORLD_SIZE.1 - 1 as i16;
-                    if world_pos.y == 0 {
-                        return (Position::new(pos.x as usize, pos.y as usize), world_pos);
+                y = y as i16 - travel_distance as i16; 
+                if y < 0 { //If the new coordinate is negative, we know we have to shift up
+                    y = WORLD_SIZE.1 - 1 as i16; //Puts coordinate at spot on next camera view
+                    if world_pos.y == 0 { //If we are at the edge of the board, don't shift, instead return same value
+                        return (Position::new(pos.x as usize, pos.y as usize), world_pos); 
                     }
-                    world_pos = Position::new(world.world_position.x, world.world_position.y - 1);
+                    world_pos = Position::new(world.world_position.x, world.world_position.y - 1); //Shifts world
                 }
 
             }
-            Direction::South => {
+            Direction::South => { //Same as North but for the South direction
                 y = y as i16 + travel_distance as i16;
                 if y >= WORLD_SIZE.1 as i16{
                     y = 0;
-                    if world_pos.y == BOARD_SIZE.1 as usize /50 {
+                    if world_pos.y == BOARD_SIZE.1 as usize / 50 {
                         return (Position::new(pos.x as usize, pos.y as usize), world_pos);
                     }
                     world_pos = Position::new(world.world_position.x, world.world_position.y + 1);
                 }
             }
-            Direction::East => {
+            Direction::East => { //Same as North but for the East direction
                 x = x as i16 + travel_distance as i16;
                 if x >= WORLD_SIZE.0 as i16 {
                     x = 0;
-                    if world_pos.x == BOARD_SIZE.1 as usize /50 {
+                    if world_pos.x == BOARD_SIZE.1 as usize / 50 {
                         return (Position::new(pos.x as usize, pos.y as usize), world_pos);
                     }
                     world_pos = Position::new(world.world_position.x + 1, world.world_position.y);
                 }
             }
-            Direction::West => {
+            Direction::West => { //Same as North but for the West Direction
                 x = x as i16 - travel_distance as i16;
                 if x < 0 {
                     x = WORLD_SIZE.0 as i16 - 1;
