@@ -20,6 +20,10 @@ use std::{
 };
 
 const TOTAL_LAKES: i16 = 50;
+pub const BOSS_ROOMS: [Position; 5] = [Position::new(1, 1), Position::new(1, 5), Position::new(3, 3), Position::new(5, 1), Position::new(5, 5)];
+
+
+
 
 pub struct World {
     pub world_position: Position,

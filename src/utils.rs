@@ -20,7 +20,7 @@ pub struct Position {
     pub y: usize,
 }
 impl Position {
-    pub fn new(x: usize, y: usize) -> Self {
+    pub const fn new(x: usize, y: usize) -> Self {
         Position {
             x,
             y,

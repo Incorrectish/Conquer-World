@@ -1,7 +1,7 @@
 use crate::direction::Direction;
 use crate::enemy::Enemy;
 use crate::player::Player;
-use crate::{projectile::Projectile, tile, world::World, SCREEN_SIZE, TILE_SIZE, WORLD_SIZE};
+use crate::{projectile::Projectile, tile, world::{World, BOSS_ROOMS}, SCREEN_SIZE, TILE_SIZE, WORLD_SIZE};
 use ggez::{
     event,
     graphics::{self, Canvas},
@@ -42,7 +42,18 @@ impl ggez::event::EventHandler<GameError> for State {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         // render the graphics with the rgb value, it will always be black though because the
         // self.r,g,b,a values never change from 0
-        let mut canvas = graphics::Canvas::from_frame(ctx, graphics::Color::from(tile::GRASS));
+        let mut canvas;
+        let mut boss_room = false;
+        for boss_room_position in BOSS_ROOMS {
+            if self.world.world_position == boss_room_position {
+                boss_room = true;
+            }
+        }
+        if boss_room {
+            canvas = graphics::Canvas::from_frame(ctx, graphics::Color::from(tile::FLOOR));
+        } else {
+            canvas = graphics::Canvas::from_frame(ctx, graphics::Color::from(tile::GRASS));
+        }
         self.world.draw(&mut canvas);
 
         //For Text
