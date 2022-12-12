@@ -1,3 +1,4 @@
+use crate::UNIVERSAL_OFFSET;
 use crate::direction::Direction;
 use crate::enemy::Enemy;
 use crate::player::Player;
@@ -121,7 +122,7 @@ impl ggez::event::EventHandler<GameError> for State {
         self.world.player.queued_position = Some(
             Position::new(
                 (_x / TILE_SIZE.0 as f32) as usize,
-                (_y / TILE_SIZE.1 as f32) as usize,
+                (_y / TILE_SIZE.1 as f32) as usize - UNIVERSAL_OFFSET as usize,
             ),
         );
         Ok(())

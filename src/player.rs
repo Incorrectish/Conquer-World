@@ -22,6 +22,7 @@ const MELEE_ATTACK_KEYCODE: VirtualKeyCode = KeyCode::A;
 // TODO look over these values
 const HEAL_ABILITY_RETURN: usize = 2;
 const HEAL_KEYCODE: VirtualKeyCode = KeyCode::H;
+const TELEPORT_KEYCODE: VirtualKeyCode = KeyCode::T;
 const LIGHTNING_KEYCODE: VirtualKeyCode = KeyCode::L;
 const BUILD_KEYCODE: VirtualKeyCode = KeyCode::B;
 const PROJECTILE_ATTACK_KEYCODE: VirtualKeyCode = KeyCode::Space;
@@ -278,6 +279,13 @@ impl Player {
                 LIGHTNING_KEYCODE => {
                     Player::lightning(world);
                 }
+
+                TELEPORT_KEYCODE => {
+                    if world.player.energy > 5 && world.player.queued_position.is_some() {
+                        Self::teleport(world);
+                        world.player.energy -= 5;
+                    }
+                } 
                 _ => {return false;}
             },
             None => {return false;}
@@ -286,17 +294,30 @@ impl Player {
     }
 
     pub fn lightning(world: &mut World) {
-        if let Some(queued_position) = world.player.queued_position {
-            // TODO: Damage
-            let projectile = Projectile::new(
-                queued_position.x,
-                queued_position.y,
-                0,
-                3,
-                Direction::North,
-                tile::LIGHTNING_PLACEHOLDER,
-            );
-            world.projectiles.push(projectile)
+        // if let Some(queued_position) = world.player.queued_position {
+        //     // TODO: Damage
+        //     let projectile = Projectile::new(
+        //         queued_position.x,
+        //         queued_position.y,
+        //         0,
+        //         3,
+        //         Direction::North,
+        //         tile::LIGHTNING_PLACEHOLDER,
+        //     );
+        //     world.projectiles.push(projectile)
+        // }
+    }
+
+    // THIS METHOD EXPECTS A QUEUED POSITION
+    pub fn teleport(world: &mut World) {
+        if let Some(pos) = world.player.queued_position {
+            world.entity_positions.remove(&world.player.pos);
+            if !world.terrain_positions.contains_key(&pos) && !world.entity_positions.contains_key(&pos) {
+                world.entity_positions.insert(pos, (tile::PLAYER, Entity::Player));
+                world.player.pos = pos;
+            } else {
+                world.entity_positions.insert(world.player.pos, (tile::PLAYER, Entity::Player));
+            }
         }
     }
 
