@@ -244,30 +244,31 @@ impl World {
     // world. takes in the world, x, and y, and returns true if the coordinates are inside the
     // world, and false otherwise
     pub fn coordinates_are_within_world(world: &mut World, world_position: Position) -> bool {
-       return world_position.x < 0 || 
-       world_position.x > WORLD_SIZE.0 as usize / 50 ||
-       world_position.y < 0 ||
-       world_position.y > WORLD_SIZE.1 as usize / 50;
+        return world_position == world.world_position;
+
+
     }
 
     // Returns true if coordinates inside board (note distinction from world), false otherwise
     // Distinction from coordinates_are_within_world() is important for shifting cameras when
     // crossing edge
     pub fn coordinates_are_within_board(world: &mut World, world_position: Position) -> bool {
-        return world_position == world.world_position;
+        return world_position.x > 0 || 
+        world_position.x < WORLD_SIZE.0 as usize / 50 ||
+        world_position.y > 0 ||
+        world_position.y < WORLD_SIZE.1 as usize / 50;
     }
 
     //Takes in a previous location and new location Position object and updates that specific
     //entity inside of the HashMap to move from the previous location to the new location
-    pub fn update_position(world: &mut World, prev_position: Position, new_position: Position) {
-        let info = world.entity_positions.get(&prev_position); //Access contents of what was at previous position
+    pub fn update_position(world: &mut World, prev_position: Position, new_position_info: (Position, Position)) {
+        let curr_world = &mut world.entity_map[new_position_info.1.y][new_position_info.1.x];
+        let info = curr_world.get(&prev_position); //Access contents of what was at previous position
         if let Some(contents) = info {
             let tile_color = contents.0;
             let tile_type = contents.1.clone();
-            world
-                .entity_positions
-                .insert(new_position, (tile_color, tile_type)); //Insert same contents into new position
-            world.entity_positions.remove(&prev_position); //Remove old position
+            curr_world.insert(new_position_info.0, (tile_color, tile_type)); //Insert same contents into new position
+            curr_world.remove(&prev_position); //Remove old position
         }
     }
 
@@ -298,7 +299,7 @@ impl World {
 
         let new_position = Self::new_position(pos, direction.clone(), world, speed); //Get where the entity is supposed to go
 
-        if !Self::coordinates_are_within_board(world, new_position.1) { //If new location is not within the board, returns false
+        if !Self::coordinates_are_within_board(world, new_position.1) || new_position.0 == pos { //If new location is not within the board, returns false
             return false;
         } else {
             match entity_type { //Determine entity time again as each behaves differently
@@ -308,41 +309,47 @@ impl World {
                             world,
                             new_position,
                         )
-                    {                                   
+                    {                
                         let mut curr_player_map = &mut world.entity_map[world.world_position.y][world.world_position.x];
-                        curr_player_map.remove(&new_position.0);
+                        curr_player_map.remove(&pos);
                         match direction { //Shifts camera using x and y offsets depending on which way the player is moving
                             Direction::North => {
-                                world.world_position = Position::new(world.world_position.x, world.world_position.y - 1);
+                                world.world_position = Position::new(new_position.1.x, new_position.1.y);
                                 curr_player_map = &mut world.entity_map[world.world_position.y][world.world_position.x];
-                                curr_player_map.insert(Position::new(new_position.x, WORLD_SIZE.1 as usize - 1), (tile::PLAYER, Entity::Player));
+                                curr_player_map.insert(Position::new(new_position.0.x, WORLD_SIZE.1 as usize - 1), (tile::PLAYER, Entity::Player));
+                                world.player.pos = Position::new(new_position.0.x, WORLD_SIZE.1 as usize - 1);
 
                             }
                             Direction::East => {
-                                world.world_position = Position::new(world.world_position.x + 1, world.world_position.y);
+                                world.world_position = Position::new(new_position.1.x, new_position.1.y);
                                 curr_player_map = &mut world.entity_map[world.world_position.y][world.world_position.x];
-                                curr_player_map.insert(Position::new(0, world.world_position.y), (tile::PLAYER, Entity::Player));
+                                curr_player_map.insert(Position::new(0, new_position.0.y), (tile::PLAYER, Entity::Player));
+                                world.player.pos = Position::new(0, new_position.0.y);
 
                             }
                             Direction::West => {
-                                world.world_position = Position::new(world.world_position.x - 1, world.world_position.y);
+                                world.world_position = Position::new(new_position.1.x, new_position.1.y);
                                 curr_player_map = &mut world.entity_map[world.world_position.y][world.world_position.x];
-                                curr_player_map.insert(Position::new(WORLD_SIZE.0 as usize - 1, world.world_position.y), (tile::PLAYER, Entity::Player));
+                                curr_player_map.insert(Position::new(WORLD_SIZE.0 as usize - 1, new_position.0.y), (tile::PLAYER, Entity::Player));
+                                world.player.pos = Position::new(WORLD_SIZE.0 as usize - 1, new_position.0.y);
+
                             }
                             Direction::South => {
-                                world.world_position = Position::new(world.world_position.x, world.world_position.y + 1);
+                                world.world_position = Position::new(new_position.1.x, new_position.1.y);
                                 curr_player_map = &mut world.entity_map[world.world_position.y][world.world_position.x];
-                                curr_player_map.insert(Position::new(world.world_position.x, 0), (tile::PLAYER, Entity::Player));
+                                curr_player_map.insert(Position::new(new_position.0.x, 0), (tile::PLAYER, Entity::Player));
+                                world.player.pos = Position::new(new_position.0.x, 0);
+
                             }
                         }
-                    }
-
-                    if Player::can_travel_to( //If the player can travel to the area, update its position in the HashMap and object
-                        world,
-                        new_position,
-                    ) {
-                        Self::update_position(world, world.player.pos, new_position);
-                        world.player.pos = new_position;
+                    } else {
+                        if Player::can_travel_to(
+                            world,
+                            new_position,
+                        ) {
+                            Self::update_position(world, world.player.pos, new_position);
+                            world.player.pos = new_position.0;
+                        }
                     }
                     return true;
                 }
@@ -352,21 +359,21 @@ impl World {
                 }
 
                 Entity::Projectile(i) => { 
-                    if !Projectile::can_travel_to(
-                        new_position,
-                        &world.entity_positions,
-                        &world.terrain_positions,
-                    ) {
-                        return false;
-                    }
-                    for index in 0..world.enemies.len()  { //Check if the projectile will hit an enemy, if so damage the enemy 
-                        if new_position == world.enemies[index].pos {
-                            world.enemies[index].damage(world.projectiles[i].damage);
-                            return false; //Will delete the projectile that hits the enemy
-                        }
-                    }
-                    Self::update_position(world, world.projectiles[i].pos, new_position); //Update projectile position to new position it is moving to
-                    world.projectiles[i].pos = new_position;
+                    // if !Projectile::can_travel_to(
+                    //     new_position,
+                    //     &world.entity_positions,
+                    //     &world.terrain_positions,
+                    // ) {
+                    //     return false;
+                    // }
+                    // for index in 0..world.enemies.len()  { //Check if the projectile will hit an enemy, if so damage the enemy 
+                    //     if new_position == world.enemies[index].pos {
+                    //         world.enemies[index].damage(world.projectiles[i].damage);
+                    //         return false; //Will delete the projectile that hits the enemy
+                    //     }
+                    // }
+                    // Self::update_position(world, world.projectiles[i].pos, new_position); //Update projectile position to new position it is moving to
+                    // world.projectiles[i].pos = new_position;
                     true
                 }
             }
@@ -387,12 +394,15 @@ impl World {
     ) -> (Position, Position) {
         let mut x = pos.x as i16;
         let mut y = pos.y as i16;
-        let world_pos: Position;
+        let mut world_pos = world.world_position;
         match direction {
             Direction::North => {
                 y = y as i16 - travel_distance as i16;
                 if y < 0 {
                     y = WORLD_SIZE.1 - 1 as i16;
+                    if world_pos.y == 0 {
+                        return (Position::new(pos.x as usize, pos.y as usize), world_pos);
+                    }
                     world_pos = Position::new(world.world_position.x, world.world_position.y - 1);
                 }
 
@@ -401,6 +411,9 @@ impl World {
                 y = y as i16 + travel_distance as i16;
                 if y >= WORLD_SIZE.1 as i16{
                     y = 0;
+                    if world_pos.y == BOARD_SIZE.1 as usize /50 {
+                        return (Position::new(pos.x as usize, pos.y as usize), world_pos);
+                    }
                     world_pos = Position::new(world.world_position.x, world.world_position.y + 1);
                 }
             }
@@ -408,6 +421,9 @@ impl World {
                 x = x as i16 + travel_distance as i16;
                 if x >= WORLD_SIZE.0 as i16 {
                     x = 0;
+                    if world_pos.x == BOARD_SIZE.1 as usize /50 {
+                        return (Position::new(pos.x as usize, pos.y as usize), world_pos);
+                    }
                     world_pos = Position::new(world.world_position.x + 1, world.world_position.y);
                 }
             }
@@ -415,6 +431,9 @@ impl World {
                 x = x as i16 - travel_distance as i16;
                 if x < 0 {
                     x = WORLD_SIZE.0 as i16 - 1;
+                    if world_pos.x == 0 {
+                        return (Position::new(pos.x as usize, pos.y as usize), world_pos);
+                    }
                     world_pos = Position::new(world.world_position.x - 1, world.world_position.y);
                 }
             }

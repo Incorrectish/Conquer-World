@@ -73,7 +73,7 @@ impl Enemy {
                 Enemy::kill(world, index);
             } else {
                 if World::coordinates_are_within_world(world, world.enemies[index].pos) {
-                    Self::move_enemy(index, world);
+                    // Self::move_enemy(index, world);
                 }
             }
         }
@@ -89,102 +89,102 @@ impl Enemy {
 
     // This just makes move along the best path for the speed, eg speed 2 = 2 moves along the best
     // path
-    pub fn move_enemy(index: usize, world: &mut World) {
-        // This gets the shortest path
-        let mut travel_path = Self::get_best_path(index, world);
-        let enemy = &world.enemies[index];
-        let mut cur_pos = enemy.pos;
-        for _ in 0..enemy.speed {
-            if let Some(new_pos) = travel_path.pop_front() {
-                if new_pos == world.player.pos {
-                    world.player.damage(world.enemies[index].attack_damage);
-                } else {
-                    // simply updates the render queue
-                    World::update_position(world, cur_pos, new_pos);
-                    world.enemies[index].pos = new_pos;
-                    cur_pos = new_pos;
-                }
+    // pub fn move_enemy(index: usize, world: &mut World) {
+    //     // This gets the shortest path
+    //     let mut travel_path = Self::get_best_path(index, world);
+    //     let enemy = &world.enemies[index];
+    //     let mut cur_pos = enemy.pos;
+    //     for _ in 0..enemy.speed {
+    //         if let Some(new_pos) = travel_path.pop_front() {
+    //             if new_pos == world.player.pos {
+    //                 world.player.damage(world.enemies[index].attack_damage);
+    //             } else {
+    //                 // simply updates the render queue
+    //                 World::update_position(world, cur_pos, new_pos);
+    //                 world.enemies[index].pos = new_pos;
+    //                 cur_pos = new_pos;
+    //             }
                 
-            } else {
-                break;
-            }
-        }
-     }        
+    //         } else {
+    //             break;
+    //         }
+    //     }
+    //  }        
 
-    pub fn get_best_path(index: usize, world: &mut World) -> LinkedList<Position> {
-        let enemy = &world.enemies[index];
-        // this is a visited array to save if we have visited a location on the grid
-        let mut visited = [[false; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
+    // pub fn get_best_path(index: usize, world: &mut World) -> LinkedList<Position> {
+    //     let enemy = &world.enemies[index];
+    //     // this is a visited array to save if we have visited a location on the grid
+    //     let mut visited = [[false; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
 
-        // this stores every location's previous location so that we can reconstruct the best path
-        // given our start and end
-        let mut previous = [[Position::new(WORLD_SIZE.0 as usize, WORLD_SIZE.1 as usize); WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
+    //     // this stores every location's previous location so that we can reconstruct the best path
+    //     // given our start and end
+    //     let mut previous = [[Position::new(WORLD_SIZE.0 as usize, WORLD_SIZE.1 as usize); WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
 
-        let mut queue = LinkedList::new();
-        queue.push_back(enemy.pos);
+    //     let mut queue = LinkedList::new();
+    //     queue.push_back(enemy.pos);
 
         
-        visited[enemy.pos.y - world.y_offset][enemy.pos.x - world.x_offset] = true;
-        while !queue.is_empty() {
-            if let Some(node) = queue.pop_front() {
+    //     visited[enemy.pos.y - world.y_offset][enemy.pos.x - world.x_offset] = true;
+    //     while !queue.is_empty() {
+    //         if let Some(node) = queue.pop_front() {
 
-                // reached the goal location, break and reconstruct path
-                if node == world.player.pos {
-                    break;
-                }
+    //             // reached the goal location, break and reconstruct path
+    //             if node == world.player.pos {
+    //                 break;
+    //             }
 
-                // standard bfs stuff, for each neighbor, if it hasn't been visited, put it into
-                // the queue
-                let neighbors = Self::get_neighbors(world, node);
-                for next in neighbors {
-                    if !visited[next.y - world.y_offset][next.x - world.x_offset] {
-                        queue.push_back(next);
-                        visited[next.y - world.y_offset][next.x - world.x_offset] = true;
+    //             // standard bfs stuff, for each neighbor, if it hasn't been visited, put it into
+    //             // the queue
+    //             let neighbors = Self::get_neighbors(world, node);
+    //             for next in neighbors {
+    //                 if !visited[next.y - world.y_offset][next.x - world.x_offset] {
+    //                     queue.push_back(next);
+    //                     visited[next.y - world.y_offset][next.x - world.x_offset] = true;
 
-                        // mark the previous of the neighbor as the node to reconstruct the path
-                        previous[next.y - world.y_offset][next.x - world.x_offset] = node;
-                    }
-                }
-            }
-        }
+    //                     // mark the previous of the neighbor as the node to reconstruct the path
+    //                     previous[next.y - world.y_offset][next.x - world.x_offset] = node;
+    //                 }
+    //             }
+    //         }
+    //     }
 
-        // This uses the previous 2 dimensional array to reconstruct the best path
-        let mut path = LinkedList::new();
-        let mut position = world.player.pos;
-        let enemy_pos = world.enemies[index].pos;
-        while (position != enemy_pos) {
-            path.push_front(position);
+    //     // This uses the previous 2 dimensional array to reconstruct the best path
+    //     let mut path = LinkedList::new();
+    //     let mut position = world.player.pos;
+    //     let enemy_pos = world.enemies[index].pos;
+    //     while (position != enemy_pos) {
+    //         path.push_front(position);
 
-            // if the position's or y is greater than the world size, that means that a path wasn't
-            // found, as it means the previous position did not have a previous, so we break out
-            if (position.x - world.x_offset) as i16 >= WORLD_SIZE.0 {
-                break;
-            }
-            position = previous[position.y - world.y_offset][position.x - world.x_offset];
-        }
-        path
-    }
+    //         // if the position's or y is greater than the world size, that means that a path wasn't
+    //         // found, as it means the previous position did not have a previous, so we break out
+    //         if (position.x - world.x_offset) as i16 >= WORLD_SIZE.0 {
+    //             break;
+    //         }
+    //         position = previous[position.y - world.y_offset][position.x - world.x_offset];
+    //     }
+    //     path
+    // }
 
-    pub fn get_neighbors(world:&mut World, position: Position) -> Vec<Position> {
-        let directions = [Direction::North, Direction::South, Direction::West, Direction::East];
-        let mut moves = Vec::new();
+    // pub fn get_neighbors(world:&mut World, position: Position) -> Vec<Position> {
+    //     let directions = [Direction::North, Direction::South, Direction::West, Direction::East];
+    //     let mut moves = Vec::new();
 
-        // loop through all the directions
-        for direction in directions {
-            let pos = World::new_position(position, direction, world, 1);
+    //     // loop through all the directions
+    //     for direction in directions {
+    //         let pos = World::new_position(position, direction, world, 1);
 
-            // if the new position is valid(correct tiles & within bounds) add it to the potential
-            // neighbors
-            if Self::can_travel_to(
-                pos, &world.entity_positions, 
-                &world.terrain_positions) 
-                && World::coordinates_are_within_world(world, pos) 
-                {
-                    moves.push(pos);
-                }
-        }
-        return moves;
-    }
+    //         // if the new position is valid(correct tiles & within bounds) add it to the potential
+    //         // neighbors
+    //         if Self::can_travel_to(
+    //             pos, &world.entity_positions, 
+    //             &world.terrain_positions) 
+    //             && World::coordinates_are_within_world(world, pos) 
+    //             {
+    //                 moves.push(pos);
+    //             }
+    //     }
+    //     return moves;
+    // }
 
     pub fn can_travel_to(
         position: Position,
