@@ -354,16 +354,15 @@ impl Player {
 
     pub fn can_travel_to(
         world: &mut World,
-        position: Position,
+        position_info: (Position, Position)
     ) -> bool {
         let terrain_map = &world.terrain_map;
-        let curr_terrain_map = &terrain_map[world.world_position.y][world.world_position.x];
-        let entity_positions = &world.entity_positions;
-        //Temporary as for now and doesn't quite work. To fix need to revamp entity system as well
-        let terrain_pos = Position::new(position.x - (50 * world.world_position.x), position.y - (50 * world.world_position.y)); 
-        if entity_positions.contains_key(&position) || curr_terrain_map.contains_key(&terrain_pos) {
-            let info = entity_positions.get(&position);
-            let info2 = curr_terrain_map.get(&terrain_pos);
+        let entity_map = &world.entity_map;
+        let curr_terrain_map = &terrain_map[position_info.1.y][position_info.1.x];
+        let curr_entity_map = &entity_map[position_info.1.y][position_info.1.x];
+         if curr_entity_map.contains_key(&position_info.0) || curr_terrain_map.contains_key(&position_info.0) {
+            let info = curr_entity_map.get(&position_info.0);
+            let info2 = curr_terrain_map.get(&position_info.0);
             if let Some(info) = info {
                 if PERMISSIBLE_TILES.contains(&info.0) {
                     return true;

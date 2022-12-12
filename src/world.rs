@@ -22,6 +22,7 @@ use std::{
 const TOTAL_LAKES: i16 = 50;
 
 pub struct World {
+    //Stores which world the player is in
     pub world_position: Position,
 
     // stores the bottom left and top right coordinates of the currently rendered world, useful for
@@ -51,6 +52,7 @@ pub struct World {
     // Hashmap of positions to colors
     pub entity_positions: HashMap<Position, ([f32; 4], Entity)>,
     pub terrain_positions: HashMap<Position, [f32; 4]>,
+    pub entity_map: [[HashMap<Position, ([f32; 4], Entity)>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize]; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     pub terrain_map: [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize]; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     pub rng: ThreadRng,
 }
@@ -60,6 +62,10 @@ impl World {
         let mut rng = rand::thread_rng();
         let mut entity_positions = HashMap::new();      
         let terrain_positions = HashMap::new();
+        let mut entity_map:
+        [[HashMap<Position, ([f32; 4], Entity)>; 
+        (BOARD_SIZE.0 / WORLD_SIZE.0) as usize]; 
+        (BOARD_SIZE.1 / WORLD_SIZE.1) as usize] = Default::default();  
         let mut terrain_map:
         [[HashMap<Position, [f32; 4]>; 
         (BOARD_SIZE.0 / WORLD_SIZE.0) as usize]; 
@@ -68,7 +74,8 @@ impl World {
         World::gen_outer_boss_walls(&mut terrain_map); 
         World::gen_water(&mut rng, &mut terrain_map);
         let player = Player::new();
-        entity_positions.insert(player.pos, (player.color, (Entity::Player)));
+        let starting_map = &mut entity_map[player.pos.y][player.pos.x];
+        starting_map.insert(player.pos, (player.color, Entity::Player));
         let mut enemies = Vec::new();
         World::gen_enemies(
             &mut rng,
@@ -88,6 +95,7 @@ impl World {
             enemies,
             projectiles: Vec::new(),
             entity_positions,
+            entity_map,
             terrain_map,
             terrain_positions,
             rng,
@@ -147,7 +155,7 @@ impl World {
         }
 
         //Drawing the colored dot indicator
-        //Get initial (0,0) position
+        //Get initial position at the corner of the cell
         x = 2 + (self.world_position.x as usize) * 5; 
         y = 2 + (self.world_position.y as usize) * 5;  
 
@@ -212,42 +220,37 @@ impl World {
         }
         
         //Draw every pixel that is contained in the entity HashMap
-        for (loc, color) in &self.entity_positions {
-            if self.y_offset <= loc.y && self.x_offset <= loc.x {
-                canvas.draw(
-                    &graphics::Quad,
-                    graphics::DrawParam::new()
-                        .dest_rect(graphics::Rect::new_i32(
-                            (loc.x - self.x_offset) as i32 * TILE_SIZE.0 as i32,
-                            (loc.y - self.y_offset + UNIVERSAL_OFFSET as usize) as i32 * TILE_SIZE.1 as i32,
-                            TILE_SIZE.0 as i32,
-                            TILE_SIZE.1 as i32,
-                        ))
-                        .color(color.0),
-                )
-            }
+        let curr_world_entity_map = &self.entity_map[self.world_position.y][self.world_position.x];
+        for (loc, color) in curr_world_entity_map {
+            canvas.draw(
+                &graphics::Quad,
+                graphics::DrawParam::new()
+                    .dest_rect(graphics::Rect::new_i32(
+                        (loc.x - self.x_offset) as i32 * TILE_SIZE.0 as i32,
+                        (loc.y - self.y_offset + UNIVERSAL_OFFSET as usize) as i32 * TILE_SIZE.1 as i32,
+                        TILE_SIZE.0 as i32,
+                        TILE_SIZE.1 as i32,
+                    ))
+                    .color(color.0),
+            ) 
         }
     }
 
     // this function just returns whether a set of coordinates are within the bounds of the dynamic
     // world. takes in the world, x, and y, and returns true if the coordinates are inside the
     // world, and false otherwise
-    pub fn coordinates_are_within_world(world: &mut World, position: Position) -> bool {
-        // POTENTIAL ERRORS WITH </<=
-        position.x >= world.x_offset
-            && position.x < world.x_offset + WORLD_SIZE.0 as usize
-            && position.y >= world.y_offset
-            && position.y < world.y_offset + WORLD_SIZE.1 as usize
+    pub fn coordinates_are_within_world(world: &mut World, world_position: Position) -> bool {
+       return world_position.x < 0 || 
+       world_position.x > WORLD_SIZE.0 as usize / 50 ||
+       world_position.y < 0 ||
+       world_position.y > WORLD_SIZE.1 as usize / 50;
     }
 
     // Returns true if coordinates inside board (note distinction from world), false otherwise
     // Distinction from coordinates_are_within_world() is important for shifting cameras when
     // crossing edge
-    pub fn coordinates_are_within_board(world: &mut World, position: Position) -> bool {
-        position.x < world.board_bottom_right.0
-            && position.x >= world.board_top_left.0
-            && position.y < world.board_bottom_right.1
-            && position.y >= world.board_top_left.1
+    pub fn coordinates_are_within_board(world: &mut World, world_position: Position) -> bool {
+        return world_position == world.world_position;
     }
 
     //Takes in a previous location and new location Position object and updates that specific
@@ -288,43 +291,44 @@ impl World {
             ),
         };
 
+
         let new_position = Self::new_position(pos, direction.clone(), world, speed); //Get where the entity is supposed to go
 
-        if !Self::coordinates_are_within_board(world, new_position) || new_position == pos { //If new location is not within the board, returns false
+        if !Self::coordinates_are_within_board(world, new_position.1) { //If new location is not within the board, returns false
             return false;
         } else {
             match entity_type { //Determine entity time again as each behaves differently
                 Entity::Player => {
-                    if !Self::coordinates_are_within_world(world, new_position) //If new position is not within world but the player can travel to it
+                    if !Self::coordinates_are_within_world(world, new_position.1) //If new position is not within world but the player can travel to it
                         && Player::can_travel_to(                               //need to shift camera view for the user
                             world,
                             new_position,
                         )
-                    {
+                    {                                   
+                        let mut curr_player_map = &mut world.entity_map[world.world_position.y][world.world_position.x];
+                        curr_player_map.remove(&new_position);
                         match direction { //Shifts camera using x and y offsets depending on which way the player is moving
                             Direction::North => {
-                                dbg!(world.player.pos.y);
-                                world.y_offset = max(0, world.y_offset - WORLD_SIZE.1 as usize);
                                 world.world_position = Position::new(world.world_position.x, world.world_position.y - 1);
+                                curr_player_map = &mut world.entity_map[world.world_position.y][world.world_position.x];
+                                curr_player_map.insert(Position::new(new_position.x, WORLD_SIZE.1 as usize - 1), (tile::PLAYER, Entity::Player));
+
                             }
                             Direction::East => {
-                                world.x_offset = min(
-                                    world.board_bottom_right.0 - WORLD_SIZE.0 as usize,
-                                    world.x_offset + WORLD_SIZE.0 as usize,
-                                );
                                 world.world_position = Position::new(world.world_position.x + 1, world.world_position.y);
+                                curr_player_map = &mut world.entity_map[world.world_position.y][world.world_position.x];
+                                curr_player_map.insert(Position::new(0, world.world_position.y), (tile::PLAYER, Entity::Player));
 
                             }
                             Direction::West => {
-                                world.x_offset = max(0, world.x_offset - WORLD_SIZE.0 as usize);
                                 world.world_position = Position::new(world.world_position.x - 1, world.world_position.y);
+                                curr_player_map = &mut world.entity_map[world.world_position.y][world.world_position.x];
+                                curr_player_map.insert(Position::new(WORLD_SIZE.0 as usize - 1, world.world_position.y), (tile::PLAYER, Entity::Player));
                             }
                             Direction::South => {
-                                world.y_offset = min(
-                                    world.board_bottom_right.0 - WORLD_SIZE.1 as usize,
-                                    world.y_offset + WORLD_SIZE.1 as usize,
-                                );
                                 world.world_position = Position::new(world.world_position.x, world.world_position.y + 1);
+                                curr_player_map = &mut world.entity_map[world.world_position.y][world.world_position.x];
+                                curr_player_map.insert(Position::new(world.world_position.x, 0), (tile::PLAYER, Entity::Player));
                             }
                         }
                     }
@@ -366,6 +370,7 @@ impl World {
     }
 
 
+
     // This method assumes that x and y are valid coordinates and does NOT check them
 
     // This very simply gets the new position from the old, by checking the direction and the
@@ -375,38 +380,42 @@ impl World {
         direction: Direction,
         world: &mut Self,
         travel_distance: usize,
-    ) -> Position {
-        let mut x = pos.x;
-        let mut y = pos.y;
+    ) -> (Position, Position) {
+        let mut x = pos.x as i16;
+        let mut y = pos.y as i16;
+        let world_pos: Position;
         match direction {
             Direction::North => {
-                // may be a bug in here because I can't math TODO: verify
-                // we want to go as far up until we hit the bounds of the "world"
-                y = max(
-                    y as i16 - travel_distance as i16,
-                    world.board_top_left.1 as i16,
-                ) as usize;
+                y = y as i16 - travel_distance as i16;
+                if y < 0 {
+                    y = WORLD_SIZE.1 - 1 as i16;
+                    world_pos = Position::new(world.world_position.x, world.world_position.y - 1);
+                }
+
             }
             Direction::South => {
-                y = min(
-                    y as i16 + travel_distance as i16,
-                    world.board_bottom_right.1 as i16,
-                ) as usize;
+                y = y as i16 + travel_distance as i16;
+                if y >= WORLD_SIZE.1 as i16{
+                    y = 0;
+                    world_pos = Position::new(world.world_position.x, world.world_position.y + 1);
+                }
             }
             Direction::East => {
-                x = min(
-                    x as i16 + travel_distance as i16,
-                    world.board_bottom_right.0 as i16,
-                ) as usize;
+                x = x as i16 + travel_distance as i16;
+                if x >= WORLD_SIZE.0 as i16 {
+                    x = 0;
+                    world_pos = Position::new(world.world_position.x + 1, world.world_position.y);
+                }
             }
             Direction::West => {
-                x = max(
-                    x as i16 - travel_distance as i16,
-                    world.board_top_left.0 as i16,
-                ) as usize;
+                x = x as i16 - travel_distance as i16;
+                if x < 0 {
+                    x = WORLD_SIZE.0 as i16 - 1;
+                    world_pos = Position::new(world.world_position.x - 1, world.world_position.y);
+                }
             }
         }
-        return Position::new(x, y);
+        return (Position::new(x as usize, y as usize), world_pos);
     }
 
     pub fn get_enemy(position: Position, world: &mut World) -> Option<usize> {
