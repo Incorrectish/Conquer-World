@@ -55,7 +55,9 @@ pub struct Player {
 
     // planned energy, used for healing, projectiles, (teleportation?), building
     energy: usize,
-    //
+
+    // This is the position queued by mouse clicks, used for teleportation, etc
+    queued_position: Option<Position>,
 }
 
 impl Player {
@@ -75,6 +77,7 @@ impl Player {
             color: tile::PLAYER,
             health: MAX_PLAYER_HEALTH,
             energy: PLAYER_INITIAL_ENERGY,
+            queued_position: None
         };
         temp
     }
