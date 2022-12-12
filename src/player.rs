@@ -16,7 +16,7 @@ use std::{
 };
 
 // Can change easily
-const MAX_PLAYER_HEALTH: usize = 10;
+const MAX_PLAYER_HEALTH: usize = 30;
 const PLAYER_MELEE_DAMAGE: usize = 1;
 const MELEE_ATTACK_KEYCODE: VirtualKeyCode = KeyCode::A;
 // TODO look over these values
@@ -28,7 +28,7 @@ const PROJECTILE_ATTACK_KEYCODE: VirtualKeyCode = KeyCode::Space;
 const PLAYER_PROJECTILE_SPEED: usize = 1;
 const PLAYER_PROJECTILE_DAMAGE: usize = 1;
 const PLAYER_INITIAL_SPEED: usize = 1;
-const PLAYER_INITIAL_ENERGY: usize = 10;
+const PLAYER_INITIAL_ENERGY: usize = 30;
 const PERMISSIBLE_TILES: [[f32; 4]; 1] = [tile::GRASS];
 
 // This is with the covered tile model, but we could use the static/dynamic board paradighm or
@@ -123,26 +123,54 @@ impl Player {
 
     //Colors in the hearts based on current health
     pub fn color_heart(&self, canvas: &mut graphics::Canvas, outline: [(usize,usize); 32], iteration: i32) {
-        let health_check: i32 = self.health as i32 - (iteration as i32 * 2); //Checks if you have half, full, or no healthpoints on specific heart
+        let master_heart_color: [f32; 4]; //True value for specific heart, used so half hearts can be colored correctly
+        let stage3 = [0.2, 0.8, 0.2, 1.0];
+        let stage2 = [1.0, 0.8, 0.1, 1.0];
+        let stage1 = [1.0, 0.1, 0.1, 1.0];
+        let mut health_check: i32 = self.health as i32 - (iteration as i32 * 2); //Checks if you have half, full, or no healthpoints on specific heart
+        if health_check > 20 {
+            master_heart_color = stage3;
+            health_check -= 20;
+        } else if health_check > 10 {
+            master_heart_color = stage2;
+            health_check -= 10;
+        } else {
+            master_heart_color = stage3;
+        }
         if health_check > 0 {
             for i in 8..outline.len()-2 { //Skip first row of outline (first 8 pixels)
                 if outline[i].1 == outline[i+1].1 { //while the outline pixel and next outline pixel are on the same y axis
                     //Color the pixels inbetween each outline position (fill in the heart)
                     let mut offset = 1;
+                    let mut temp_heart_color = master_heart_color; //Temp color incase it switches due to half heart
                     while outline[i].0+offset != outline[i+1].0 {
-                        if (health_check != 1) || outline[i].0+offset <= 6 { //If it is only half a heart, only color in half (stop at x position 6)
+                        let pos = (outline[i].0+offset, outline[i].1); //Get the position going to be colored (saves space)
+                        if pos == (2,2) || pos == (3,2) || pos == (2,3) { //For the three white pixels :)
+                            temp_heart_color = [1.0, 1.0, 1.0, 1.0];
+                        }
+                        //If it is only half a heart, only color in half (stop at x position 6)
+                        //However, if the color isn't red, color in the other half the color one stage down
+                        if health_check != 1 || (outline[i].0+offset <= 6 || master_heart_color != stage1) {
+                            if health_check == 1 && outline[i].0+offset > 6 {
+                                if master_heart_color == stage3 {
+                                    temp_heart_color = stage2;
+                                } else if master_heart_color == stage2 {
+                                    temp_heart_color = stage1;
+                                }
+                            }
                             canvas.draw(
                                 &graphics::Quad,
                                 graphics::DrawParam::new()
                                     .dest_rect(graphics::Rect::new_i32(
-                                        ((outline[i].0+offset) as i32 + 1) * 4 + iteration*60,
-                                        ((outline[i].1) as i32 + 2) * 4,
+                                        ((pos.0) as i32 + 1) * 4 + iteration*60,
+                                        ((pos.1) as i32 + 2) * 4,
                                         4,
                                         4,
                                     ))
-                                    .color([1.0,0.1,0.1,1.0]),
-                            );
-                        }   
+                                    .color(temp_heart_color),
+                            ); 
+                            temp_heart_color = master_heart_color;
+                        } 
                         offset += 1;
                     }
                 }
@@ -153,30 +181,53 @@ impl Player {
     //Colors in the energies based on current energy
     //Works exactly the same as color_heart(), but instead the half energy uses half the height, not the width
     pub fn color_energy(&self, canvas: &mut graphics::Canvas, outline: [(usize,usize); 37], iteration: i32) {
-        let energy_check: i32 = self.energy as i32 - (iteration as i32 * 2);
+        let master_energy_color: [f32; 4]; 
+        let stage3 = [0.15, 0.2, 0.85, 1.0];
+        let stage2 = [0.4, 0.45, 0.8, 1.0];
+        let stage1 = [0.0,0.6,0.98,1.0];
+        let mut energy_check: i32 = self.energy as i32 - (iteration as i32 * 2);
+
+        if energy_check > 20 {
+            master_energy_color = stage3;
+            energy_check -= 20;
+        } else if energy_check > 10 {
+            master_energy_color = stage2;
+            energy_check -= 10;
+        } else {
+            master_energy_color = stage1;
+        }
         if energy_check > 0 {
-            for i in 7..outline.len()-1 {
-                if outline[i].1 == outline[i+1].1 {
+            for i in 7..outline.len()-1 { 
+                if outline[i].1 == outline[i+1].1 { 
                     let mut offset = 1;
-                    if (energy_check != 1) || outline[i+1].1 >= 5 {
+                    let mut temp_energy_color = master_energy_color; 
+                    if (energy_check != 1) || (outline[i+1].1 >= 6 || master_energy_color != stage1) {
+                        if energy_check == 1 && outline[i].1 < 6 {
+                            if master_energy_color == stage3 {
+                                temp_energy_color = stage2;
+                            } else if master_energy_color == stage2 {
+                                temp_energy_color = stage1;
+                            }
+                        }
                         while outline[i].0+offset != outline[i+1].0 {
+                            let pos = (outline[i].0+offset, outline[i].1);
                             canvas.draw(
                                 &graphics::Quad,
                                 graphics::DrawParam::new()
                                     .dest_rect(graphics::Rect::new_i32(
-                                        ((outline[i].0+offset) as i32 + 130) * 4 + iteration*48,
-                                        ((outline[i].1) as i32 + 2) * 4,
+                                        ((pos.0) as i32 + 130) * 4 + iteration*48,
+                                        ((pos.1) as i32 + 2) * 4,
                                         4,
                                         4,
                                     ))
-                                    .color([0.0,0.6,0.98,1.0]),
-                            );
+                                    .color(temp_energy_color),
+                            ); 
                             offset += 1;
                         }
                     }
                 }
             }
-        }
+        }    
     }
 
     // eventually this should be the functionality to like shoot projectiles and stuff but for now
@@ -208,7 +259,7 @@ impl Player {
                 PROJECTILE_ATTACK_KEYCODE => {
                     if (world.player.energy > 0) {
                         Player::projectile_attack(world);
-                        // world.player.energy -= 1;
+                        world.player.energy -= 1;
                         // commented out so I can test everything
                     }
                 }
