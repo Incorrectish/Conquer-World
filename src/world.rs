@@ -17,7 +17,6 @@ use rand::rngs::ThreadRng;
 use std::collections::HashMap;
 use std::cmp::min;
 
-const TOTAL_LAKES: i16 = 50;
 pub const BOSS_ROOMS: [Position; 5] = [
     Position::new(1, 1),
     Position::new(1, 5),
@@ -25,6 +24,7 @@ pub const BOSS_ROOMS: [Position; 5] = [
     Position::new(5, 1),
     Position::new(5, 5),
 ];
+const TOTAL_LAKES: i16 = 100;
 const TOTAL_MOUNTAINS: i16 = 75;
 const ENEMY_COUNT: usize = 100;
 
@@ -83,8 +83,8 @@ impl World {
             (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
             (BOARD_SIZE.0 / WORLD_SIZE.0) as usize] = Default::default();
         World::gen_boss(&mut terrain_map);
-        World::gen_outer_boss_walls(&mut terrain_map);
-        World::gen_water(&mut rng, &mut terrain_map);
+        World::gen_outer_boss_walls(&mut terrain_map); 
+        World::gen_lake(&mut rng, &mut terrain_map);
         World::gen_mountain(&mut rng, &mut terrain_map);
         let player = Player::new();
         let starting_map = &mut entity_map[player.pos.y][player.pos.x];
@@ -546,7 +546,7 @@ impl World {
     }
 
     // generates water tiles around the map
-    pub fn gen_water(
+    pub fn gen_lake(
         rng: &mut ThreadRng,
         terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
                  (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
@@ -568,8 +568,7 @@ impl World {
         x: i16,
         y: i16,
         dist: i16,
-        terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
-                 (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
+        terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize]; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     ) {
         // sets curr tile to water
         let world_loc = Position::new((x / 50) as usize, (y / 50) as usize);
@@ -578,8 +577,19 @@ impl World {
             (y - (50 * world_loc.y as i16)) as usize,
         );
         let world_map = &mut terrain_map[world_loc.y][world_loc.x];
+
+        let tile: [f32; 4]; 
+
+        if (world_loc.x == 1 || world_loc.x == 3 || world_loc.x == 5)
+            && (world_loc.y == 1 || world_loc.y == 3 || world_loc.y == 5)
+        {
+            tile = tile::LAVA;
+        } else {
+            tile = tile::WATER;
+        }
+
         if !world_map.contains_key(&loc) {
-            world_map.insert(loc, Self::related_color(rng, tile::WATER));
+            world_map.insert(loc, Self::related_color(rng, tile));
         }
 
         const DIRECTIONS: [[i16; 2]; 4] = [[0, 1], [0, -1], [1, 0], [-1, 0]]; // orthogonal dirs
@@ -604,13 +614,25 @@ impl World {
 
     // adds a little variability to lake color
     fn related_color(rng: &mut ThreadRng, color: [f32; 4]) -> [f32; 4] {
-        const MAX_DIFF: f32 = 0.05;
-        [
-            color[0] + random::rand_fraction(rng) * 2.0 * MAX_DIFF,
-            color[1] + random::rand_fraction(rng) * 2.0 * MAX_DIFF,
-            color[2] + random::rand_fraction(rng) * 2.0 * MAX_DIFF,
-            color[3]
-        ]
+        if color == tile::WATER {
+            const MAX_DIFF: f32 = 0.05;
+            return [
+                color[0] + random::rand_fraction(rng) * 2.0 * MAX_DIFF - MAX_DIFF,
+                color[1] + random::rand_fraction(rng) * 2.0 * MAX_DIFF - MAX_DIFF,
+                color[2] + random::rand_fraction(rng) * 2.0 * MAX_DIFF - MAX_DIFF,
+                color[3]
+            ];
+        } else if color == tile::LAVA {
+            const MAX_DIFF_1: f32 = 0.01;
+            const MAX_DIFF_2: f32 = 0.10;
+            return [
+                color[0] + random::rand_fraction(rng) * 2.0 * MAX_DIFF_1 - MAX_DIFF_1,
+                color[1] + random::rand_fraction(rng) * 2.0 * MAX_DIFF_2 - MAX_DIFF_2,
+                color[2] + random::rand_fraction(rng) * 2.0 * MAX_DIFF_1 - MAX_DIFF_1,
+                color[3]
+            ];
+        }
+        return color;
     }
 
     //TODO: make faster, makes the game really slow rn
