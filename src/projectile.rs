@@ -29,15 +29,15 @@ impl Projectile {
     }
 
     pub fn update(world: &mut World) {
-        for index in (0..world.projectiles.len()).rev() {
-            // if the projectile goes out of bounds, the position won't change
-            // CURRENTLY THIS WON'T WORK ON IMPACTS BECAUSE PROJECTILE THIKS THAT ENEMIES/PLAYERS
-            // ARE ILLEGAL TILES AND DESTROYS ITSELF. ADD TO PERMISSIBLE_TILES TO FIX THIS
-            if !World::travel(world, Entity::Projectile(index)) {
-                Projectile::kill(index, world);
-                return;
+        let mut index = 1; 
+        for random in 0..world.projectiles.len() { 
+            if !World::travel(world, Entity::Projectile(index-1)) {
+                Projectile::kill(index-1, world);
+               //When projectile dies, whole array shifts back one, 
+               //so need to account for this in order to check the next projectile  in array
+               index -= 1; 
             }
-
+            index += 1;
             // case for impact with player
 
             // case for impact with enemy

@@ -109,7 +109,7 @@ impl Player {
                     &graphics::Quad,
                     graphics::DrawParam::new()
                         .dest_rect(graphics::Rect::new_i32(
-                            ((coord.0) as i32 + 130) * 4 + i*48,
+                            ((coord.0) as i32 + 80) * 4 + i*48,
                             ((coord.1) as i32 + 2) * 4,
                             4,
                             4,
@@ -135,7 +135,7 @@ impl Player {
             master_heart_color = stage2;
             health_check -= 10;
         } else {
-            master_heart_color = stage3;
+            master_heart_color = stage1;
         }
         if health_check > 0 {
             for i in 8..outline.len()-2 { //Skip first row of outline (first 8 pixels)
@@ -215,7 +215,7 @@ impl Player {
                                 &graphics::Quad,
                                 graphics::DrawParam::new()
                                     .dest_rect(graphics::Rect::new_i32(
-                                        ((pos.0) as i32 + 130) * 4 + iteration*48,
+                                        ((pos.0) as i32 + 80) * 4 + iteration*48,
                                         ((pos.1) as i32 + 2) * 4,
                                         4,
                                         4,
@@ -341,6 +341,12 @@ impl Player {
                 PLAYER_PROJECTILE_DAMAGE,
                 world.player.direction.clone(),
             );
+            for index in 0..world.enemies.len()  { //Check if it's spawning on enemy, if so damage the enenmy and not spawn a projectile
+                if projectile_spawn_pos == world.enemies[index].pos {
+                    world.enemies[index].damage(projectile.damage);
+                    return;
+                }
+            }
             world.entity_positions.insert(projectile.pos, (tile::PROJECTILE, Entity::Projectile(world.projectiles.len())));
             world.projectiles.push(projectile);
         }

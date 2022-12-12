@@ -61,7 +61,7 @@ impl World {
         World::gen_water(&mut rng, &mut terrain_positions);
         World::gen_boss(&mut terrain_positions);
         //Commented out for now because it slows down the game a lot for some reason
-        // World::gen_outer_boss_walls(&mut terrain_positions);
+        World::gen_outer_boss_walls(&mut terrain_positions);
         let player = Player::new();
         entity_positions.insert(player.pos, (player.color, (Entity::Player)));
         let mut enemies = Vec::new();
@@ -289,6 +289,12 @@ impl World {
                         &world.terrain_positions,
                     ) {
                         return false;
+                    }
+                    for index in 0..world.enemies.len()  { //Check if the projectile will hit an enemy, if so damage the enemy 
+                        if new_position == world.enemies[index].pos {
+                            world.enemies[index].damage(world.projectiles[i].damage);
+                            return false; //Will delete the projectile that hits the enemy
+                        }
                     }
                     Self::update_position(world, world.projectiles[i].pos, new_position); //Update projectile position to new position it is moving to
                     world.projectiles[i].pos = new_position;
