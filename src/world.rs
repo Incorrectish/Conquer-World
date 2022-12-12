@@ -5,7 +5,7 @@ use crate::{
     player::Player,
     projectile::Projectile,
     random,
-    tile::{self, ENEMY, FLOOR, PLAYER},
+    tile::{self, FLOOR, PLAYER, *},
     utils::Position,
     BOARD_SIZE, TILE_SIZE, WORLD_SIZE, UNIVERSAL_OFFSET
 };
@@ -113,8 +113,8 @@ impl World {
                     && !entity_positions.contains_key(&random_position)
                 {
                     entity_positions
-                        .insert(random_position, (tile::ENEMY, Entity::Enemy(enemies.len())));
-                    enemies.push(Enemy::new(x as usize, y as usize, 1));
+                        .insert(random_position, (tile::BASIC_ENEMY, Entity::Enemy(enemies.len())));
+                    enemies.push(Enemy::new(x as usize, y as usize, 1, tile::BASIC_ENEMY));
                     break;
                 }
             }

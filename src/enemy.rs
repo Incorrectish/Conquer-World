@@ -1,13 +1,14 @@
-use crate::{direction::Direction, tile, world::World, WORLD_SIZE, utils::Position, entity::Entity, TILE_SIZE};
+use crate::{direction::Direction, tile::{self, PROJECTILE}, world::World, WORLD_SIZE, utils::Position, entity::Entity, TILE_SIZE};
 use ggez::graphics::{self, Canvas};
 use std::{
     collections::HashMap,
     collections::{VecDeque, LinkedList}, num,
 
 };
-const ENEMY_HEALTH: usize = 5;
-const PERMISSIBLE_TILES: [[f32; 4]; 3] = [tile::GRASS, tile::PLAYER, tile::ENEMY];
 
+
+const ENEMY_HEALTH: usize = 5;
+const PERMISSIBLE_TILES: [[f32; 4]; 2] = [tile::GRASS, tile::PROJECTILE];
 
 // This is basically the same as the enemy for now, but I am just testing an enemy system
 pub struct Enemy {
@@ -41,12 +42,13 @@ impl Enemy {
         x: usize,
         y: usize,
         speed: usize,
+        color: [f32; 4],
     ) -> Self {
         let temp = Self {
             pos: Position::new(x, y),
             direction: Direction::North,
             speed: 1,
-            color: tile::ENEMY,
+            color,
             attack_damage: 1,
             health: ENEMY_HEALTH,
             resistance: 1.0,
