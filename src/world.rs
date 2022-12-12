@@ -148,6 +148,7 @@ impl World {
         let mut x = BOARD_SIZE.0 as usize / 50; 
         let mut y = BOARD_SIZE.1 as usize / 50;
         let player_indicator = [0.9, 0.1, 0.1, 1.0]; //Color of the dot on the map
+        let dungeon_indicator = [0.1, 0.5, 0.1, 1.0]; //Color of boss indicators
         for i in 0..(x * 6 - x + 1) {  //Calculate length and iterate that many times
             for j in 0..(y * 6 - y + 1) { //Calculate height and iterate that many times
                 if i % 5 == 0 || i == 0 || i == x * 6 - x || //Draw the horizontal lines but keep the cells empty
@@ -161,12 +162,32 @@ impl World {
                                 2,
                                 2
                             ))
-                            .color([1.0,1.0,1.0,1.0]),
+                            .color([0.0,0.0,0.0,1.0]),
                     )
                 }
             }
         }
 
+        //Draw boss room indicators
+        for position in BOSS_ROOMS {
+            x = 2 + (position.x as usize) * 5; 
+            y = 2 + (position.y as usize) * 5; 
+            for i in x..x+2 { 
+                for j in y..y+2 {
+                    canvas.draw(
+                        &graphics::Quad,
+                        graphics::DrawParam::new()
+                            .dest_rect(graphics::Rect::new_i32(
+                                (i as i32 + 360) * 2 as i32,
+                                (j as i32 + 2)* 2 as i32,
+                                2,
+                                2
+                            ))
+                            .color(dungeon_indicator),
+                    )
+                }
+            } 
+        }
         //Drawing the colored dot indicator
         //Get initial position at the corner of the cell
         x = 2 + (self.world_position.x as usize) * 5; 
@@ -206,7 +227,7 @@ impl World {
                             TILE_SIZE.0 as i32,
                             TILE_SIZE.1 as i32,
                         ))
-                        .color([0.0,0.0,0.0,1.0]),
+                        .color([1.0,1.0,1.0,1.0]),
                 )
             }
         }

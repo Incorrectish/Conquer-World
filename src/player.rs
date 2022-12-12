@@ -99,7 +99,7 @@ impl Player {
                             5,
                             5,
                         ))
-                        .color([1.0,1.0,1.0,1.0]), //Color of outline
+                        .color([0.0,0.0,0.0,1.0]), //Color of outline
                 )
             }
             Self::color_heart(&self, canvas, outline, i); //Color in the heart
@@ -120,7 +120,7 @@ impl Player {
                             5,
                             5,
                         ))
-                        .color([1.0,1.0,1.0,1.0]),
+                        .color([0.0,0.0,0.0,1.0]),
                 )
             }
             Self::color_energy(&self, canvas, outline, i);

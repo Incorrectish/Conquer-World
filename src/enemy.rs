@@ -70,13 +70,13 @@ impl Enemy {
         // thinking of using a hack to remove all the enemies at the position instead because two
         // enemies cannot be on the same tile, would avoid the f32 lack of equality
         for index in (0..world.enemies.len()).rev() {
-            if world.enemies[index].health <= 0 {
-                Enemy::kill(world, index);
-            } else {
-                if World::coordinates_are_within_world(world, world.enemies[index].pos) {
-                    // Self::move_enemy(index, world);
-                }
-            }
+            // if world.enemies[index].health <= 0 {
+            //     Enemy::kill(world, index);
+            // } else {
+            //     if World::coordinates_are_within_world(world, world.enemies[index].pos) {
+            //         Self::move_enemy(index, world);
+            //     }
+            // }
         }
     }
 
@@ -89,7 +89,7 @@ impl Enemy {
 
 
     // This just makes move along the best path for the speed, eg speed 2 = 2 moves along the best
-    // path        
+    // path
     // pub fn move_enemy(index: usize, world: &mut World) {
     //     // This gets the shortest path
     //     let mut travel_path = Self::get_best_path(index, world);
@@ -125,21 +125,15 @@ impl Enemy {
     //     queue.push_back(enemy.pos);
 
 
-    // visited[enemy.pos.y - world.y_offset][enemy.pos.x - world.x_offset] = true;
-    // while !queue.is_empty() {
-    //     if let Some(node) = queue.pop_front() {
-    //         // reached the goal location, break and reconstruct path
-    //         if node == world.player.pos {
-    //             break;
-    //         }
+    //     visited[enemy.pos.y - world.y_offset][enemy.pos.x - world.x_offset] = true;
+    //     while !queue.is_empty() {
+    //         if let Some(node) = queue.pop_front() {
 
-    //         // standard bfs stuff, for each neighbor, if it hasn't been visited, put it into
-    //         // the queue
-    //         let neighbors = Self::get_neighbors(world, node);
-    //         for next in neighbors {
-    //             if !visited[next.y - world.y_offset][next.x - world.x_offset] {
-    //                 queue.push_back(next);
-    //                 visited[next.y - world.y_offset][next.x - world.x_offset] = true;
+    //             // reached the goal location, break and reconstruct path
+    //             if node == world.player.pos {
+    //                 break;
+    //             }
+
     //             // standard bfs stuff, for each neighbor, if it hasn't been visited, put it into
     //             // the queue
     //             let can_dodge_projectiles = match world.enemies[index].color {
@@ -158,7 +152,6 @@ impl Enemy {
     //             }
     //         }
     //     }
-    // }
 
     //     // This uses the previous 2 dimensional array to reconstruct the best path
     //     let mut path = LinkedList::new();
@@ -177,10 +170,10 @@ impl Enemy {
     //     path
     // }
 
-
-    // pub fn get_neighbors(world:&mut World, position: Position) -> Vec<Position> {
+    // pub fn get_neighbors(world: &mut World, position: Position, can_dodge_projectiles: bool) -> Vec<Position> {
     //     let directions = [Direction::North, Direction::South, Direction::West, Direction::East];
     //     let mut moves = Vec::new();
+
     //     // loop through all the directions
     //     for direction in directions {
     //         let pos = World::new_position(position, direction, world, 1);
@@ -189,15 +182,14 @@ impl Enemy {
     //         // neighbors
     //         if Self::can_travel_to(
     //             pos, &world.entity_positions, 
-    //             &world.terrain_positions) 
+    //             &world.terrain_positions, can_dodge_projectiles) 
     //             && World::coordinates_are_within_world(world, pos) 
     //             {
-    //                 moves.push(pos);
+    //                     moves.push(pos);
     //             }
     //     }
     //     return moves;
     // }
-    
 
     pub fn can_travel_to(
         position: Position,
