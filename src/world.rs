@@ -18,16 +18,16 @@ use rand::rngs::ThreadRng;
 use std::cmp::min;
 use std::collections::HashMap;
 
-pub const BOSS_ROOMS: [Position; 1] = [
-    Position::new(1, 0),
-    // Position::new(1, 5),
-    // Position::new(3, 3),
-    // Position::new(5, 1),
-    // Position::new(5, 5),
+pub const BOSS_ROOMS: [Position; 5] = [
+    Position::new(1, 1),
+    Position::new(1, 5),
+    Position::new(3, 3),
+    Position::new(5, 1),
+    Position::new(5, 5),
 ];
 const TOTAL_LAKES: i16 = 100;
 const TOTAL_MOUNTAINS: i16 = 75;
-const ENEMY_COUNT: usize = 100;
+const ENEMY_COUNT: usize = 50;
 
 pub struct World {
     //Stores which world the player is in
@@ -137,8 +137,8 @@ impl World {
                 let world_x = random::rand_range(rng, 0, BOARD_SIZE.0/WORLD_SIZE.0) as usize;
                 let world_y = random::rand_range(rng, 0, BOARD_SIZE.1/WORLD_SIZE.1) as usize;
                 let random_loc = Position::new(
-                    (x - (50 * world_x as i16)) as usize,
-                    (y - (50 * world_y as i16)) as usize,
+                    x as usize,
+                    y as usize,
                 );
                 let world_map_entity = &mut entity_map[world_y][world_x];
                 let world_map_terrain = &mut terrain_map[world_y][world_x];
@@ -753,30 +753,32 @@ impl World {
                 // generates a thickness 2 wall around each mini boss room square
                 let mut world_map =
                     &mut terrain_map[corner[1] as usize / 50][corner[0] as usize / 50];
-                let mut loc = Position::new(0, i);
-                world_map.insert(loc, tile::WALL);
-                loc = Position::new(i, 0);
-                world_map.insert(loc, tile::WALL);
-                loc = Position::new(i, WORLD_SIZE.0 as usize - 1);
-                world_map.insert(loc, tile::WALL);
-                loc = Position::new(0, WORLD_SIZE.0 as usize - 1);
-                world_map.insert(loc, tile::WALL);
+                if i as i16 != WORLD_SIZE.0 / 2- 1 {
+                    let mut loc = Position::new(0, i);
+                    world_map.insert(loc, tile::WALL);
+                    loc = Position::new(i, 0);
+                    world_map.insert(loc, tile::WALL);
+                    loc = Position::new(i, WORLD_SIZE.0 as usize - 1);
+                    world_map.insert(loc, tile::WALL);
+                    loc = Position::new(WORLD_SIZE.0 as usize - 1, i);
+                    world_map.insert(loc, tile::WALL);
 
-                world_map = &mut terrain_map[corner[1] as usize / 50][corner[0] as usize / 50 + 1];
-                loc = Position::new(0, i);
-                world_map.insert(loc, tile::WALL);
+                    world_map = &mut terrain_map[corner[1] as usize / 50][corner[0] as usize / 50 + 1];
+                    loc = Position::new(0, i);
+                    world_map.insert(loc, tile::WALL);
 
-                world_map = &mut terrain_map[corner[1] as usize / 50][corner[0] as usize / 50 - 1];
-                loc = Position::new(WORLD_SIZE.0 as usize - 1, i);
-                world_map.insert(loc, tile::WALL);
+                    world_map = &mut terrain_map[corner[1] as usize / 50][corner[0] as usize / 50 - 1];
+                    loc = Position::new(WORLD_SIZE.0 as usize - 1, i);
+                    world_map.insert(loc, tile::WALL);
 
-                world_map = &mut terrain_map[corner[1] as usize / 50 + 1][corner[0] as usize / 50];
-                loc = Position::new(i, 0);
-                world_map.insert(loc, tile::WALL);
+                    world_map = &mut terrain_map[corner[1] as usize / 50 + 1][corner[0] as usize / 50];
+                    loc = Position::new(i, 0);
+                    world_map.insert(loc, tile::WALL);
 
-                world_map = &mut terrain_map[corner[1] as usize / 50 - 1][corner[0] as usize / 50];
-                loc = Position::new(i, WORLD_SIZE.1 as usize - 1);
-                world_map.insert(loc, tile::WALL);
+                    world_map = &mut terrain_map[corner[1] as usize / 50 - 1][corner[0] as usize / 50];
+                    loc = Position::new(i, WORLD_SIZE.1 as usize - 1);
+                    world_map.insert(loc, tile::WALL);
+                }
 
                 // let mut loc = Position::new(corner[1] as usize, (corner[0] + i) as usize);
                 // terrain_positions.insert(loc, tile::WALL);
