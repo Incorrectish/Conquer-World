@@ -19,13 +19,15 @@ use std::{
 const MAX_PLAYER_HEALTH: usize = 30;
 const PLAYER_MELEE_DAMAGE: usize = 1;
 const TELEPORTATION_COST: usize = 10;
-const HEAL_COST: usize = 5;
+const HEAL_COST: usize = 8;
 const MELEE_ATTACK_KEYCODE: VirtualKeyCode = KeyCode::A;
 // TODO look over these values
-const HEAL_ABILITY_RETURN: usize = 2;
+const HEAL_ABILITY_RETURN: usize = 3;
 const HEAL_KEYCODE: VirtualKeyCode = KeyCode::H;
 const TELEPORT_KEYCODE: VirtualKeyCode = KeyCode::T;
 const LIGHTNING_KEYCODE: VirtualKeyCode = KeyCode::L;
+const SLAM_KEYCODE: VirtualKeyCode = KeyCode::S;
+const FLAME_KEYCODE: VirtualKeyCode = KeyCode::F;
 const BUILD_KEYCODE: VirtualKeyCode = KeyCode::B;
 const PROJECTILE_ATTACK_KEYCODE: VirtualKeyCode = KeyCode::Space;
 const PLAYER_PROJECTILE_SPEED: usize = 1;
@@ -275,9 +277,9 @@ impl Player {
                         world.player.energy -= HEAL_COST;
                     }
                 }
-                // BUILD_KEYCODE => {
-                //     Player::build(world);
-                // }
+                BUILD_KEYCODE => {
+                    Player::build(world);
+                }
                 LIGHTNING_KEYCODE => {
                     Player::lightning(world);
                 }
@@ -320,31 +322,34 @@ impl Player {
         }
     }
 
-    // pub fn build(world: &mut World) {
-    //     let position = World::new_position(
-    //         world.player.pos,
-    //         world.player.direction.clone(),
-    //         world,
-    //         1,
-    //     );
+    pub fn build(world: &mut World) {
+        if let Some(pos) = world.player.queued_position {
 
-    //     // make sure there are no enemies       
-    //     if !world.entity_positions.contains_key(&position) {
-    //         // check if there is terrain at the position 
-    //         // If there is nothing, then build there
-    //         // If there is something, check if it's a build, and destroy it
-    //         match world.terrain_positions.get(&position) {
-    //             Some(color) => {
-    //                 if *color == tile::STRUCTURE {
-    //                     world.terrain_positions.remove(&position);
-    //                 }
-    //             } 
-    //             None => {
-    //                 world.terrain_positions.insert(position, tile::STRUCTURE);
-    //             }
-    //         }
-    //     }
-    // }
+        // let position = World::new_position(
+        //     world.player.pos,
+        //     world.player.direction.clone(),
+        //     world,
+        //     1,
+        // );
+
+        // make sure there are no enemies       
+        // if !world.entity_positions.contains_key(&position) {
+        //     // check if there is terrain at the position 
+        //     // If there is nothing, then build there
+        //     // If there is something, check if it's a build, and destroy it
+        //     match world.terrain_positions.get(&position) {
+        //         Some(color) => {
+        //             if *color == tile::STRUCTURE {
+        //                 world.terrain_positions.remove(&position);
+        //             }
+        //         } 
+        //         None => {
+        //             world.terrain_positions.insert(position, tile::STRUCTURE);
+        //         }
+        //     }
+        // }
+        }
+    }
 
     pub fn melee_attack(world: &mut World) {
         // gets the position that the attack will be applied to, one tile forward of the player in
