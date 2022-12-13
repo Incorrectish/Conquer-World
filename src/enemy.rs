@@ -4,7 +4,7 @@ use crate::{
     tile::{self, PROJECTILE_PLAYER},
     utils::Position,
     world::World,
-    TILE_SIZE, WORLD_SIZE,
+    BOARD_SIZE, TILE_SIZE, WORLD_SIZE,
 };
 use std::{collections::HashMap, collections::LinkedList};
 
@@ -71,8 +71,6 @@ impl Enemy {
                 Enemy::kill(world, index);
             } else {
                 if world.world_position == world.enemies[index].world_pos {
-                    // dbg!(world.world_position);
-                    // dbg!(world.enemies[index].world_pos);
                     Self::move_enemy(index, world);
                 }
             }
@@ -95,7 +93,6 @@ impl Enemy {
         let mut cur_pos = enemy.pos;
         for _ in 0..enemy.speed {
             if let Some(new_pos) = travel_path.pop_front() {
-                // dbg!(new_pos);
                 if new_pos == world.player.pos {
                     world.player.damage(world.enemies[index].attack_damage);
                 } else {
@@ -116,8 +113,6 @@ impl Enemy {
             tile::BOMBER => true,
             _ => false,
         };
-
-        let mut print = true;
 
         let enemy = &world.enemies[index];
         // this is a visited array to save if we have visited a location on the grid
@@ -142,23 +137,20 @@ impl Enemy {
 
                 // standard bfs stuff, for each neighbor, if it hasn't been visited, put it into
                 // the queue
-                let neighbors =
-                    Self::get_neighbors(world, node, can_dodge_projectiles, index, Entity::Enemy(index));
+                let neighbors = Self::get_neighbors(
+                    world,
+                    node,
+                    can_dodge_projectiles,
+                    index,
+                    Entity::Enemy(index),
+                );
                 for next in neighbors {
-                    // if !visited[next.y][next.x] {
-                    // if world.player.pos.y >= 48 {
-                    //     dbg!(next);
-                    //     dbg!(world.enemies[index].pos);
-                    // }
-                    // if !visited[next.y - (world.world_position.y * WORLD_SIZE.1 as usize)][next.x - (world.world_position.x * WORLD_SIZE.0 as usize)] {
                     if !visited[next.y][next.x] {
                         queue.push_back(next);
                         visited[next.y][next.x] = true;
-                        // visited[next.y - (world.world_position.y * WORLD_SIZE.1 as usize)][next.x - (world.world_position.x * WORLD_SIZE.0 as usize)] = true;
 
                         // mark the previous of the neighbor as the node to reconstruct the path
                         previous[next.y][next.x] = node;
-                        // previous[next.y - (world.world_position.y * WORLD_SIZE.1 as usize)][next.x - (world.world_position.x * WORLD_SIZE.0 as usize)] = node;
                     }
                 }
             }
@@ -174,11 +166,9 @@ impl Enemy {
             // if the position's or y is greater than the world size, that means that a path wasn't
             // found, as it means the previous position did not have a previous, so we break out
             if position.x as i16 >= WORLD_SIZE.0 {
-                // if (position.x - (world.world_position.x * WORLD_SIZE.1 as usize)) as i16 > WORLD_SIZE.0 {
                 break;
             }
             position = previous[position.y][position.x];
-            // position = previous[position.y - (world.world_position.y * WORLD_SIZE.1 as usize)][position.x - (world.world_position.x * WORLD_SIZE.0 as usize)];
         }
         path
     }
@@ -188,7 +178,7 @@ impl Enemy {
         position: Position,
         can_dodge_projectiles: bool,
         index: usize,
-        entity_type: Entity
+        entity_type: Entity,
     ) -> Vec<Position> {
         let directions = [
             Direction::North,
@@ -200,14 +190,15 @@ impl Enemy {
 
         // loop through all the directions
         for direction in directions {
-            let (new_pos, _) = World::new_position(position, direction, world, 1, entity_type.clone());
+            let (new_pos, _) =
+                World::new_position(position, direction, world, 1, entity_type.clone());
             // if the new position is valid(correct tiles & within bounds) add it to the potential
             // neighbors
             if new_pos != world.enemies[index].pos
                 && Self::can_travel_to(
-                    new_pos,
-                    &world.entity_positions,
-                    &world.terrain_positions,
+                    (new_pos, world.enemies[index].world_pos),
+                    &world.entity_map,
+                    &world.terrain_map,
                     can_dodge_projectiles,
                 )
                 && world.enemies[index].world_pos == world.world_position
@@ -219,40 +210,73 @@ impl Enemy {
     }
 
     pub fn can_travel_to(
-        position: Position,
-        entity_positions: &HashMap<Position, ([f32; 4], Entity)>,
-        terrain_positions: &HashMap<Position, [f32; 4]>,
+        // this is the (position_in_world, position_of_world)
+        position_info: (Position, Position),
+        entity_map: &[[HashMap<Position, ([f32; 4], Entity)>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
+             (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
+        terrain_map: &[[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
+             (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
         can_dodge_projectiles: bool,
     ) -> bool {
         // check if there are any static or dynamic entities in the position
-        if entity_positions.contains_key(&position) || terrain_positions.contains_key(&position) {
-            let info = entity_positions.get(&position);
-            let info2 = terrain_positions.get(&position);
-            if can_dodge_projectiles {
-                if let Some(info) = info {
-                    if PERMISSIBLE_TILES_DODGING.contains(&info.0) {
+        if terrain_map[position_info.1.y][position_info.1.x].contains_key(&position_info.0) {
+            let info = terrain_map[position_info.1.y][position_info.1.x].get(&position_info.0);
+            if let Some(info_under) = info {
+                if can_dodge_projectiles {
+                    if PERMISSIBLE_TILES_DODGING.contains(&info_under) {
+                        return true;
+                    }
+                } else {
+                    if PERMISSIBLE_TILES.contains(&info_under) {
                         return true;
                     }
                 }
-                if let Some(info) = info2 {
-                    if PERMISSIBLE_TILES_DODGING.contains(&info) {
+            }
+            return false;
+        } else if terrain_map[position_info.1.y][position_info.1.x].contains_key(&position_info.0) {
+            let info = entity_map[position_info.1.y][position_info.1.x].get(&position_info.0);
+            if let Some(info_under) = info {
+                if can_dodge_projectiles {
+                    if PERMISSIBLE_TILES_DODGING.contains(&info_under.0) {
                         return true;
                     }
-                }
-            } else {
-                if let Some(info) = info {
-                    if PERMISSIBLE_TILES.contains(&info.0) {
-                        return true;
-                    }
-                }
-                if let Some(info) = info2 {
-                    if PERMISSIBLE_TILES.contains(&info) {
+                } else {
+                    if PERMISSIBLE_TILES.contains(&info_under.0) {
                         return true;
                     }
                 }
             }
             return false;
         }
+        // if entity_map[position_info.1.y][position_info.1.x].contains_key(&position_info.0) {
+        // || terrain_map[position_info.1.y][position_info.1.x].contains_key(&position_info.0) {
+        // let info = entity_map[position_info.1.y][position_info.1.x].get(&position_info.0);
+        // let info2 = terrain_map[position_info.1.y][position_info.1.x].get(&position_info.0);
+        // if can_dodge_projectiles {
+        //     if let Some(info) = info {
+        //         if PERMISSIBLE_TILES_DODGING.contains(&info.0) {
+        //             return true;
+        //         }
+        //     }
+        //     if let Some(info) = info2 {
+        //         if PERMISSIBLE_TILES_DODGING.contains(&info) {
+        //             return true;
+        //         }
+        //     }
+        // } else {
+        //     if let Some(info) = info {
+        //         if PERMISSIBLE_TILES.contains(&info.0) {
+        //             return true;
+        //         }
+        //     }
+        //     if let Some(info) = info2 {
+        //         if PERMISSIBLE_TILES.contains(&info) {
+        //             return true;
+        //         }
+        //     }
+        // }
+        // return false;
+        // }
         true
     }
 }
