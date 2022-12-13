@@ -26,7 +26,7 @@ pub const BOSS_ROOMS: [Position; 5] = [
 ];
 const TOTAL_LAKES: i16 = 100;
 const TOTAL_MOUNTAINS: i16 = 75;
-const ENEMY_COUNT: usize = 0;
+const ENEMY_COUNT: usize = 1;
 
 pub struct World {
     //Stores which world the player is in
@@ -483,47 +483,53 @@ impl World {
             Direction::North => {
                 y = y as i16 - travel_distance as i16;
                 if y < 0 {
-                    //If the new coordinate is negative, we know we have to shift up
-                    y = WORLD_SIZE.1 - 1 as i16; //Puts coordinate at spot on next camera view
-                    if world_pos.y == 0 {
-                        //If we are at the edge of the board, don't shift, instead return same value
-                        return (Position::new(pos.x as usize, pos.y as usize), world_pos);
-                    }
-                    world_pos = Position::new(world.world_position.x, world.world_position.y - 1);
-                    //Shifts world
+                    return (Position::new(pos.x as usize, pos.y as usize), world_pos);
+                    // //If the new coordinate is negative, we know we have to shift up
+                    // y = WORLD_SIZE.1 - 1 as i16; //Puts coordinate at spot on next camera view
+                    // if world_pos.y == 0 {
+                    //     //If we are at the edge of the board, don't shift, instead return same value
+                    //     return (Position::new(pos.x as usize, pos.y as usize), world_pos);
+                    // }
+                    // world_pos = Position::new(world.world_position.x, world.world_position.y - 1);
+                    // //Shifts world
                 }
             }
             Direction::South => {
                 //Same as North but for the South direction
                 y = y as i16 + travel_distance as i16;
                 if y >= WORLD_SIZE.1 as i16 {
-                    y = 0;
-                    if world_pos.y == BOARD_SIZE.1 as usize / 50 {
-                        return (Position::new(pos.x as usize, pos.y as usize), world_pos);
-                    }
-                    world_pos = Position::new(world.world_position.x, world.world_position.y + 1);
+                    return (Position::new(pos.x as usize, pos.y as usize), world_pos);
+                    // y = 0;
+                    // if world_pos.y == BOARD_SIZE.1 as usize / 50 {
+                    //     return (Position::new(pos.x as usize, pos.y as usize), world_pos);
+                    // }
+                    // world_pos = Position::new(world.world_position.x, world.world_position.y + 1);
                 }
             }
             Direction::East => {
                 //Same as North but for the East direction
                 x = x as i16 + travel_distance as i16;
                 if x >= WORLD_SIZE.0 as i16 {
-                    x = 0;
-                    if world_pos.x == BOARD_SIZE.1 as usize / 50 {
-                        return (Position::new(pos.x as usize, pos.y as usize), world_pos);
-                    }
-                    world_pos = Position::new(world.world_position.x + 1, world.world_position.y);
+                    return (Position::new(pos.x as usize, pos.y as usize), world_pos);
+
+                    // x = 0;
+                    // if world_pos.x == BOARD_SIZE.1 as usize / 50 {
+                    //     return (Position::new(pos.x as usize, pos.y as usize), world_pos);
+                    // }
+                    // world_pos = Position::new(world.world_position.x + 1, world.world_position.y);
                 }
             }
             Direction::West => {
                 //Same as North but for the West Direction
                 x = x as i16 - travel_distance as i16;
                 if x < 0 {
-                    x = WORLD_SIZE.0 as i16 - 1;
-                    if world_pos.x == 0 {
-                        return (Position::new(pos.x as usize, pos.y as usize), world_pos);
-                    }
-                    world_pos = Position::new(world.world_position.x - 1, world.world_position.y);
+                    // x = WORLD_SIZE.0 as i16 - 1;
+                    return (Position::new(pos.x as usize, pos.y as usize), world_pos);
+
+                    // if world_pos.x == 0 {
+                    //     return (Position::new(pos.x as usize, pos.y as usize), world_pos);
+                    // }
+                    // world_pos = Position::new(world.world_position.x - 1, world.world_position.y);
                 }
             }
         }

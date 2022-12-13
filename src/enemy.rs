@@ -134,6 +134,7 @@ impl Enemy {
         while !queue.is_empty() {
             if let Some(node) = queue.pop_front() {
                 if node == world.player.pos {
+                    dbg!(node);
                     // reached the goal location, break and reconstruct path
                     break;
                 }
@@ -149,6 +150,7 @@ impl Enemy {
                     // }
                     // if !visited[next.y - (world.world_position.y * WORLD_SIZE.1 as usize)][next.x - (world.world_position.x * WORLD_SIZE.0 as usize)] {
                     if !visited[next.y][next.x] {
+                        dbg!(next);
                         queue.push_back(next);
                         visited[next.y][next.x] = true;
                         // visited[next.y - (world.world_position.y * WORLD_SIZE.1 as usize)][next.x - (world.world_position.x * WORLD_SIZE.0 as usize)] = true;
@@ -168,12 +170,13 @@ impl Enemy {
         while position != enemy_pos {
             path.push_front(position);
 
-            // if the position's or y is greater than the world size, that means that a path wasn't
+            // if the position's x or y is greater than the world size, that means that a path wasn't
             // found, as it means the previous position did not have a previous, so we break out
             if position.x as i16 > WORLD_SIZE.0 {
             // if (position.x - (world.world_position.x * WORLD_SIZE.1 as usize)) as i16 > WORLD_SIZE.0 {
                 break;
             }
+            dbg!(position);
             position = previous[position.y][position.x];
             // position = previous[position.y - (world.world_position.y * WORLD_SIZE.1 as usize)][position.x - (world.world_position.x * WORLD_SIZE.0 as usize)];
         }
@@ -196,17 +199,17 @@ impl Enemy {
 
         // loop through all the directions
         for direction in directions {
-            let (new_pos, _) = World::new_position(position, direction, world, 1);
+            let new_pos = World::new_position(position, direction, world, 1);
 
             // if the new position is valid(correct tiles & within bounds) add it to the potential
             // neighbors
             if Self::can_travel_to(
                 world,
-                (new_pos, world.world_position),
+                new_pos,
                 can_dodge_projectiles,
-            ) && world.enemies[index].world_pos == world.world_position
-            {
-                moves.push(new_pos);
+            ) 
+            {   
+                moves.push(new_pos.0);
             }
         }
         return moves;
