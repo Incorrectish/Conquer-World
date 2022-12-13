@@ -704,7 +704,7 @@ impl World {
     }
 
     // adds a little variability to lake color
-    fn related_color(rng: &mut ThreadRng, color: [f32; 4]) -> [f32; 4] {
+    pub fn related_color(rng: &mut ThreadRng, color: [f32; 4]) -> [f32; 4] {
         if color == tile::WATER {
             const MAX_DIFF: f32 = 0.05;
             return [
@@ -720,6 +720,15 @@ impl World {
                 color[0] + random::rand_fraction(rng) * 2.0 * MAX_DIFF_1 - MAX_DIFF_1,
                 color[1] + random::rand_fraction(rng) * 2.0 * MAX_DIFF_2 - MAX_DIFF_2,
                 color[2] + random::rand_fraction(rng) * 2.0 * MAX_DIFF_1 - MAX_DIFF_1,
+                color[3],
+            ];
+        } else if color == tile::GRASS {
+            const MAX_DIFF_1: f32 = 0.01;
+            const MAX_DIFF_2: f32 = 0.10;
+            return [
+                color[0] + random::rand_fraction(rng) * 2.0 * MAX_DIFF_1 - MAX_DIFF_1,
+                color[1] + random::rand_fraction(rng) * 2.0 * MAX_DIFF_1 - MAX_DIFF_1,
+                color[2] + random::rand_fraction(rng) * 2.0 * MAX_DIFF_2 - MAX_DIFF_2,
                 color[3],
             ];
         }
@@ -852,5 +861,18 @@ impl World {
     // Gets probability of continuing to expand lake outwards
     fn prob_expand_mountain(rng: &mut ThreadRng, dist: i16) -> bool {
         random::bernoulli(rng, 1. - 0.10 * (dist as f32))
+    }
+
+    fn add_doors() {
+        for room in BOSS_ROOMS {
+            let world_x = room.x;
+            let world_y = room.y;
+
+            let loc_x = 0;
+            let loc_y = 24;
+
+            
+            
+        }
     }
 }

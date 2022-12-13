@@ -16,7 +16,6 @@ use ggez::{
     input::keyboard::{KeyCode, KeyInput},
     Context, GameError, GameResult,
 };
-use rand::rngs::ThreadRng;
 
 pub struct State {
     should_draw: bool,
@@ -55,8 +54,30 @@ impl ggez::event::EventHandler<GameError> for State {
                 canvas = graphics::Canvas::from_frame(ctx, graphics::Color::from(tile::FLOOR));
             } else {
                 canvas = graphics::Canvas::from_frame(ctx, graphics::Color::from(tile::GRASS));
-            }
-            self.world.draw(&mut canvas);
+                for x in 0..WORLD_SIZE.0 {
+                    for y in 0..WORLD_SIZE.1 {
+                        let mut rng = rand::thread_rng();
+                        canvas.draw(
+                            &graphics::Quad,
+                            graphics::DrawParam::new()
+                                .dest_rect(graphics::Rect::new_i32(
+                                    (x as usize * TILE_SIZE.0 as usize) as i32,
+                                    ((y as usize + UNIVERSAL_OFFSET as usize) as i32) * TILE_SIZE.1 as i32,
+                                    // (loc.x - (self.world_position.x * WORLD_SIZE.0 as usize)) as i32
+                                    //     * TILE_SIZE.0 as i32,
+                                    // (loc.y - (self.world_position.y * WORLD_SIZE.1 as usize)
+                                    //     + UNIVERSAL_OFFSET as usize) as i32
+                                    //     * TILE_SIZE.1 as i32,
+
+                                    TILE_SIZE.0 as i32,
+                                    TILE_SIZE.1 as i32,
+                                ))
+                                .color(World::related_color(&mut rng, tile::GRASS)),
+                        )
+                    }
+                }
+        }
+        self.world.draw(&mut canvas);
 
             //For Text
             // let level_dest = bevy::math::Vec2::new(10.0, 10.0);
