@@ -99,10 +99,6 @@ impl Enemy {
         for _ in 0..enemy.speed {
             if let Some(new_pos) = travel_path.pop_front() {
                 if new_pos.x >= WORLD_SIZE.0 as usize || new_pos.y >= WORLD_SIZE.1 as usize {
-                    dbg!("No valid paths found");
-                    dbg!(world.enemies[index].clone());
-                    dbg!(world.player.pos);
-                    dbg!(world.world_position);
                     return;
                 }
                 if new_pos == world.player.pos {
@@ -111,8 +107,11 @@ impl Enemy {
                     let mut index_proj: i32 = 0;
                     for _ in 0..world.projectiles.len() {
                         if new_pos == world.projectiles[index_proj as usize].pos 
-                        && world.enemies[index_proj as usize].world_pos == world.projectiles[index_proj as usize].world_pos {
-                            world.enemies[index_proj as usize].damage(world.projectiles[index_proj as usize].damage);
+                        && world.enemies[index].world_pos == world.projectiles[index_proj as usize].world_pos {
+                            world.enemies[index].damage(world.projectiles[index_proj as usize].damage);
+                            if world.enemies[index].health <= 0 {
+                                Enemy::kill(world, index);
+                            }
                             Projectile::kill(index_proj as usize, world);
                             index_proj -= 1;
                         }
