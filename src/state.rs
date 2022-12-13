@@ -3,6 +3,7 @@ use crate::direction::Direction;
 use crate::enemy::Enemy;
 use crate::player::Player;
 use crate::utils::Position;
+use crate::utils::Boss;
 use crate::{
     projectile::Projectile,
     tile,
@@ -97,6 +98,7 @@ impl ggez::event::EventHandler<GameError> for State {
             // updates all the enemies in the world, for now only removes them once their health is
             // less than or equal to 0
             Enemy::update(&mut self.world);
+            Boss::update(&mut self.world);
         }
         Ok(())
     }

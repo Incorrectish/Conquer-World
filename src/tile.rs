@@ -25,7 +25,7 @@ pub const BOMBER: [f32; 4] = [0.0, 0.8, 0.3, 1.0];
 pub const SHOOTING_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0];
 pub const KNIGHT_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0];
 pub const OGRE_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0];
-pub const MINI_BOSS: [f32; 4] = [0.8, 0.3, 0.3, 1.0];
+pub const MINI_BOSS: [f32; 4] = [0.25, 0.2, 0.9, 1.0];
 pub const MAJOR_BOSS: [f32; 4] = [0.8, 0.3, 0.3, 1.0];
 
 pub const PLAYER: [f32; 4] = [1.0, 1.0, 1.0, 0.5];

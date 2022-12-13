@@ -7,6 +7,7 @@ use crate::{
     random,
     tile::{self, FLOOR, PLAYER, *},
     utils::Position,
+    utils::Boss,
     BOARD_SIZE, TILE_SIZE, UNIVERSAL_OFFSET, WORLD_SIZE,
 };
 
@@ -53,6 +54,9 @@ pub struct World {
     // list of enemies in our world
     pub enemies: Vec<Enemy>,
 
+    //Vector of Bosses
+    pub bosses: Vec<Boss>,
+
     // list of all the projectiles in the world
     pub projectiles: Vec<Projectile>,
 
@@ -89,7 +93,9 @@ impl World {
         let starting_map = &mut entity_map[player.pos.y][player.pos.x];
         starting_map.insert(player.pos, (player.color, Entity::Player));
         let mut enemies = Vec::new();
+        let mut bosses = Vec::new();
         World::gen_enemies(&mut rng, &mut terrain_map, &mut entity_map, &mut enemies);
+        World::gen_bosses(&mut terrain_map, &mut entity_map, &mut bosses);
         World {
             world_position: Position::new(0, 0),
             top_left: (0, 0),
@@ -98,6 +104,7 @@ impl World {
             board_bottom_right: (BOARD_SIZE.0 as usize, (BOARD_SIZE.1) as usize),
             player,
             enemies,
+            bosses,
             projectiles: Vec::new(),
             entity_positions,
             entity_map,
@@ -155,8 +162,29 @@ impl World {
                 }
             }
         }
+        
+    }
+
+    pub fn gen_bosses (
+        terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
+                 (BOARD_SIZE.1 / WORLD_SIZE.1) as usize],
+
+        entity_map: &mut [[HashMap<Position, ([f32; 4], Entity)>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
+                 (BOARD_SIZE.1 / WORLD_SIZE.1) as usize],
+
+        bosses: &mut Vec<Boss>,
+    ) {
         for room_coord in BOSS_ROOMS {
-            
+            let world_map_entity = &mut entity_map[room_coord.y][room_coord.x];
+            let x = WORLD_SIZE.0 as usize / 2;
+            let y = WORLD_SIZE.1 as usize / 2 - UNIVERSAL_OFFSET as usize;
+            bosses.push(Boss::new(
+                x as usize,
+                y as usize,
+                tile::MAJOR_BOSS,
+                room_coord,
+                world_map_entity,
+            ));
         }
     }
 

@@ -259,9 +259,9 @@ impl Player {
                 }
 
                 // Arbitrarily chosen for attack, can change later
-                // MELEE_ATTACK_KEYCODE => {
-                //     Player::melee_attack(world);
-                // }
+                MELEE_ATTACK_KEYCODE => {
+                    Player::melee_attack(world);
+                }
                 // PROJECTILE_ATTACK_KEYCODE => {
                 //     if (world.player.energy > 0) {
                 //         Player::projectile_attack(world);
@@ -346,24 +346,25 @@ impl Player {
     //     }
     // }
 
-    // pub fn melee_attack(world: &mut World) {
-    //     // gets the position that the attack will be applied to, one tile forward of the player in
-    //     // the direction that they are facing
-    //     let attacking_position = World::new_position(
-    //         world.player.pos,
-    //         world.player.direction.clone(),
-    //         world,
-    //         world.player.speed,
-    //     );
+    pub fn melee_attack(world: &mut World) {
+        // gets the position that the attack will be applied to, one tile forward of the player in
+        // the direction that they are facing
+        let attacking_position = World::new_position(
+            world.player.pos,
+            world.player.direction.clone(),
+            world,
+            world.player.speed,
+            Entity::Player,
+        );
 
     //     // We do not know what enemies are on the tile being attacked, so we need to go through the
     //     // enemies and check if any of them are on the attacking tile, then damage them
-    //     for enemy in &mut world.enemies {
-    //         if enemy.pos == attacking_position {
-    //             enemy.damage(PLAYER_MELEE_DAMAGE);
-    //         }
-    //     }
-    // }
+        for enemy in &mut world.enemies {
+            if enemy.pos == attacking_position.0 {
+                enemy.damage(PLAYER_MELEE_DAMAGE);
+            }
+        }
+    }
 
     // // This function should just spawn a projectile, the mechanics of dealing with the projectile
     // // and such should be determined by the projectile object itself

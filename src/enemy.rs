@@ -80,8 +80,8 @@ impl Enemy {
     pub fn kill(world: &mut World, index: usize) {
         // for now all it does is remove the tile on the world "board"
         let pos = world.enemies[index].pos;
+        world.entity_map[world.enemies[index].world_pos.y][world.enemies[index].world_pos.x].remove(&pos);
         world.enemies.remove(index);
-        world.entity_positions.remove(&pos);
     }
 
     // This just makes move along the best path for the speed, eg speed 2 = 2 moves along the best
