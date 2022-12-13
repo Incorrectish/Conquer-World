@@ -264,13 +264,13 @@ impl Player {
                 MELEE_ATTACK_KEYCODE => {
                     Player::melee_attack(world);
                 }
-                // PROJECTILE_ATTACK_KEYCODE => {
-                //     if (world.player.energy > 0) {
-                //         Player::projectile_attack(world);
-                //         world.player.energy -= 1;
-                //         // commented out so I can test everything
-                //     }
-                // }
+                PROJECTILE_ATTACK_KEYCODE => {
+                    if  world.player.energy > 0 {
+                        Player::projectile_attack(world);
+                        world.player.energy -= 1;
+                        // commented out so I can test everything
+                    }
+                }
                 HEAL_KEYCODE => {
                     if world.player.energy >= HEAL_COST {
                         world.player.health += HEAL_ABILITY_RETURN;
@@ -373,32 +373,34 @@ impl Player {
 
     // // This function should just spawn a projectile, the mechanics of dealing with the projectile
     // // and such should be determined by the projectile object itself
-    // pub fn projectile_attack(world: &mut World) {
-    //     let projectile_spawn_pos = World::new_position(
-    //         world.player.pos,
-    //         world.player.direction.clone(),
-    //         world,
-    //         world.player.speed,
-    //     );
-    //     if projectile_spawn_pos != world.player.pos {
-    //         let projectile = Projectile::new(
-    //             projectile_spawn_pos.x,
-    //             projectile_spawn_pos.y,
-    //             PLAYER_PROJECTILE_SPEED,
-    //             PLAYER_PROJECTILE_DAMAGE,
-    //             world.player.direction.clone(),
-    //             tile::PROJECTILE_PLAYER,
-    //         );
-    //         for index in 0..world.enemies.len()  { //Check if it's spawning on enemy, if so damage the enenmy and not spawn a projectile
-    //             if projectile_spawn_pos == world.enemies[index].pos {
-    //                 world.enemies[index].damage(projectile.damage);
-    //                 return;
-    //             }
-    //         }
-    //         world.entity_positions.insert(projectile.pos, (tile::PROJECTILE_PLAYER, Entity::Projectile(world.projectiles.len())));
-    //         world.projectiles.push(projectile);
-    //     }
-    // }
+    pub fn projectile_attack(world: &mut World) {
+        let projectile_spawn_pos = World::new_position(
+            world.player.pos,
+            world.player.direction.clone(),
+            world,
+            world.player.speed,
+            Entity::Projectile(world.projectiles.len()),
+        );
+        if projectile_spawn_pos.0 != world.player.pos && projectile_spawn_pos.1 == world.world_position {
+            let projectile = Projectile::new(
+                projectile_spawn_pos.0.x,
+                projectile_spawn_pos.0.y,
+                PLAYER_PROJECTILE_SPEED,
+                PLAYER_PROJECTILE_DAMAGE,
+                world.player.direction.clone(),
+                tile::PROJECTILE_PLAYER,
+                world.world_position,
+            );
+            for index in 0..world.enemies.len()  { //Check if it's spawning on enemy, if so damage the enenmy and not spawn a projectile
+                if projectile_spawn_pos.0 == world.enemies[index].pos && projectile_spawn_pos.1 == world.enemies[index].world_pos {
+                    world.enemies[index].damage(projectile.damage);
+                    return;
+                }
+            }
+            world.entity_map[world.world_position.y][world.world_position.x].insert(projectile.pos, (tile::PROJECTILE_PLAYER, Entity::Projectile(world.projectiles.len())));
+            world.projectiles.push(projectile);
+        }
+    }
 
     pub fn can_travel_to(
         world: &mut World,
