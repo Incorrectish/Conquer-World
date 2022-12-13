@@ -143,7 +143,7 @@ impl Enemy {
                 // standard bfs stuff, for each neighbor, if it hasn't been visited, put it into
                 // the queue
                 let neighbors =
-                    Self::get_neighbors(world, node, can_dodge_projectiles, index, &mut print, Entity::Enemy(index));
+                    Self::get_neighbors(world, node, can_dodge_projectiles, index, Entity::Enemy(index));
                 for next in neighbors {
                     // if !visited[next.y][next.x] {
                     // if world.player.pos.y >= 48 {
@@ -173,7 +173,7 @@ impl Enemy {
 
             // if the position's or y is greater than the world size, that means that a path wasn't
             // found, as it means the previous position did not have a previous, so we break out
-            if position.x as i16 > WORLD_SIZE.0 {
+            if position.x as i16 >= WORLD_SIZE.0 {
                 // if (position.x - (world.world_position.x * WORLD_SIZE.1 as usize)) as i16 > WORLD_SIZE.0 {
                 break;
             }
@@ -188,7 +188,6 @@ impl Enemy {
         position: Position,
         can_dodge_projectiles: bool,
         index: usize,
-        print: &mut bool,
         entity_type: Entity
     ) -> Vec<Position> {
         let directions = [
@@ -202,11 +201,6 @@ impl Enemy {
         // loop through all the directions
         for direction in directions {
             let (new_pos, _) = World::new_position(position, direction, world, 1, entity_type.clone());
-            if *print {
-                dbg!(new_pos);
-                dbg!(world.enemies[index].pos);
-            }
-
             // if the new position is valid(correct tiles & within bounds) add it to the potential
             // neighbors
             if new_pos != world.enemies[index].pos
@@ -221,7 +215,6 @@ impl Enemy {
                 moves.push(new_pos);
             }
         }
-        *print = false;
         return moves;
     }
 

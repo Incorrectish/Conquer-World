@@ -283,7 +283,6 @@ impl Player {
                 TELEPORT_KEYCODE => {
                     if world.player.energy >= TELEPORTATION_COST && world.player.queued_position.is_some() {
                         Self::teleport(world);
-                        world.player.energy -= TELEPORTATION_COST;
                     }
                 } 
                 _ => {return false;}
@@ -311,12 +310,10 @@ impl Player {
     // THIS METHOD EXPECTS A QUEUED POSITION
     pub fn teleport(world: &mut World) {
         if let Some(pos) = world.player.queued_position {
-            world.entity_positions.remove(&world.player.pos);
-            if !world.terrain_positions.contains_key(&pos) && !world.entity_positions.contains_key(&pos) {
-                world.entity_positions.insert(pos, (tile::PLAYER, Entity::Player));
+            if Player::can_travel_to(world, (pos, world.world_position)){
+                World::update_position(world, world.player.pos, (pos, world.world_position));
                 world.player.pos = pos;
-            } else {
-                world.entity_positions.insert(world.player.pos, (tile::PLAYER, Entity::Player));
+                world.player.energy -= TELEPORTATION_COST;
             }
         }
     }
