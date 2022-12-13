@@ -471,7 +471,8 @@ impl World {
                     if !Projectile::can_travel_to(
                         world,
                         new_position,
-                    ) && new_position.0 != pos {
+                    ) && new_position.0 != pos 
+                      && new_position.1 != world.player.pos {
                         return false;
                     }
                     for index in 0..world.enemies.len()  { //Check if the projectile will hit an enemy, if so damage the enemy
