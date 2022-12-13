@@ -5,6 +5,7 @@ use crate::{
     utils::Position,
     world::World,
     BOARD_SIZE, TILE_SIZE, WORLD_SIZE,
+    projectile::Projectile,
 };
 use std::{collections::HashMap, collections::LinkedList};
 
@@ -96,6 +97,16 @@ impl Enemy {
                 if new_pos == world.player.pos {
                     world.player.damage(world.enemies[index].attack_damage);
                 } else {
+                    let mut index_proj: i32 = 0;
+                    for _ in 0..world.projectiles.len() {
+                        if new_pos == world.projectiles[index_proj as usize].pos 
+                        && world.enemies[index_proj as usize].world_pos == world.projectiles[index_proj as usize].world_pos {
+                            world.enemies[index_proj as usize].damage(world.projectiles[index_proj as usize].damage);
+                            Projectile::kill(index_proj as usize, world);
+                            index_proj -= 1;
+                        }
+                        index_proj += 1
+                    }
                     // simply updates the render queue
                     World::update_position(world, cur_pos, (new_pos, world.world_position));
                     world.enemies[index].pos = new_pos;

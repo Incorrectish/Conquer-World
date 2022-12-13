@@ -18,12 +18,12 @@ use rand::rngs::ThreadRng;
 use std::cmp::min;
 use std::collections::HashMap;
 
-pub const BOSS_ROOMS: [Position; 5] = [
-    Position::new(1, 1),
-    Position::new(1, 5),
-    Position::new(3, 3),
-    Position::new(5, 1),
-    Position::new(5, 5),
+pub const BOSS_ROOMS: [Position; 1] = [
+    Position::new(1, 0),
+    // Position::new(1, 5),
+    // Position::new(3, 3),
+    // Position::new(5, 1),
+    // Position::new(5, 5),
 ];
 const TOTAL_LAKES: i16 = 100;
 const TOTAL_MOUNTAINS: i16 = 75;
@@ -307,9 +307,6 @@ impl World {
 
         for (loc, color) in curr_world_entity_map {
             // if (loc.y < (self.world_position.y * WORLD_SIZE.1 as usize) && (self.world_position.x * WORLD_SIZE.0 as usize) > 0) {
-            // dbg!(loc);
-            // dbg!(color.0);
-            // dbg!(self.world_position);
             // }
             canvas.draw(
                 &graphics::Quad,
@@ -392,7 +389,6 @@ impl World {
 
         let new_position = Self::new_position(pos, direction.clone(), world, speed, entity_type.clone()); //Get where the entity is supposed to go
 
-        // dbg!(new_position);
         if !Self::coordinates_are_within_board(world, new_position.1) || new_position.0 == pos {
             //If new location is not within the board, returns false
             return false;
@@ -472,21 +468,20 @@ impl World {
                 }
 
                 Entity::Projectile(i) => {
-                    // if !Projectile::can_travel_to(
-                    //     new_position,
-                    //     &world.entity_positions,
-                    //     &world.terrain_positions,
-                    // ) {
-                    //     return false;
-                    // }
-                    // for index in 0..world.enemies.len()  { //Check if the projectile will hit an enemy, if so damage the enemy
-                    //     if new_position == world.enemies[index].pos {
-                    //         world.enemies[index].damage(world.projectiles[i].damage);
-                    //         return false; //Will delete the projectile that hits the enemy
-                    //     }
-                    // }
-                    // Self::update_position(world, world.projectiles[i].pos, new_position); //Update projectile position to new position it is moving to
-                    // world.projectiles[i].pos = new_position;
+                    if !Projectile::can_travel_to(
+                        world,
+                        new_position,
+                    ) && new_position.0 != pos {
+                        return false;
+                    }
+                    for index in 0..world.enemies.len()  { //Check if the projectile will hit an enemy, if so damage the enemy
+                        if new_position.0 == world.enemies[index].pos && new_position.1 == world.enemies[index].world_pos {
+                            world.enemies[index].damage(world.projectiles[i].damage);
+                            return false; //Will delete the projectile that hits the enemy
+                        }
+                    }
+                    Self::update_position(world, world.projectiles[i].pos, new_position); //Update projectile position to new position it is moving to
+                    world.projectiles[i].pos = new_position.0;
                     true
                 }
             }
@@ -516,6 +511,9 @@ impl World {
                         Entity::Enemy(i) => {
                             return (world.enemies[i].pos, world.enemies[i].world_pos);
                         }
+                        Entity::Projectile(i) => {
+                            return (world.projectiles[i].pos, world.projectiles[i].world_pos);
+                        }
                         _ => {
                             //If the new coordinate is negative, we know we have to shift up
                             y = WORLD_SIZE.1 - 1 as i16; //Puts coordinate at spot on next camera view
@@ -538,6 +536,9 @@ impl World {
                         Entity::Enemy(i) => {
                             return (world.enemies[i].pos, world.enemies[i].world_pos);
                         }
+                        Entity::Projectile(i) => {
+                            return (world.projectiles[i].pos, world.projectiles[i].world_pos);
+                        }
                         _ => {
                             y = 0;
                             if world_pos.y == BOARD_SIZE.1 as usize / 50 {
@@ -557,6 +558,9 @@ impl World {
                         Entity::Enemy(i) => {
                             return (world.enemies[i].pos, world.enemies[i].world_pos);
                         }
+                        Entity::Projectile(i) => {
+                            return (world.projectiles[i].pos, world.projectiles[i].world_pos);
+                        }
                         _ => {
                             x = 0;
                             if world_pos.x == BOARD_SIZE.1 as usize / 50 {
@@ -575,6 +579,9 @@ impl World {
                     match entity_type {
                         Entity::Enemy(i) => {
                             return (world.enemies[i].pos, world.enemies[i].world_pos);
+                        }
+                        Entity::Projectile(i) => {
+                            return (world.projectiles[i].pos, world.projectiles[i].world_pos);
                         }
                         _ => {
                             x = WORLD_SIZE.0 as i16 - 1;

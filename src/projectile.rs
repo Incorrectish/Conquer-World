@@ -5,11 +5,12 @@ use crate::{
 use ggez::graphics::{self, Canvas};
 use std::collections::HashMap;
 
-const PERMISSIBLE_TILES: [[f32; 4]; 4] = [
+const PERMISSIBLE_TILES: [[f32; 4]; 5] = [
     tile::WATER,
     tile::GRASS,
     tile::PLAYER,
     tile::PROJECTILE_PLAYER,
+    tile::BASIC_ENEMY,
 ];
 
 pub struct Projectile {
@@ -18,6 +19,7 @@ pub struct Projectile {
     pub direction: Direction,
     pub color: [f32; 4],
     pub damage: usize,
+    pub world_pos: Position,
     // maybe add an alignment so projectiles from enemies cannot damage themselves and projectiles
     // from players cannot damage themselves
 }
@@ -30,6 +32,7 @@ impl Projectile {
         damage: usize,
         direction: Direction,
         color: [f32; 4],
+        player_pos: Position,
     ) -> Self {
         let temp = Projectile {
             pos: Position::new(x, y),
@@ -37,14 +40,15 @@ impl Projectile {
             damage,
             direction,
             color,
+            world_pos: player_pos        
         };
         temp
     }
 
     pub fn update(world: &mut World) {
-        let mut index = 0;
+        let mut index: i32 = 0;
         for _ in 0..world.projectiles.len() {
-            match world.projectiles[index] {
+            match world.projectiles[index as usize] {
             //     tile::LIGHTNING_PLACEHOLDER => {
             //         let pos = world.projectiles[index].pos;
             //         world.projectiles[index].color = tile::LIGHTNING_INITIAL;
@@ -96,8 +100,8 @@ impl Projectile {
             //         }
             //     }
                 _ => {
-                    if !World::travel(world, Entity::Projectile(index)) {
-                        Projectile::kill(index, world);
+                    if !World::travel(world, Entity::Projectile(index as usize)) {
+                        Projectile::kill(index as usize, world);
                         //When projectile dies, whole array shifts back one,
                         //so need to account for this in order to check the next projectile  in array
                         index -= 1;
@@ -114,25 +118,26 @@ impl Projectile {
     }
 
     pub fn kill(index: usize, world: &mut World) {
-        world.entity_positions.remove(&world.projectiles[index].pos);
+        world.entity_map[world.projectiles[index].world_pos.y][world.projectiles[index].world_pos.x].remove(&world.projectiles[index].pos);
         world.projectiles.remove(index);
     }
 
     pub fn can_travel_to(
-        position: Position,
-        entity_positions: &HashMap<Position, ([f32; 4], Entity)>,
-        terrain_positions: &HashMap<Position, [f32; 4]>,
+        world: &mut World,
+        position_info: (Position, Position) //Where .0 is the position, and .1 is the world_position
     ) -> bool {
-        if entity_positions.contains_key(&position) || terrain_positions.contains_key(&position) {
-            let info = entity_positions.get(&position);
-            let info2 = terrain_positions.get(&position);
-            if let Some(info) = info {
+        //Get the map on which the position is on
+        let terrain_map = &world.terrain_map;
+        let entity_map = &world.entity_map;
+        let curr_terrain_map = &terrain_map[position_info.1.y][position_info.1.x];
+        let curr_entity_map = &entity_map[position_info.1.y][position_info.1.x];
+        if curr_entity_map.contains_key(&position_info.0) || curr_terrain_map.contains_key(&position_info.0) {
+            if let Some(info) = curr_entity_map.get(&position_info.0) {
                 if PERMISSIBLE_TILES.contains(&info.0) {
                     return true;
                 }
             }
-
-            if let Some(info) = info2 {
+            if let Some(info) = curr_terrain_map.get(&position_info.0) {
                 if PERMISSIBLE_TILES.contains(&info) {
                     return true;
                 }
