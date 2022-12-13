@@ -27,7 +27,7 @@ pub const BOSS_ROOMS: [Position; 1] = [
 ];
 const TOTAL_LAKES: i16 = 100;
 const TOTAL_MOUNTAINS: i16 = 75;
-const ENEMY_COUNT: usize = 1;
+const ENEMY_COUNT: usize = 100;
 
 pub struct World {
     //Stores which world the player is in
@@ -130,10 +130,10 @@ impl World {
             // enemy there
             loop {
 
-                // let x = random::rand_range(rng, 0, BOARD_SIZE.0); // random x coordinate
-                // let y = random::rand_range(rng, 0, BOARD_SIZE.1); // random y coordinate
-                let x = random::rand_range(rng, 0, WORLD_SIZE.0); // random x coordinate
-                let y = random::rand_range(rng, 0, WORLD_SIZE.1); // random y coordinate
+                let x = random::rand_range(rng, 0, BOARD_SIZE.0); // random x coordinate
+                let y = random::rand_range(rng, 0, BOARD_SIZE.1); // random y coordinate
+                // let x = random::rand_range(rng, 0, WORLD_SIZE.0); // random x coordinate, only spawns World 1 for testing
+                // let y = random::rand_range(rng, 0, WORLD_SIZE.1); // random y coordinate
                 let world_loc =
                     Position::new((x / WORLD_SIZE.0) as usize, (y / WORLD_SIZE.1) as usize);
                 let random_loc = Position::new(
