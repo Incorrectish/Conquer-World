@@ -117,6 +117,8 @@ impl Enemy {
             _ => false,
         };
 
+        let mut print = true;
+
         let enemy = &world.enemies[index];
         // this is a visited array to save if we have visited a location on the grid
         let mut visited = [[false; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
@@ -134,14 +136,14 @@ impl Enemy {
         while !queue.is_empty() {
             if let Some(node) = queue.pop_front() {
                 if node == world.player.pos {
-                    dbg!(node);
                     // reached the goal location, break and reconstruct path
                     break;
                 }
 
                 // standard bfs stuff, for each neighbor, if it hasn't been visited, put it into
                 // the queue
-                let neighbors = Self::get_neighbors(world, node, can_dodge_projectiles, index);
+                let neighbors =
+                    Self::get_neighbors(world, node, can_dodge_projectiles, index, &mut print, Entity::Enemy(index));
                 for next in neighbors {
                     // if !visited[next.y][next.x] {
                     // if world.player.pos.y >= 48 {
@@ -150,7 +152,6 @@ impl Enemy {
                     // }
                     // if !visited[next.y - (world.world_position.y * WORLD_SIZE.1 as usize)][next.x - (world.world_position.x * WORLD_SIZE.0 as usize)] {
                     if !visited[next.y][next.x] {
-                        dbg!(next);
                         queue.push_back(next);
                         visited[next.y][next.x] = true;
                         // visited[next.y - (world.world_position.y * WORLD_SIZE.1 as usize)][next.x - (world.world_position.x * WORLD_SIZE.0 as usize)] = true;
@@ -170,13 +171,12 @@ impl Enemy {
         while position != enemy_pos {
             path.push_front(position);
 
-            // if the position's x or y is greater than the world size, that means that a path wasn't
+            // if the position's or y is greater than the world size, that means that a path wasn't
             // found, as it means the previous position did not have a previous, so we break out
             if position.x as i16 > WORLD_SIZE.0 {
-            // if (position.x - (world.world_position.x * WORLD_SIZE.1 as usize)) as i16 > WORLD_SIZE.0 {
+                // if (position.x - (world.world_position.x * WORLD_SIZE.1 as usize)) as i16 > WORLD_SIZE.0 {
                 break;
             }
-            dbg!(position);
             position = previous[position.y][position.x];
             // position = previous[position.y - (world.world_position.y * WORLD_SIZE.1 as usize)][position.x - (world.world_position.x * WORLD_SIZE.0 as usize)];
         }
@@ -188,6 +188,8 @@ impl Enemy {
         position: Position,
         can_dodge_projectiles: bool,
         index: usize,
+        print: &mut bool,
+        entity_type: Entity
     ) -> Vec<Position> {
         let directions = [
             Direction::North,
@@ -199,51 +201,58 @@ impl Enemy {
 
         // loop through all the directions
         for direction in directions {
-            let new_pos = World::new_position(position, direction, world, 1);
+            let (new_pos, _) = World::new_position(position, direction, world, 1, entity_type.clone());
+            if *print {
+                dbg!(new_pos);
+                dbg!(world.enemies[index].pos);
+            }
 
             // if the new position is valid(correct tiles & within bounds) add it to the potential
             // neighbors
-            if Self::can_travel_to(
-                world,
-                new_pos,
-                can_dodge_projectiles,
-            ) 
-            {   
-                moves.push(new_pos.0);
+            if new_pos != world.enemies[index].pos
+                && Self::can_travel_to(
+                    new_pos,
+                    &world.entity_positions,
+                    &world.terrain_positions,
+                    can_dodge_projectiles,
+                )
+                && world.enemies[index].world_pos == world.world_position
+            {
+                moves.push(new_pos);
             }
         }
+        *print = false;
         return moves;
     }
 
     pub fn can_travel_to(
-        world: &mut World,
-        position_info: (Position, Position),
+        position: Position,
+        entity_positions: &HashMap<Position, ([f32; 4], Entity)>,
+        terrain_positions: &HashMap<Position, [f32; 4]>,
         can_dodge_projectiles: bool,
     ) -> bool {
-        let terrain_map = &world.terrain_map;
-        let entity_map = &world.entity_map;
-        let curr_terrain_map = &terrain_map[position_info.1.y][position_info.1.x];
-        let curr_entity_map = &entity_map[position_info.1.y][position_info.1.x];
         // check if there are any static or dynamic entities in the position
-        if curr_entity_map.contains_key(&position_info.0) || curr_terrain_map.contains_key(&position_info.0) {
+        if entity_positions.contains_key(&position) || terrain_positions.contains_key(&position) {
+            let info = entity_positions.get(&position);
+            let info2 = terrain_positions.get(&position);
             if can_dodge_projectiles {
-                if let Some(info) = curr_entity_map.get(&position_info.0) {
+                if let Some(info) = info {
                     if PERMISSIBLE_TILES_DODGING.contains(&info.0) {
                         return true;
                     }
                 }
-                if let Some(info) = curr_terrain_map.get(&position_info.0) {
+                if let Some(info) = info2 {
                     if PERMISSIBLE_TILES_DODGING.contains(&info) {
                         return true;
                     }
                 }
             } else {
-                if let Some(info) = curr_entity_map.get(&position_info.0) {
+                if let Some(info) = info {
                     if PERMISSIBLE_TILES.contains(&info.0) {
                         return true;
                     }
                 }
-                if let Some(info) = curr_terrain_map.get(&position_info.0) {
+                if let Some(info) = info2 {
                     if PERMISSIBLE_TILES.contains(&info) {
                         return true;
                     }

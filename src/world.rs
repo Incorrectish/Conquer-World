@@ -279,9 +279,9 @@ impl World {
 
         for (loc, color) in curr_world_entity_map {
             // if (loc.y < (self.world_position.y * WORLD_SIZE.1 as usize) && (self.world_position.x * WORLD_SIZE.0 as usize) > 0) {
-                // dbg!(loc);
-                // dbg!(color.0);
-                // dbg!(self.world_position);
+            // dbg!(loc);
+            // dbg!(color.0);
+            // dbg!(self.world_position);
             // }
             canvas.draw(
                 &graphics::Quad,
@@ -362,14 +362,14 @@ impl World {
             ),
         };
 
-        let new_position = Self::new_position(pos, direction.clone(), world, speed); //Get where the entity is supposed to go
+        let new_position = Self::new_position(pos, direction.clone(), world, speed, entity_type.clone()); //Get where the entity is supposed to go
 
         // dbg!(new_position);
         if !Self::coordinates_are_within_board(world, new_position.1) || new_position.0 == pos {
             //If new location is not within the board, returns false
             return false;
         } else {
-            match entity_type {
+            match entity_type.clone() {
                 //Determine entity time again as each behaves differently
                 Entity::Player => {
                     //If new position is not within world but the player can travel to it
@@ -474,6 +474,7 @@ impl World {
         direction: Direction,
         world: &mut Self,
         travel_distance: usize,
+        entity_type: Entity,
     ) -> (Position, Position) {
         //Where .0 is the phyiscal coordinate position and .1 is the world_position
         let mut x = pos.x as i16;
@@ -483,53 +484,79 @@ impl World {
             Direction::North => {
                 y = y as i16 - travel_distance as i16;
                 if y < 0 {
-                    return (Position::new(pos.x as usize, pos.y as usize), world_pos);
-                    // //If the new coordinate is negative, we know we have to shift up
-                    // y = WORLD_SIZE.1 - 1 as i16; //Puts coordinate at spot on next camera view
-                    // if world_pos.y == 0 {
-                    //     //If we are at the edge of the board, don't shift, instead return same value
-                    //     return (Position::new(pos.x as usize, pos.y as usize), world_pos);
-                    // }
-                    // world_pos = Position::new(world.world_position.x, world.world_position.y - 1);
-                    // //Shifts world
+                    match entity_type {
+                        Entity::Enemy(i) => {
+                            return (world.enemies[i].pos, world.enemies[i].world_pos);
+                        }
+                        _ => {
+                            //If the new coordinate is negative, we know we have to shift up
+                            y = WORLD_SIZE.1 - 1 as i16; //Puts coordinate at spot on next camera view
+                            if world_pos.y == 0 {
+                                //If we are at the edge of the board, don't shift, instead return same value
+                                return (Position::new(pos.x as usize, pos.y as usize), world_pos);
+                            }
+                            //Shifts world
+                            world_pos =
+                                Position::new(world.world_position.x, world.world_position.y - 1);
+                        }
+                    }
                 }
             }
             Direction::South => {
                 //Same as North but for the South direction
                 y = y as i16 + travel_distance as i16;
                 if y >= WORLD_SIZE.1 as i16 {
-                    return (Position::new(pos.x as usize, pos.y as usize), world_pos);
-                    // y = 0;
-                    // if world_pos.y == BOARD_SIZE.1 as usize / 50 {
-                    //     return (Position::new(pos.x as usize, pos.y as usize), world_pos);
-                    // }
-                    // world_pos = Position::new(world.world_position.x, world.world_position.y + 1);
+                    match entity_type {
+                        Entity::Enemy(i) => {
+                            return (world.enemies[i].pos, world.enemies[i].world_pos);
+                        }
+                        _ => {
+                            y = 0;
+                            if world_pos.y == BOARD_SIZE.1 as usize / 50 {
+                                return (Position::new(pos.x as usize, pos.y as usize), world_pos);
+                            }
+                            world_pos =
+                                Position::new(world.world_position.x, world.world_position.y + 1);
+                        }
+                    }
                 }
             }
             Direction::East => {
                 //Same as North but for the East direction
                 x = x as i16 + travel_distance as i16;
                 if x >= WORLD_SIZE.0 as i16 {
-                    return (Position::new(pos.x as usize, pos.y as usize), world_pos);
-
-                    // x = 0;
-                    // if world_pos.x == BOARD_SIZE.1 as usize / 50 {
-                    //     return (Position::new(pos.x as usize, pos.y as usize), world_pos);
-                    // }
-                    // world_pos = Position::new(world.world_position.x + 1, world.world_position.y);
+                    match entity_type {
+                        Entity::Enemy(i) => {
+                            return (world.enemies[i].pos, world.enemies[i].world_pos);
+                        }
+                        _ => {
+                            x = 0;
+                            if world_pos.x == BOARD_SIZE.1 as usize / 50 {
+                                return (Position::new(pos.x as usize, pos.y as usize), world_pos);
+                            }
+                            world_pos =
+                                Position::new(world.world_position.x + 1, world.world_position.y);
+                        }
+                    }
                 }
             }
             Direction::West => {
                 //Same as North but for the West Direction
                 x = x as i16 - travel_distance as i16;
                 if x < 0 {
-                    // x = WORLD_SIZE.0 as i16 - 1;
-                    return (Position::new(pos.x as usize, pos.y as usize), world_pos);
-
-                    // if world_pos.x == 0 {
-                    //     return (Position::new(pos.x as usize, pos.y as usize), world_pos);
-                    // }
-                    // world_pos = Position::new(world.world_position.x - 1, world.world_position.y);
+                    match entity_type {
+                        Entity::Enemy(i) => {
+                            return (world.enemies[i].pos, world.enemies[i].world_pos);
+                        }
+                        _ => {
+                            x = WORLD_SIZE.0 as i16 - 1;
+                            if world_pos.x == 0 {
+                                return (Position::new(pos.x as usize, pos.y as usize), world_pos);
+                            }
+                            world_pos =
+                                Position::new(world.world_position.x - 1, world.world_position.y);
+                        }
+                    }
                 }
             }
         }
