@@ -13,6 +13,7 @@ const ENEMY_HEALTH: usize = 5;
 const PERMISSIBLE_TILES: [[f32; 4]; 2] = [tile::GRASS, tile::PROJECTILE_PLAYER];
 const PERMISSIBLE_TILES_DODGING: [[f32; 4]; 1] = [tile::GRASS];
 
+#[derive(Debug, Clone)]
 // This is basically the same as the enemy for now, but I am just testing an enemy system
 pub struct Enemy {
     // This is the position in the form (x, y)
@@ -68,6 +69,9 @@ impl Enemy {
 
     pub fn update(world: &mut World) {
         for index in (0..world.enemies.len()).rev() {
+            // if world.enemies[index].pos.x >= WORLD_SIZE.0 as usize || world.enemies[index].pos.y >= WORLD_SIZE.1 as usize {
+            //     panic!("Enemy out of bounds with position: {:?}", world.enemies[index].pos);
+            // }
             if world.enemies[index].health <= 0 {
                 Enemy::kill(world, index);
             } else {
@@ -94,6 +98,13 @@ impl Enemy {
         let mut cur_pos = enemy.pos;
         for _ in 0..enemy.speed {
             if let Some(new_pos) = travel_path.pop_front() {
+                if new_pos.x >= WORLD_SIZE.0 as usize || new_pos.y >= WORLD_SIZE.1 as usize {
+                    dbg!("No valid paths found");
+                    dbg!(world.enemies[index].clone());
+                    dbg!(world.player.pos);
+                    dbg!(world.world_position);
+                    return;
+                }
                 if new_pos == world.player.pos {
                     world.player.damage(world.enemies[index].attack_damage);
                 } else {
@@ -136,6 +147,12 @@ impl Enemy {
         let mut queue = LinkedList::new();
         queue.push_back(enemy.pos);
 
+        if (enemy.pos.x >= WORLD_SIZE.0 as usize || enemy.pos.y >= WORLD_SIZE.1 as usize) {
+            dbg!(enemy.pos);
+            dbg!(enemy.world_pos);
+            dbg!(world.player.pos);
+            dbg!(world.world_position);
+        }
         visited[enemy.pos.y][enemy.pos.x] = true;
         // visited[enemy.pos.y - (world.world_position.y * WORLD_SIZE.1 as usize)][enemy.pos.x - (world.world_position.x * WORLD_SIZE.0 as usize)] = true;
         while !queue.is_empty() {

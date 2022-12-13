@@ -137,8 +137,8 @@ impl World {
                 let world_x = random::rand_range(rng, 0, BOARD_SIZE.0/WORLD_SIZE.0) as usize;
                 let world_y = random::rand_range(rng, 0, BOARD_SIZE.1/WORLD_SIZE.1) as usize;
                 let random_loc = Position::new(
-                    (x - (50 * world_x as i16)) as usize,
-                    (y - (50 * world_y as i16)) as usize,
+                    (x) as usize,
+                    (y) as usize,
                 );
                 let world_map_entity = &mut entity_map[world_y][world_x];
                 let world_map_terrain = &mut terrain_map[world_y][world_x];
