@@ -130,18 +130,18 @@ impl World {
             // enemy there
             loop {
 
-                let x = random::rand_range(rng, 0, BOARD_SIZE.0); // random x coordinate
-                let y = random::rand_range(rng, 0, BOARD_SIZE.1); // random y coordinate
-                // let x = random::rand_range(rng, 0, WORLD_SIZE.0); // random x coordinate, only spawns World 1 for testing
-                // let y = random::rand_range(rng, 0, WORLD_SIZE.1); // random y coordinate
-                let world_loc =
-                    Position::new((x / WORLD_SIZE.0) as usize, (y / WORLD_SIZE.1) as usize);
+                // let x = random::rand_range(rng, 0, BOARD_SIZE.0); // random x coordinate
+                // let y = random::rand_range(rng, 0, BOARD_SIZE.1); // random y coordinate
+                let x = random::rand_range(rng, 0, WORLD_SIZE.0); // random x coordinate
+                let y = random::rand_range(rng, 0, WORLD_SIZE.1); // random y coordinate
+                let world_x = random::rand_range(rng, 0, BOARD_SIZE.0/WORLD_SIZE.0) as usize;
+                let world_y = random::rand_range(rng, 0, BOARD_SIZE.1/WORLD_SIZE.1) as usize;
                 let random_loc = Position::new(
-                    (x - (50 * world_loc.x as i16)) as usize,
-                    (y - (50 * world_loc.y as i16)) as usize,
+                    (x - (50 * world_x as i16)) as usize,
+                    (y - (50 * world_y as i16)) as usize,
                 );
-                let world_map_entity = &mut entity_map[world_loc.y][world_loc.x];
-                let world_map_terrain = &mut terrain_map[world_loc.y][world_loc.x];
+                let world_map_entity = &mut entity_map[world_y][world_x];
+                let world_map_terrain = &mut terrain_map[world_y][world_x];
 
                 // if the random position is blank, then create an enemy there
                 if !world_map_terrain.contains_key(&random_loc)
@@ -156,7 +156,7 @@ impl World {
                         y as usize,
                         1,
                         tile::BASIC_ENEMY,
-                        world_loc,
+                        Position::new(world_x, world_y),
                     ));
                     break;
                 }
