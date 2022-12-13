@@ -117,6 +117,8 @@ impl Enemy {
             _ => false,
         };
 
+        let mut print = true;
+
         let enemy = &world.enemies[index];
         // this is a visited array to save if we have visited a location on the grid
         let mut visited = [[false; WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
@@ -140,7 +142,8 @@ impl Enemy {
 
                 // standard bfs stuff, for each neighbor, if it hasn't been visited, put it into
                 // the queue
-                let neighbors = Self::get_neighbors(world, node, can_dodge_projectiles, index);
+                let neighbors =
+                    Self::get_neighbors(world, node, can_dodge_projectiles, index, &mut print, Entity::Enemy(index));
                 for next in neighbors {
                     // if !visited[next.y][next.x] {
                     // if world.player.pos.y >= 48 {
@@ -171,7 +174,7 @@ impl Enemy {
             // if the position's or y is greater than the world size, that means that a path wasn't
             // found, as it means the previous position did not have a previous, so we break out
             if position.x as i16 > WORLD_SIZE.0 {
-            // if (position.x - (world.world_position.x * WORLD_SIZE.1 as usize)) as i16 > WORLD_SIZE.0 {
+                // if (position.x - (world.world_position.x * WORLD_SIZE.1 as usize)) as i16 > WORLD_SIZE.0 {
                 break;
             }
             position = previous[position.y][position.x];
@@ -185,6 +188,8 @@ impl Enemy {
         position: Position,
         can_dodge_projectiles: bool,
         index: usize,
+        print: &mut bool,
+        entity_type: Entity
     ) -> Vec<Position> {
         let directions = [
             Direction::North,
@@ -196,20 +201,27 @@ impl Enemy {
 
         // loop through all the directions
         for direction in directions {
-            let (new_pos, _) = World::new_position(position, direction, world, 1);
+            let (new_pos, _) = World::new_position(position, direction, world, 1, entity_type.clone());
+            if *print {
+                dbg!(new_pos);
+                dbg!(world.enemies[index].pos);
+            }
 
             // if the new position is valid(correct tiles & within bounds) add it to the potential
             // neighbors
-            if Self::can_travel_to(
-                new_pos,
-                &world.entity_positions,
-                &world.terrain_positions,
-                can_dodge_projectiles,
-            ) && world.enemies[index].world_pos == world.world_position
+            if new_pos != world.enemies[index].pos
+                && Self::can_travel_to(
+                    new_pos,
+                    &world.entity_positions,
+                    &world.terrain_positions,
+                    can_dodge_projectiles,
+                )
+                && world.enemies[index].world_pos == world.world_position
             {
                 moves.push(new_pos);
             }
         }
+        *print = false;
         return moves;
     }
 
