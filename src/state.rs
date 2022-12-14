@@ -7,7 +7,7 @@ use crate::UNIVERSAL_OFFSET;
 use crate::{
     projectile::Projectile,
     tile,
-    world::{World, BOSS_ROOMS},
+    world::{World, BOSS_ROOMS, FINAL_BOSS_ROOM},
     SCREEN_SIZE, TILE_SIZE, WORLD_SIZE,
 };
 use ggez::{
@@ -49,12 +49,18 @@ impl ggez::event::EventHandler<GameError> for State {
         if self.should_draw {
             let mut canvas;
             let mut boss_room = false;
+            let mut final_boss = false;
             for boss_room_position in BOSS_ROOMS {
                 if self.world.world_position == boss_room_position {
                     boss_room = true;
                 }
             }
-            if boss_room {
+            if self.world.world_position == FINAL_BOSS_ROOM {
+                final_boss = true;
+            }
+            if final_boss {
+                canvas = graphics::Canvas::from_frame(ctx, graphics::Color::from(tile::BOSS_FLOOR));
+            } else if boss_room {
                 canvas = graphics::Canvas::from_frame(ctx, graphics::Color::from(tile::FLOOR));
             } else {
                 canvas = graphics::Canvas::from_frame(ctx, graphics::Color::from(tile::GRASS));

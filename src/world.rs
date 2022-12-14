@@ -25,6 +25,7 @@ pub const BOSS_ROOMS: [Position; 5] = [
     Position::new(5, 1),
     Position::new(5, 5),
 ];
+pub const FINAL_BOSS_ROOM: Position = Position::new(3, 3);
 const LAKES_PER_WORLD: i16 = 3;
 const TOTAL_MOUNTAINS: i16 = 60;
 const ENEMY_COUNT: usize = 500;
@@ -87,8 +88,8 @@ impl World {
         let mut boss_defeated = [[false; 7]; 7];
         World::gen_boss(&mut terrain_map);
         World::gen_outer_boss_walls(&mut terrain_map);
-        World::gen_lake(&mut rng, &mut terrain_map);
         World::gen_mountain(&mut rng, &mut terrain_map);
+        World::gen_lake(&mut rng, &mut terrain_map);
         // World::add_doors(&mut terrain_map);
         let player = Player::new();
         let starting_map = &mut entity_map[player.pos.y][player.pos.x];
@@ -803,9 +804,10 @@ impl World {
                  (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     ) {
         // the upper left corner of each mini boss room
-        const UP_LEFT_CORNERS: [[i16; 2]; 4] = [
+        const UP_LEFT_CORNERS: [[i16; 2]; 5] = [
             [WORLD_SIZE.0, WORLD_SIZE.1],
             [WORLD_SIZE.0 * 5, WORLD_SIZE.1],
+            [WORLD_SIZE.0 * 3, WORLD_SIZE.1 * 3],
             [WORLD_SIZE.0, WORLD_SIZE.1 * 5],
             [WORLD_SIZE.0 * 5, WORLD_SIZE.1 * 5],
         ];
@@ -1023,8 +1025,10 @@ impl World {
                 (other_y - (50 * world_loc.y as i16)) as usize,
             );
 
-            if terrain_map[world_loc.y][world_loc.x].contains_key(&loc) {
-                return true;
+            if let Some(tile) = terrain_map[world_loc.y][world_loc.x].get(&loc) {
+                if *tile == tile::WALL {
+                    return true;
+                }
             }
         }
         return false;

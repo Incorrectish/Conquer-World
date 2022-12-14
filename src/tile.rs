@@ -1,4 +1,5 @@
-pub const FLOOR: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
+pub const BOSS_FLOOR: [f32; 4] = [0.1, 0.1, 0.1, 1.0];
+pub const FLOOR: [f32; 4] = [0.2, 0.2, 0.2, 1.0];
 pub const WATER: [f32; 4] = [0.145, 0.588, 0.8, 1.0];
 pub const LAVA: [f32; 4] = [0.988, 0.612, 0.078, 1.0];
 pub const MOUNTAIN: [[f32; 4]; 5] = [
