@@ -24,12 +24,29 @@ pub const LIGHTNING: [[f32; 4]; 4] = [
     [1.0, 1.0, 1.0, 1.0],
 ];
 
-pub const BASIC_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0];
-pub const BOMBER: [f32; 4] = [0.0, 0.8, 0.3, 1.0];
-pub const SHOOTING_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0];
+pub const CHASING_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0];
+pub const BOMBER_ENEMY: [f32; 4] = [0.0, 0.8, 0.3, 1.0];
+pub const SHOOTER_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0];
 pub const KNIGHT_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0];
 pub const OGRE_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0];
 pub const MINI_BOSS: [f32; 4] = [0.25, 0.2, 0.9, 1.0];
 pub const MAJOR_BOSS: [f32; 4] = [0.8, 0.3, 0.3, 1.0];
+
+// pub const ENEMIES: [[f32; 4]; 7] = [
+//     // basic
+//     [0.8, 0.3, 0.3, 1.0],
+//     // bomber
+//     [0.0, 0.8, 0.3, 1.0],
+//     // shooter
+//     [0.8, 0.3, 0.3, 1.0],
+//     // knight
+//     [0.8, 0.3, 0.3, 1.0],
+//     // 3x3, major enemy
+//     [0.8, 0.3, 0.3, 1.0],
+//     // mini boss
+//     [0.25, 0.2, 0.9, 1.0],
+//     // major boss
+//     [0.8, 0.3, 0.3, 1.0],
+// ];
 
 pub const PLAYER: [f32; 4] = [1.0, 1.0, 1.0, 0.5];

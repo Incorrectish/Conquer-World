@@ -9,9 +9,23 @@ use crate::{
 };
 use std::{collections::HashMap, collections::LinkedList, cmp::max};
 
-const ENEMY_HEALTH: usize = 5;
+const BASIC_ENEMY_HEALTH: usize = 5;
+const BOMBER_ENEMY_HEALTH: usize = 5;
+const KNIGHT_ENEMY_HEALTH: usize = 5;
+const SHOOTER_ENEMY_HEALTH: usize = 5;
+const MAJOR_ENEMY_HEALTH: usize = 5;
+const MINOR_BOSS_HEALTH: usize = 5;
+const MAJOR_BOSS_HEALTH: usize = 5;
 const PERMISSIBLE_TILES: [[f32; 4]; 2] = [tile::GRASS, tile::PROJECTILE_PLAYER];
 const PERMISSIBLE_TILES_DODGING: [[f32; 4]; 1] = [tile::GRASS];
+const PERMISSIBLE_TILES_BOSS: [[f32; 4]; 0] = [];
+const BASIC_ENEMY_SPEED: usize = 1;
+const BOMBER_ENEMY_SPEED: usize = 1;
+const KNIGHT_ENEMY_SPEED: usize = 1;
+const SHOOTER_ENEMY_SPEED: usize = 1;
+const MAJOR_ENEMY_SPEED: usize = 1;
+const MINOR_BOSS_SPEED: usize = 1;
+const MAJOR_BOSS_SPEED: usize = 1;
 
 #[derive(Debug, Clone)]
 // This is basically the same as the enemy for now, but I am just testing an enemy system
@@ -41,22 +55,64 @@ pub struct Enemy {
     pub world_pos: Position,
 
     resistance: f32,
+
+    can_dodge_projectiles: bool,
+
+    is_boss: bool,
+
+    pub movement_cooldown: bool,
 }
 
 impl Enemy {
-    pub fn new(x: usize, y: usize, speed: usize, color: [f32; 4], world_pos: Position) -> Self {
+    fn new(x: usize, y: usize, speed: usize, color: [f32; 4], world_pos: Position, health: usize, can_dodge_projectiles: bool, boss: bool) -> Self {
         let temp = Self {
             pos: Position::new(x, y),
             direction: Direction::North,
             speed: 1,
             color,
             attack_damage: 1,
-            health: ENEMY_HEALTH,
+            health,
             resistance: 1.0,
             world_pos,
+            can_dodge_projectiles,
+            is_boss: boss,
+            movement_cooldown: false,
         };
         temp
     }
+
+    pub fn bomber(x: usize, y: usize, world_pos: Position) -> Self {
+        Enemy::new(
+            x, y, BOMBER_ENEMY_SPEED, tile::BOMBER_ENEMY, BOMBER_ENEMY_HEALTH, BOMBER_ENEMY_SPEED, world_pos, true, false 
+        ) 
+    }
+
+    pub fn basic() -> Self {
+        Enemy::new(
+            x, y, BOMBER_ENEMY_SPEED, tile::BASIC_ENEMY, BASIC_ENEMY_HEALTH, world_pos, false, false 
+        ) 
+    }
+
+    pub fn major_enemy() -> Self {
+
+    }
+
+    pub fn shooting_enemy() -> {
+
+    }
+
+    pub fn knight() -> Self {
+
+    }
+
+    pub fn major_boss() -> Self {
+
+    }
+
+    pub fn minor_boss() -> Self {
+
+    }
+
 
     pub fn health(&self) -> usize {
         self.health
@@ -89,6 +145,54 @@ impl Enemy {
         world.enemies.remove(index);
     }
 
+
+    pub fn move_enemy_with_deltas(index: usize, world: &mut World) {
+        let (delta_x, delta_y) = (world.enemies[index].pos.x as i32 - world.player.pos.x as i32, world.enemies[index].pos.y as i32 - world.player.pos.y as i32);
+        let direction = if delta_x.abs() > delta_y.abs() {
+            // delta x will never be 0
+            if delta_x > 0 {
+                // move to the left
+                Direction::West
+            } else {
+                // move to the right 
+                Direction::East
+            }
+        } else {
+            // delta y will never be 0
+            if delta_y > 0 {
+                // move up
+                Direction::North
+            } else {
+                // move down
+                Direction::South
+            }
+        };
+
+        let (new_pos, _) = World::new_position(world.enemies[index].pos, direction, world, world.enemies[index].speed, Entity::Enemy, Some(index));
+        let world_pos = world.enemies[index].world_pos;
+        // TODO
+        if (world.terrain_map[world_pos.y][world_pos.x].contains_key(&new_pos)) {
+            if (PERMISSIBLE_TILES)
+        } 
+        if new_pos == world.player.pos {
+            world.player.damage(world.enemies[index].attack_damage);
+        } else {
+            let mut index_proj: i32 = 0;
+            for _ in 0..world.projectiles.len() {
+                if new_pos == world.projectiles[index_proj as usize].pos 
+                    && world.enemies[index].world_pos == world.projectiles[index_proj as usize].world_pos {
+                        world.enemies[index].damage(world.projectiles[index_proj as usize].damage);
+                        Projectile::kill(index_proj as usize, world);
+                        index_proj -= 1;
+                    }
+                index_proj += 1
+            }
+            // simply updates the render queue
+            World::update_position(world, world.enemies[index].pos, (new_pos, world.world_position));
+            world.enemies[index].pos = new_pos;
+        }
+    }
+
     // This just makes move along the best path for the speed, eg speed 2 = 2 moves along the best
     // path
     pub fn move_enemy(index: usize, world: &mut World) {
@@ -100,10 +204,10 @@ impl Enemy {
         let mut travel_path = Self::get_best_path(index, world, can_dodge_projectiles);
         let enemy = &world.enemies[index];
         let mut cur_pos = enemy.pos;
-        let world_pos = enemy.world_pos;
         for _ in 0..enemy.speed {
             if let Some(new_pos) = travel_path.pop_front() {
                 if new_pos.x >= WORLD_SIZE.0 as usize || new_pos.y >= WORLD_SIZE.1 as usize {
+                    Self::move_enemy_with_deltas(index, world);
                     return;
                 }
                 if new_pos == world.player.pos {
@@ -112,11 +216,11 @@ impl Enemy {
                     let mut index_proj: i32 = 0;
                     for _ in 0..world.projectiles.len() {
                         if new_pos == world.projectiles[index_proj as usize].pos 
-                        && world.enemies[index].world_pos == world.projectiles[index_proj as usize].world_pos {
-                            world.enemies[index].damage(world.projectiles[index_proj as usize].damage);
-                            Projectile::kill(index_proj as usize, world);
-                            index_proj -= 1;
-                        }
+                            && world.enemies[index].world_pos == world.projectiles[index_proj as usize].world_pos {
+                                world.enemies[index].damage(world.projectiles[index_proj as usize].damage);
+                                Projectile::kill(index_proj as usize, world);
+                                index_proj -= 1;
+                            }
                         index_proj += 1
                     }
                     // simply updates the render queue
@@ -140,7 +244,7 @@ impl Enemy {
         // this stores every location's previous location so that we can reconstruct the best path
         // given our start and end
         let mut previous = [[Position::new(WORLD_SIZE.0 as usize + 1, WORLD_SIZE.1 as usize + 1);
-            WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
+        WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
         let mut queue = LinkedList::new();
         queue.push_back(enemy.pos);
 
@@ -161,7 +265,7 @@ impl Enemy {
                     can_dodge_projectiles,
                     index,
                     Entity::Enemy,
-                );
+                    );
                 for next in neighbors {
                     if !visited[next.y][next.x] {
                         queue.push_back(next);
@@ -197,7 +301,7 @@ impl Enemy {
         can_dodge_projectiles: bool,
         index: usize,
         entity_type: Entity,
-    ) -> Vec<Position> {
+        ) -> Vec<Position> {
         let directions = [
             Direction::North,
             Direction::South,
@@ -219,11 +323,11 @@ impl Enemy {
                     &world.terrain_map,
                     &world.atmosphere_map,
                     can_dodge_projectiles,
-                )
-                && world.enemies[index].world_pos == world.world_position
-            {
-                moves.push(new_pos);
-            }
+                    )
+                    && world.enemies[index].world_pos == world.world_position
+                    {
+                        moves.push(new_pos);
+                    }
         }
         return moves;
     }
@@ -232,13 +336,13 @@ impl Enemy {
         // this is the (position_in_world, position_of_world)
         position_info: (Position, Position),
         entity_map: &[[HashMap<Position, ([f32; 4], Entity)>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
-             (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
+        (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
         terrain_map: &[[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
-             (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
+        (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
         atmosphere_map: &[[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
-             (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
+        (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
         can_dodge_projectiles: bool,
-    ) -> bool {
+        ) -> bool {
         // check if there are any static or dynamic entities in the position
         if terrain_map[position_info.1.y][position_info.1.x].contains_key(&position_info.0) {
             let info = terrain_map[position_info.1.y][position_info.1.x].get(&position_info.0);
@@ -284,5 +388,13 @@ impl Enemy {
             return false;
         } 
         true
+    }
+
+    pub fn can_dodge_projectiles(&self) -> bool {
+        self.can_dodge_projectiles
+    } 
+
+    pub fn is_boss(&self) -> bool {
+        self.is_boss
     }
 }
