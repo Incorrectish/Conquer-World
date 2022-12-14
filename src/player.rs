@@ -366,6 +366,7 @@ impl Player {
     //     // enemies and check if any of them are on the attacking tile, then damage them
         for enemy in &mut world.enemies {
             if enemy.pos == attacking_position.0 {
+                world.player.energy += 2;
                 enemy.damage(PLAYER_MELEE_DAMAGE);
             }
         }
