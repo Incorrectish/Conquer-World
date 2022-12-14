@@ -31,12 +31,12 @@ impl Boss {
                 if i != 1 || j != 1 {
                     surrounding[index] = Some(Enemy::new(x+i, y+j, 1, tile::MINI_BOSS, world_position));
                     entity_loc.insert(Position::new(x+i, y+j), 
-                    (tile::MINI_BOSS, Entity::Enemy(index))
+                    (tile::MINI_BOSS, Entity::Enemy)
                 );
                 index += 1;
                 } else {
                     entity_loc.insert(Position::new(x+i, y+j), 
-                    (tile::MAJOR_BOSS, Entity::Enemy(index)));
+                    (tile::MAJOR_BOSS, Entity::Enemy));
                 }
             }
         }
@@ -51,15 +51,15 @@ impl Boss {
     }
 
     pub fn update(world: &mut World) {
-        for index in (0..world.bosses.len()).rev() {
-            if world.bosses[index].health <= 0 {
-                Enemy::kill(world, index);
-            } else {
-                if world.world_position == world.bosses[index].world_position {
-                    Self::move_boss(index, world);
-                }
-            }
-        }
+        // for index in (0..world.bosses.len()).rev() {
+        //     if world.bosses[index].health <= 0 {
+        //         Enemy::kill(world, index);
+        //     } else {
+        //         if world.world_position == world.bosses[index].world_position {
+        //             Self::move_boss(index, world);
+        //         }
+        //     }
+        // }
     }
 
     pub fn move_boss(index: usize, world: &mut World) {

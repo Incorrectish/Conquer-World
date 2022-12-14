@@ -15,10 +15,12 @@ pub const GRASS: [f32; 4] = [0.0, 0.5, 0.0, 1.0];
 pub const STRUCTURE: [f32; 4] = [0.3, 0.0, 0.0, 1.0];
 
 // This is a random color, it just can't conflict with anything esle
-pub const LIGHTNING_PLACEHOLDER: [f32; 4] = [0.414, 0.0, 0.414, 0.414];
-pub const LIGHTNING_SECONDARY: [f32; 4] = [0.0, 0.0, 0.5, 1.0];
-pub const LIGHTNING_INITIAL: [f32; 4] = [0.0, 0.0, 1.0, 1.0];
-pub const LIGHTNING_FINAL: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
+pub const LIGHTNING: [[f32; 4]; 4] = [
+    [0.414, 0.0, 0.414, 0.414],
+    [0.0, 0.0, 0.5, 1.0],
+    [0.0, 0.0, 1.0, 1.0],
+    [1.0, 1.0, 1.0, 1.0],
+];
 
 pub const BASIC_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0];
 pub const BOMBER: [f32; 4] = [0.0, 0.8, 0.3, 1.0];
