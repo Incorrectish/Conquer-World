@@ -25,7 +25,7 @@ pub const BOSS_ROOMS: [Position; 5] = [
     Position::new(5, 1),
     Position::new(5, 5),
 ];
-const TOTAL_LAKES: i16 = 100;
+const LAKES_PER_WORLD: i16 = 3;
 const TOTAL_MOUNTAINS: i16 = 75;
 const ENEMY_COUNT: usize = 5;
 
@@ -675,12 +675,21 @@ impl World {
         terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
                  (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     ) {
-        let mut lakes_added = 0;
-        while lakes_added < TOTAL_LAKES {
-            let x = random::rand_range(rng, 5, BOARD_SIZE.0); // random x coordinate
-            let y = random::rand_range(rng, 5, BOARD_SIZE.1); // random y coordinate
-            Self::gen_lake_helper(rng, x, y, 0, terrain_map); // new lake centered at (x, y)
-            lakes_added += 1;
+        for i in 0..7 {
+            for j in 0..7 {
+                let mut lakes_added = 0;
+                while lakes_added < LAKES_PER_WORLD {
+                    let x = random::rand_range(rng, 5, WORLD_SIZE.0); // random x coordinate
+                    let y = random::rand_range(rng, 5, WORLD_SIZE.1); // random y coordinate
+                    
+                    let mut lake: HashMap<Position, [f32; 4]> = HashMap::new();
+                    Self::gen_lake_helper(rng, i*WORLD_SIZE.0 + x, j*WORLD_SIZE.1 + y, 0, terrain_map, &mut lake); // new lake centered at (x, y)
+                    if lake.len() > 0 {
+                        Self::combine_into_terrain(terrain_map, &lake);
+                        lakes_added += 1;
+                    }
+                }
+            }
         }
     }
 
@@ -694,27 +703,27 @@ impl World {
         dist: i16,
         terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
                  (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
+        lake: &mut HashMap<Position, [f32; 4]>,
     ) {
-        // sets curr tile to water
-        let world_loc = Position::new((x / 50) as usize, (y / 50) as usize);
-        let loc = Position::new(
-            (x - (50 * world_loc.x as i16)) as usize,
-            (y - (50 * world_loc.y as i16)) as usize,
-        );
-        let world_map = &mut terrain_map[world_loc.y][world_loc.x];
+        let pos = Position::new(x as usize, y as usize);
+        if !Self::has_adjacent_terrain(x as usize, y as usize, &terrain_map) {
+            // sets curr tile to water
+            let world_loc = Position::new((x / 50) as usize, (y / 50) as usize);
 
-        let tile: [f32; 4];
+            let tile: [f32; 4];
+            if (world_loc.x == 1 || world_loc.x == 3 || world_loc.x == 5)
+                && (world_loc.y == 1 || world_loc.y == 3 || world_loc.y == 5)
+            {
+                tile = tile::LAVA;
+            } else {
+                tile = tile::WATER;
+            }
 
-        if (world_loc.x == 1 || world_loc.x == 3 || world_loc.x == 5)
-            && (world_loc.y == 1 || world_loc.y == 3 || world_loc.y == 5)
-        {
-            tile = tile::LAVA;
+            if !lake.contains_key(&pos) {
+                lake.insert(pos, tile);
+            }
         } else {
-            tile = tile::WATER;
-        }
-
-        if !world_map.contains_key(&loc) {
-            world_map.insert(loc, tile);
+            return;
         }
 
         const DIRECTIONS: [[i16; 2]; 4] = [[0, 1], [0, -1], [1, 0], [-1, 0]]; // orthogonal dirs
@@ -726,7 +735,7 @@ impl World {
                 let j = y + dir[1];
                 // if in bounds, recursively call fn on adjacent tile (draws WATER at that tile)
                 if i >= 0 && i < BOARD_SIZE.0 && j >= 0 && j < BOARD_SIZE.1 {
-                    Self::gen_lake_helper(rng, i, j, dist + 1, terrain_map);
+                    Self::gen_lake_helper(rng, i, j, dist + 1, terrain_map, lake);
                 }
             }
         }
@@ -848,8 +857,13 @@ impl World {
         while mountains_added < TOTAL_MOUNTAINS {
             let x = random::rand_range(rng, 5, BOARD_SIZE.0); // random x coordinate
             let y = random::rand_range(rng, 5, BOARD_SIZE.1); // random y coordinate
-            Self::gen_mountain_helper(rng, x, y, 0, terrain_map); // new lake centered at (x, y)
-            mountains_added += 1;
+            
+            let mut mountain: HashMap<Position, [f32; 4]> = HashMap::new();
+            Self::gen_mountain_helper(rng, x, y, 0, terrain_map, &mut mountain); // new lake centered at (x, y)
+            if mountain.len() > 0 {
+                Self::combine_into_terrain(terrain_map, &mountain);
+                mountains_added += 1;
+            }
         }
     }
 
@@ -863,16 +877,18 @@ impl World {
         dist: i16,
         terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
                  (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
+        mountain: &mut HashMap<Position, [f32; 4]>,
     ) {
-        // sets curr tile to water
-        let world_loc = Position::new((x / 50) as usize, (y / 50) as usize);
-        let loc = Position::new(
-            (x - (50 * world_loc.x as i16)) as usize,
-            (y - (50 * world_loc.y as i16)) as usize,
-        );
-        let world_map = &mut terrain_map[world_loc.y][world_loc.x];
-        if !world_map.contains_key(&loc) {
-            world_map.insert(loc, tile::MOUNTAIN[min(4, (dist + 2) / 3) as usize]);
+        let pos = Position::new(x as usize, y as usize);
+        if !Self::has_adjacent_terrain(x as usize, y as usize, &terrain_map) {
+            // sets curr tile to water
+            let tile: [f32; 4] = tile::MOUNTAIN[min(4, (dist + 2) / 3) as usize];
+
+            if !mountain.contains_key(&pos) {
+                mountain.insert(pos, tile);
+            }
+        } else {
+            return;
         }
 
         const DIRECTIONS: [[i16; 2]; 4] = [[0, 1], [0, -1], [1, 0], [-1, 0]]; // orthogonal dirs
@@ -884,7 +900,7 @@ impl World {
                 let j = y + dir[1];
                 // if in bounds, recursively call fn on adjacent tile (draws WATER at that tile)
                 if i >= 0 && i < BOARD_SIZE.0 && j >= 0 && j < BOARD_SIZE.1 {
-                    Self::gen_mountain_helper(rng, i, j, dist + 1, terrain_map);
+                    Self::gen_mountain_helper(rng, i, j, dist + 1, terrain_map, mountain);
                 }
             }
         }
@@ -948,4 +964,63 @@ impl World {
             }
         }
     }
+
+    fn has_adjacent_terrain(
+        x: usize,
+        y: usize,
+        terrain_map: &[[HashMap<Position, [f32; 4]>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
+                 (BOARD_SIZE.1 / WORLD_SIZE.1) as usize],
+    ) -> bool {
+        if x == 0 || x == BOARD_SIZE.0 as usize - 1 || y == 0 || y == BOARD_SIZE.1 as usize - 1 {
+            return true;
+        }
+
+        let directions: [[i16; 2]; 9] = [
+            [0, 0],
+            [1, 0],
+            [1, 1],
+            [0, 1],
+            [-1, 1],
+            [-1, 0],
+            [-1, -1],
+            [0, -1],
+            [1, -1]
+        ];
+
+        for dir in directions {
+            let other_x = x as i16 + dir[0];
+            let other_y = y as i16 + dir[1];
+
+            let world_loc = Position::new((other_x / 50) as usize, (other_y / 50) as usize);
+            let loc = Position::new(
+                (other_x - (50 * world_loc.x as i16)) as usize,
+                (other_y - (50 * world_loc.y as i16)) as usize,
+            );
+
+            if terrain_map[world_loc.y][world_loc.x].contains_key(&loc) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    fn combine_into_terrain(
+        terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
+                 (BOARD_SIZE.1 / WORLD_SIZE.1) as usize],
+        other: &HashMap<Position, [f32; 4]>,
+    ) {
+        for (pos, tile) in other {
+            let world_loc = Position::new((pos.x as i16 / 50) as usize, (pos.y as i16 / 50) as usize);
+            let loc = Position::new(
+                (pos.x as i16 - (50 * world_loc.x as i16)) as usize,
+                (pos.y as i16 - (50 * world_loc.y as i16)) as usize,
+            );
+
+            if !terrain_map[world_loc.y][world_loc.x].contains_key(&loc) {
+                terrain_map[world_loc.y][world_loc.x].insert(loc, *tile);
+            }
+
+        }
+    }
+
 }
