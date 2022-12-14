@@ -419,6 +419,22 @@ impl Player {
         }
     }
 
+    pub fn lightning(world: &mut World) {
+        if let Some(queued_position) = world.player.queued_position {
+            // TODO: Damage
+            let projectile = Projectile::new(
+                queued_position.0,
+                queued_position.1,
+                0,
+                3,
+                Direction::North,
+                world,
+                tile::LIGHTNING_PLACEHOLDER,
+            );
+            world.projectiles.push(projectile)
+        }
+    }
+
     pub fn build(world: &mut World) {
         if let Some(pos) = world.player.queued_position {
             if (pos.x as i32 - world.player.pos.x as i32).abs() < 2
