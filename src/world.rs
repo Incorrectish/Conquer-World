@@ -25,6 +25,7 @@ pub const BOSS_ROOMS: [Position; 5] = [
     Position::new(5, 1),
     Position::new(5, 5),
 ];
+pub const FINAL_BOSS_ROOM: Position = Position::new(3, 3);
 const LAKES_PER_WORLD: i16 = 3;
 const TOTAL_MOUNTAINS: i16 = 60;
 const ENEMY_COUNT: usize = 5;
@@ -782,9 +783,10 @@ impl World {
                  (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     ) {
         // the upper left corner of each mini boss room
-        const UP_LEFT_CORNERS: [[i16; 2]; 4] = [
+        const UP_LEFT_CORNERS: [[i16; 2]; 5] = [
             [WORLD_SIZE.0, WORLD_SIZE.1],
             [WORLD_SIZE.0 * 5, WORLD_SIZE.1],
+            [WORLD_SIZE.0 * 3, WORLD_SIZE.1 * 3],
             [WORLD_SIZE.0, WORLD_SIZE.1 * 5],
             [WORLD_SIZE.0 * 5, WORLD_SIZE.1 * 5],
         ];
