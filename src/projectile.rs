@@ -100,7 +100,7 @@ impl Projectile {
             //         }
             //     }
                 _ => {
-                    if !World::travel(world, Entity::Projectile(index as usize)) {
+                    if !World::travel(world, Entity::Projectile, Some(index as usize)) {
                         Projectile::kill(index as usize, world);
                         //When projectile dies, whole array shifts back one,
                         //so need to account for this in order to check the next projectile  in array

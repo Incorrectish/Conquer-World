@@ -6,8 +6,8 @@ use crate::{
     projectile::Projectile,
     random,
     tile::{self, FLOOR, PLAYER, *},
-    utils::Position,
     utils::Boss,
+    utils::Position,
     BOARD_SIZE, TILE_SIZE, UNIVERSAL_OFFSET, WORLD_SIZE,
 };
 
@@ -27,7 +27,7 @@ pub const BOSS_ROOMS: [Position; 5] = [
 ];
 const TOTAL_LAKES: i16 = 100;
 const TOTAL_MOUNTAINS: i16 = 75;
-const ENEMY_COUNT: usize = 50;
+const ENEMY_COUNT: usize = 5;
 
 pub struct World {
     //Stores which world the player is in
@@ -68,27 +68,28 @@ pub struct World {
         (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     pub terrain_map: [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
         (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
-    pub door_map: [[HashMap<Position, bool>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
+    pub atmosphere_map: [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
         (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
+    pub boss_defeated: [[bool; 7]; 7],
     pub rng: ThreadRng,
 }
 
 impl World {
     pub fn new() -> Self {
         let mut rng = rand::thread_rng();
-        let mut entity_positions = HashMap::new();
+        let entity_positions = HashMap::new();
         let terrain_positions = HashMap::new();
         let mut entity_map: [[HashMap<Position, ([f32; 4], Entity)>;
             (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
             (BOARD_SIZE.1 / WORLD_SIZE.1) as usize] = Default::default();
         let mut terrain_map: [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
             (BOARD_SIZE.1 / WORLD_SIZE.1) as usize] = Default::default();
-        let mut door_map: [[HashMap<Position, bool>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
-            (BOARD_SIZE.0 / WORLD_SIZE.0) as usize] = Default::default();
+        let mut boss_defeated = [[false; 7]; 7];
         World::gen_boss(&mut terrain_map);
         World::gen_outer_boss_walls(&mut terrain_map);
         World::gen_lake(&mut rng, &mut terrain_map);
         World::gen_mountain(&mut rng, &mut terrain_map);
+        // World::add_doors(&mut terrain_map);
         let player = Player::new();
         let starting_map = &mut entity_map[player.pos.y][player.pos.x];
         starting_map.insert(player.pos, (player.color, Entity::Player));
@@ -110,7 +111,8 @@ impl World {
             entity_map,
             terrain_map,
             terrain_positions,
-            door_map,
+            atmosphere_map: Default::default(),
+            boss_defeated,
             rng,
         }
     }
@@ -129,17 +131,15 @@ impl World {
             // the loop just generates new positions until it finds an open one, and it inserts an
             // enemy there
             loop {
-
                 // let x = random::rand_range(rng, 0, BOARD_SIZE.0); // random x coordinate
                 // let y = random::rand_range(rng, 0, BOARD_SIZE.1); // random y coordinate
                 let x = random::rand_range(rng, 0, WORLD_SIZE.0); // random x coordinate
                 let y = random::rand_range(rng, 0, WORLD_SIZE.1); // random y coordinate
-                let world_x = random::rand_range(rng, 0, BOARD_SIZE.0/WORLD_SIZE.0) as usize;
-                let world_y = random::rand_range(rng, 0, BOARD_SIZE.1/WORLD_SIZE.1) as usize;
-                let random_loc = Position::new(
-                    x as usize,
-                    y as usize,
-                );
+                // let world_x = random::rand_range(rng, 0, BOARD_SIZE.0 / WORLD_SIZE.0) as usize;
+                // let world_y = random::rand_range(rng, 0, BOARD_SIZE.1 / WORLD_SIZE.1) as usize;
+                let world_x = 0;
+                let world_y = 0;
+                let random_loc = Position::new(x as usize, y as usize);
                 let world_map_entity = &mut entity_map[world_y][world_x];
                 let world_map_terrain = &mut terrain_map[world_y][world_x];
 
@@ -147,10 +147,7 @@ impl World {
                 if !world_map_terrain.contains_key(&random_loc)
                     && !world_map_entity.contains_key(&random_loc)
                 {
-                    world_map_entity.insert(
-                        random_loc,
-                        (tile::BASIC_ENEMY, Entity::Enemy(enemies.len())),
-                    );
+                    world_map_entity.insert(random_loc, (tile::BASIC_ENEMY, Entity::Enemy));
                     enemies.push(Enemy::new(
                         x as usize,
                         y as usize,
@@ -162,10 +159,9 @@ impl World {
                 }
             }
         }
-        
     }
 
-    pub fn gen_bosses (
+    pub fn gen_bosses(
         terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
                  (BOARD_SIZE.1 / WORLD_SIZE.1) as usize],
 
@@ -194,7 +190,8 @@ impl World {
         let mut x = BOARD_SIZE.0 as usize / 50;
         let mut y = BOARD_SIZE.1 as usize / 50;
         let player_indicator = [0.9, 0.1, 0.1, 1.0]; //Color of the dot on the map
-        let dungeon_indicator = [0.1, 0.5, 0.1, 1.0]; //Color of boss indicators
+        const dungeon_indicator: [f32; 4] = [0.1, 0.5, 0.1, 1.0]; //Color of boss indicators
+        const boss_room_indicator: [f32; 4] = [0.1, 0.5, 0.1, 1.0]; //Color of boss indicators
         for i in 0..(x * 6 - x + 1) {
             //Calculate length and iterate that many times
             for j in 0..(y * 6 - y + 1) {
@@ -262,7 +259,7 @@ impl World {
     }
 
     //This function draws the whole entire world that is seen by the player
-    pub fn draw(&self, canvas: &mut graphics::Canvas) {
+    pub fn draw(&mut self, canvas: &mut graphics::Canvas) {
         //Draw the black bar on top that has the health/energy indicators
         for i in 0..WORLD_SIZE.0 {
             for j in 0..UNIVERSAL_OFFSET {
@@ -298,7 +295,7 @@ impl World {
                         TILE_SIZE.0 as i32,
                         TILE_SIZE.1 as i32,
                     ))
-                    .color(*color),
+                    .color(Self::related_color(&mut self.rng, *color)),
             )
         }
 
@@ -319,11 +316,27 @@ impl World {
                         // (loc.y - (self.world_position.y * WORLD_SIZE.1 as usize)
                         //     + UNIVERSAL_OFFSET as usize) as i32
                         //     * TILE_SIZE.1 as i32,
-
                         TILE_SIZE.0 as i32,
                         TILE_SIZE.1 as i32,
                     ))
                     .color(color.0),
+            )
+        }
+
+        //Draw every pixel that is contained in the terrain HashMap
+        let curr_world_atmosphere_map =
+            &self.atmosphere_map[self.world_position.y][self.world_position.x];
+        for (loc, color) in curr_world_atmosphere_map {
+            canvas.draw(
+                &graphics::Quad,
+                graphics::DrawParam::new()
+                    .dest_rect(graphics::Rect::new_i32(
+                        loc.x as i32 * TILE_SIZE.0 as i32,
+                        (loc.y as i32 + UNIVERSAL_OFFSET as i32) * TILE_SIZE.1 as i32,
+                        TILE_SIZE.0 as i32,
+                        TILE_SIZE.1 as i32,
+                    ))
+                    .color(*color),
             )
         }
     }
@@ -364,7 +377,7 @@ impl World {
 
     //This function runs calculations and moves an entity to where ever they are meant to go
     //returns if it was successfully able to move there or not
-    pub fn travel(world: &mut World, entity_type: Entity) -> bool {
+    pub fn travel(world: &mut World, entity_type: Entity, index: Option<usize>) -> bool {
         let (pos, direction, speed, index) = match entity_type {
             //Check what type of entity is moving and match the corresponding values
             Entity::Player => (
@@ -373,21 +386,28 @@ impl World {
                 world.player.speed,
                 None,
             ),
-            Entity::Enemy(i) => (
-                world.enemies[i].pos,
-                world.enemies[i].direction.clone(),
-                world.enemies[i].speed,
-                Some(i),
-            ),
-            Entity::Projectile(i) => (
-                world.projectiles[i].pos,
-                world.projectiles[i].direction.clone(),
-                world.projectiles[i].speed,
-                Some(i),
-            ),
+            Entity::Enemy => {
+                let i = index.unwrap();
+                (
+                    world.enemies[i].pos,
+                    world.enemies[i].direction.clone(),
+                    world.enemies[i].speed,
+                    Some(i),
+                )
+            }
+            Entity::Projectile => {
+                let i = index.unwrap();
+                (
+                    world.projectiles[i].pos,
+                    world.projectiles[i].direction.clone(),
+                    world.projectiles[i].speed,
+                    Some(i),
+                )
+            }
         };
 
-        let new_position = Self::new_position(pos, direction.clone(), world, speed, entity_type.clone()); //Get where the entity is supposed to go
+        let new_position =
+            Self::new_position(pos, direction.clone(), world, speed, entity_type.clone(), index); //Get where the entity is supposed to go
 
         if !Self::coordinates_are_within_board(world, new_position.1) || new_position.0 == pos {
             //If new location is not within the board, returns false
@@ -459,24 +479,28 @@ impl World {
                             world.player.pos = new_position.0;
                         }
                     }
+                    Self::toggle_doors(&mut world.terrain_map, world.world_position, world.player.pos, world.boss_defeated);
                     return true;
                 }
 
-                Entity::Enemy(i) => {
+                Entity::Enemy => {
                     //Enemy movement is in the enemy.rs file TODO: move it over here
                     return true;
                 }
 
-                Entity::Projectile(i) => {
-                    if !Projectile::can_travel_to(
-                        world,
-                        new_position,
-                    ) && new_position.0 != pos 
-                      && new_position.1 != world.player.pos {
+                Entity::Projectile => {
+                    if !Projectile::can_travel_to(world, new_position)
+                        && new_position.0 != pos
+                        && new_position.1 != world.player.pos
+                    {
                         return false;
                     }
-                    for index in 0..world.enemies.len()  { //Check if the projectile will hit an enemy, if so damage the enemy
-                        if new_position.0 == world.enemies[index].pos && new_position.1 == world.enemies[index].world_pos {
+                    let i = index.unwrap();
+                    for index in 0..world.enemies.len() {
+                        //Check if the projectile will hit an enemy, if so damage the enemy
+                        if new_position.0 == world.enemies[index].pos
+                            && new_position.1 == world.enemies[index].world_pos
+                        {
                             world.enemies[index].damage(world.projectiles[i].damage);
                             return false; //Will delete the projectile that hits the enemy
                         }
@@ -499,6 +523,7 @@ impl World {
         world: &mut Self,
         travel_distance: usize,
         entity_type: Entity,
+        index: Option<usize>,
     ) -> (Position, Position) {
         //Where .0 is the phyiscal coordinate position and .1 is the world_position
         let mut x = pos.x as i16;
@@ -509,10 +534,12 @@ impl World {
                 y = y as i16 - travel_distance as i16;
                 if y < 0 {
                     match entity_type {
-                        Entity::Enemy(i) => {
+                        Entity::Enemy => {
+                            let i = index.unwrap();
                             return (world.enemies[i].pos, world.enemies[i].world_pos);
                         }
-                        Entity::Projectile(i) => {
+                        Entity::Projectile => {
+                            let i = index.unwrap();
                             return (world.projectiles[i].pos, world.projectiles[i].world_pos);
                         }
                         _ => {
@@ -534,10 +561,12 @@ impl World {
                 y = y as i16 + travel_distance as i16;
                 if y >= WORLD_SIZE.1 as i16 {
                     match entity_type {
-                        Entity::Enemy(i) => {
+                        Entity::Enemy => {
+                            let i = index.unwrap();
                             return (world.enemies[i].pos, world.enemies[i].world_pos);
                         }
-                        Entity::Projectile(i) => {
+                        Entity::Projectile => {
+                            let i = index.unwrap();
                             return (world.projectiles[i].pos, world.projectiles[i].world_pos);
                         }
                         _ => {
@@ -556,10 +585,12 @@ impl World {
                 x = x as i16 + travel_distance as i16;
                 if x >= WORLD_SIZE.0 as i16 {
                     match entity_type {
-                        Entity::Enemy(i) => {
+                        Entity::Enemy => {
+                            let i = index.unwrap();
                             return (world.enemies[i].pos, world.enemies[i].world_pos);
                         }
-                        Entity::Projectile(i) => {
+                        Entity::Projectile => {
+                            let i = index.unwrap();
                             return (world.projectiles[i].pos, world.projectiles[i].world_pos);
                         }
                         _ => {
@@ -578,10 +609,12 @@ impl World {
                 x = x as i16 - travel_distance as i16;
                 if x < 0 {
                     match entity_type {
-                        Entity::Enemy(i) => {
+                        Entity::Enemy => {
+                            let i = index.unwrap();
                             return (world.enemies[i].pos, world.enemies[i].world_pos);
                         }
-                        Entity::Projectile(i) => {
+                        Entity::Projectile => {
+                            let i = index.unwrap();
                             return (world.projectiles[i].pos, world.projectiles[i].world_pos);
                         }
                         _ => {
@@ -681,7 +714,7 @@ impl World {
         }
 
         if !world_map.contains_key(&loc) {
-            world_map.insert(loc, Self::related_color(rng, tile));
+            world_map.insert(loc, tile);
         }
 
         const DIRECTIONS: [[i16; 2]; 4] = [[0, 1], [0, -1], [1, 0], [-1, 0]]; // orthogonal dirs
@@ -754,7 +787,7 @@ impl World {
                 // generates a thickness 2 wall around each mini boss room square
                 let mut world_map =
                     &mut terrain_map[corner[1] as usize / 50][corner[0] as usize / 50];
-                if i as i16 != WORLD_SIZE.0 / 2- 1 {
+                if i as i16 != WORLD_SIZE.0 / 2 - 1 && i as i16 != WORLD_SIZE.0 / 2 {
                     let mut loc = Position::new(0, i);
                     world_map.insert(loc, tile::WALL);
                     loc = Position::new(i, 0);
@@ -764,19 +797,23 @@ impl World {
                     loc = Position::new(WORLD_SIZE.0 as usize - 1, i);
                     world_map.insert(loc, tile::WALL);
 
-                    world_map = &mut terrain_map[corner[1] as usize / 50][corner[0] as usize / 50 + 1];
+                    world_map =
+                        &mut terrain_map[corner[1] as usize / 50][corner[0] as usize / 50 + 1];
                     loc = Position::new(0, i);
                     world_map.insert(loc, tile::WALL);
 
-                    world_map = &mut terrain_map[corner[1] as usize / 50][corner[0] as usize / 50 - 1];
+                    world_map =
+                        &mut terrain_map[corner[1] as usize / 50][corner[0] as usize / 50 - 1];
                     loc = Position::new(WORLD_SIZE.0 as usize - 1, i);
                     world_map.insert(loc, tile::WALL);
 
-                    world_map = &mut terrain_map[corner[1] as usize / 50 + 1][corner[0] as usize / 50];
+                    world_map =
+                        &mut terrain_map[corner[1] as usize / 50 + 1][corner[0] as usize / 50];
                     loc = Position::new(i, 0);
                     world_map.insert(loc, tile::WALL);
 
-                    world_map = &mut terrain_map[corner[1] as usize / 50 - 1][corner[0] as usize / 50];
+                    world_map =
+                        &mut terrain_map[corner[1] as usize / 50 - 1][corner[0] as usize / 50];
                     loc = Position::new(i, WORLD_SIZE.1 as usize - 1);
                     world_map.insert(loc, tile::WALL);
                 }
@@ -800,14 +837,6 @@ impl World {
         // in progress: creates a hole in the left wall of the upper left mini boss room
         // terrain_positions.remove(&Position::new(WORLD_SIZE.1 as usize, (WORLD_SIZE.0 + WORLD_SIZE.0 / 2) as usize));
         // terrain_positions.remove(&Position::new((WORLD_SIZE.1 - 1) as usize, (WORLD_SIZE.0 + WORLD_SIZE.0 / 2) as usize));
-    }
-
-    // separate function to generate doors on the walls
-    // terrain_map stores boolean so that it can be toggled on and off
-    fn gen_doors(
-        terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
-                 (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
-    ) {
     }
 
     pub fn gen_mountain(
@@ -843,7 +872,7 @@ impl World {
         );
         let world_map = &mut terrain_map[world_loc.y][world_loc.x];
         if !world_map.contains_key(&loc) {
-            world_map.insert(loc, tile::MOUNTAIN[min(4, dist / 3) as usize]);
+            world_map.insert(loc, tile::MOUNTAIN[min(4, (dist + 2) / 3) as usize]);
         }
 
         const DIRECTIONS: [[i16; 2]; 4] = [[0, 1], [0, -1], [1, 0], [-1, 0]]; // orthogonal dirs
@@ -866,16 +895,57 @@ impl World {
         random::bernoulli(rng, 1. - 0.10 * (dist as f32))
     }
 
-    fn add_doors() {
-        for room in BOSS_ROOMS {
-            let world_x = room.x;
-            let world_y = room.y;
+    pub fn toggle_doors(
+        terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
+                 (BOARD_SIZE.1 / WORLD_SIZE.1) as usize],
+        world_loc: Position,
+        loc: Position,
+        boss_defeated: [[bool; 7]; 7],
+    ) {
+        let positions: [[i16 ; 4]; 8] = [
+            [1, 0, 0, WORLD_SIZE.1 / 2 - 1],
+            [1, 0, 0, WORLD_SIZE.1 / 2],
+            [-1, 0, WORLD_SIZE.0 - 1, WORLD_SIZE.1 / 2 - 1],
+            [-1, 0, WORLD_SIZE.0 - 1, WORLD_SIZE.1 / 2],
+            [0, 1, WORLD_SIZE.0 / 2 - 1, 0],
+            [0, 1, WORLD_SIZE.0 / 2, 0],
+            [0, -1, WORLD_SIZE.0 / 2 - 1, WORLD_SIZE.1 - 1],
+            [0, -1, WORLD_SIZE.0 / 2, WORLD_SIZE.1 - 1],
+        ];
 
-            let loc_x = 0;
-            let loc_y = 24;
+        if (world_loc.x == 1 || world_loc.x == 3 || world_loc.x == 5)
+            && (world_loc.y == 1 || world_loc.y == 3 || world_loc.y == 5)
+            && loc.x != 0 && loc.x != WORLD_SIZE.0 as usize - 1
+            && loc.y != 0 && loc.y != WORLD_SIZE.1 as usize - 1
+            && !boss_defeated[world_loc.y][world_loc.x] {
 
-            
-            
+            for pos in positions {
+                let x = pos[2] as usize;
+                let y = pos[3] as usize;
+                let world_x = (world_loc.x as i16 + pos[0]) as usize;
+                let world_y = (world_loc.y as i16 + pos[1]) as usize;
+                let wall_pos = Position::new(y, x);
+                if !terrain_map[world_loc.y][world_loc.x].contains_key(&wall_pos) {
+                    terrain_map[world_loc.y][world_loc.x].insert(wall_pos, tile::WALL);
+                }
+                if !terrain_map[world_y][world_x].contains_key(&wall_pos) {
+                    terrain_map[world_y][world_x].insert(wall_pos, tile::WALL);
+                }
+            }
+        } else if boss_defeated[world_loc.y][world_loc.x] {
+            for pos in positions {
+                let x = pos[2] as usize;
+                let y = pos[3] as usize;
+                let world_x = (world_loc.x as i16 + pos[0]) as usize;
+                let world_y = (world_loc.y as i16 + pos[1]) as usize;
+                let wall_pos = Position::new(y, x);
+                if terrain_map[world_loc.y][world_loc.x].contains_key(&wall_pos) {
+                    terrain_map[world_loc.y][world_loc.x].remove(&wall_pos);
+                }
+                if terrain_map[world_y][world_x].contains_key(&wall_pos) {
+                    terrain_map[world_y][world_x].remove(&wall_pos);
+                }
+            }
         }
     }
 }

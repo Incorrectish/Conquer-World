@@ -7,11 +7,11 @@ use crate::{
     BOARD_SIZE, TILE_SIZE, WORLD_SIZE,
     projectile::Projectile,
 };
-use std::{collections::HashMap, collections::LinkedList};
+use std::{collections::HashMap, collections::LinkedList, cmp::max};
 
 const ENEMY_HEALTH: usize = 5;
-const PERMISSIBLE_TILES: [[f32; 4]; 2] = [tile::GRASS, tile::PROJECTILE_PLAYER];
-const PERMISSIBLE_TILES_DODGING: [[f32; 4]; 1] = [tile::GRASS];
+const PERMISSIBLE_TILES: [[f32; 4]; 3] = [tile::GRASS, tile::PROJECTILE_PLAYER, tile::BASIC_ENEMY];
+const PERMISSIBLE_TILES_DODGING: [[f32; 4]; 2] = [tile::GRASS, tile::BASIC_ENEMY];
 
 #[derive(Debug, Clone)]
 // This is basically the same as the enemy for now, but I am just testing an enemy system
@@ -64,7 +64,7 @@ impl Enemy {
 
     pub fn damage(&mut self, damage: usize) {
         // potentially modify the damage done with the multiplier
-        self.health -= damage;
+        self.health = max(0, self.health as i32 - damage as i32) as usize;
     }
 
     pub fn update(world: &mut World) {
@@ -93,9 +93,14 @@ impl Enemy {
     // path
     pub fn move_enemy(index: usize, world: &mut World) {
         // This gets the shortest path
-        let mut travel_path = Self::get_best_path(index, world);
+        let can_dodge_projectiles = match world.enemies[index].color {
+            tile::BOMBER => true,
+            _ => false,
+        };
+        let mut travel_path = Self::get_best_path(index, world, can_dodge_projectiles);
         let enemy = &world.enemies[index];
         let mut cur_pos = enemy.pos;
+        let world_pos = enemy.world_pos;
         for _ in 0..enemy.speed {
             if let Some(new_pos) = travel_path.pop_front() {
                 if new_pos.x >= WORLD_SIZE.0 as usize || new_pos.y >= WORLD_SIZE.1 as usize {
@@ -109,9 +114,6 @@ impl Enemy {
                         if new_pos == world.projectiles[index_proj as usize].pos 
                         && world.enemies[index].world_pos == world.projectiles[index_proj as usize].world_pos {
                             world.enemies[index].damage(world.projectiles[index_proj as usize].damage);
-                            if world.enemies[index].health <= 0 {
-                                Enemy::kill(world, index);
-                            }
                             Projectile::kill(index_proj as usize, world);
                             index_proj -= 1;
                         }
@@ -128,12 +130,8 @@ impl Enemy {
         }
     }
 
-    pub fn get_best_path(index: usize, world: &mut World) -> LinkedList<Position> {
+    pub fn get_best_path(index: usize, world: &mut World, can_dodge_projectiles: bool) -> LinkedList<Position> {
         // Used to check if the enemy should be able to dodge around player projectiles
-        let can_dodge_projectiles = match world.enemies[index].color {
-            tile::BOMBER => true,
-            _ => false,
-        };
 
         let enemy = &world.enemies[index];
         // this is a visited array to save if we have visited a location on the grid
@@ -146,12 +144,6 @@ impl Enemy {
         let mut queue = LinkedList::new();
         queue.push_back(enemy.pos);
 
-        if (enemy.pos.x >= WORLD_SIZE.0 as usize || enemy.pos.y >= WORLD_SIZE.1 as usize) {
-            dbg!(enemy.pos);
-            dbg!(enemy.world_pos);
-            dbg!(world.player.pos);
-            dbg!(world.world_position);
-        }
         visited[enemy.pos.y][enemy.pos.x] = true;
         // visited[enemy.pos.y - (world.world_position.y * WORLD_SIZE.1 as usize)][enemy.pos.x - (world.world_position.x * WORLD_SIZE.0 as usize)] = true;
         while !queue.is_empty() {
@@ -168,7 +160,7 @@ impl Enemy {
                     node,
                     can_dodge_projectiles,
                     index,
-                    Entity::Enemy(index),
+                    Entity::Enemy,
                 );
                 for next in neighbors {
                     if !visited[next.y][next.x] {
@@ -217,7 +209,7 @@ impl Enemy {
         // loop through all the directions
         for direction in directions {
             let (new_pos, _) =
-                World::new_position(position, direction, world, 1, entity_type.clone());
+                World::new_position(position, direction, world, 1, entity_type.clone(), Some(index));
             // if the new position is valid(correct tiles & within bounds) add it to the potential
             // neighbors
             if new_pos != world.enemies[index].pos
@@ -225,6 +217,7 @@ impl Enemy {
                     (new_pos, world.enemies[index].world_pos),
                     &world.entity_map,
                     &world.terrain_map,
+                    &world.atmosphere_map,
                     can_dodge_projectiles,
                 )
                 && world.enemies[index].world_pos == world.world_position
@@ -241,6 +234,8 @@ impl Enemy {
         entity_map: &[[HashMap<Position, ([f32; 4], Entity)>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
              (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
         terrain_map: &[[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
+             (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
+        atmosphere_map: &[[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
              (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
         can_dodge_projectiles: bool,
     ) -> bool {
@@ -259,50 +254,35 @@ impl Enemy {
                 }
             }
             return false;
-        } else if terrain_map[position_info.1.y][position_info.1.x].contains_key(&position_info.0) {
+        } else if entity_map[position_info.1.y][position_info.1.x].contains_key(&position_info.0) {
             let info = entity_map[position_info.1.y][position_info.1.x].get(&position_info.0);
             if let Some(info_under) = info {
                 if can_dodge_projectiles {
-                    if PERMISSIBLE_TILES_DODGING.contains(&info_under.0) {
+                    if PERMISSIBLE_TILES_DODGING.contains(&info_under.0) || info_under.1 == Entity::Player {
                         return true;
                     }
                 } else {
-                    if PERMISSIBLE_TILES.contains(&info_under.0) {
+                    if PERMISSIBLE_TILES.contains(&info_under.0) || info_under.1 == Entity::Player {
                         return true;
                     }
                 }
             }
             return false;
-        }
-        // if entity_map[position_info.1.y][position_info.1.x].contains_key(&position_info.0) {
-        // || terrain_map[position_info.1.y][position_info.1.x].contains_key(&position_info.0) {
-        // let info = entity_map[position_info.1.y][position_info.1.x].get(&position_info.0);
-        // let info2 = terrain_map[position_info.1.y][position_info.1.x].get(&position_info.0);
-        // if can_dodge_projectiles {
-        //     if let Some(info) = info {
-        //         if PERMISSIBLE_TILES_DODGING.contains(&info.0) {
-        //             return true;
-        //         }
-        //     }
-        //     if let Some(info) = info2 {
-        //         if PERMISSIBLE_TILES_DODGING.contains(&info) {
-        //             return true;
-        //         }
-        //     }
-        // } else {
-        //     if let Some(info) = info {
-        //         if PERMISSIBLE_TILES.contains(&info.0) {
-        //             return true;
-        //         }
-        //     }
-        //     if let Some(info) = info2 {
-        //         if PERMISSIBLE_TILES.contains(&info) {
-        //             return true;
-        //         }
-        //     }
-        // }
-        // return false;
-        // }
+        } if atmosphere_map[position_info.1.y][position_info.1.x].contains_key(&position_info.0) {
+            let info = atmosphere_map[position_info.1.y][position_info.1.x].get(&position_info.0);
+            if let Some(info_under) = info {
+                if can_dodge_projectiles {
+                    if PERMISSIBLE_TILES_DODGING.contains(&info_under) {
+                        return true;
+                    }
+                } else {
+                    if PERMISSIBLE_TILES.contains(&info_under) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        } 
         true
     }
 }
