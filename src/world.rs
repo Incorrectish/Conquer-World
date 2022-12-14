@@ -27,7 +27,7 @@ pub const BOSS_ROOMS: [Position; 5] = [
 ];
 const LAKES_PER_WORLD: i16 = 3;
 const TOTAL_MOUNTAINS: i16 = 60;
-const ENEMY_COUNT: usize = 5;
+const ENEMY_COUNT: usize = 500;
 
 pub struct World {
     //Stores which world the player is in
@@ -135,10 +135,10 @@ impl World {
                 // let y = random::rand_range(rng, 0, BOARD_SIZE.1); // random y coordinate
                 let x = random::rand_range(rng, 0, WORLD_SIZE.0); // random x coordinate
                 let y = random::rand_range(rng, 0, WORLD_SIZE.1); // random y coordinate
-                // let world_x = random::rand_range(rng, 0, BOARD_SIZE.0 / WORLD_SIZE.0) as usize;
-                // let world_y = random::rand_range(rng, 0, BOARD_SIZE.1 / WORLD_SIZE.1) as usize;
-                let world_x = 0;
-                let world_y = 0;
+                let world_x = random::rand_range(rng, 0, BOARD_SIZE.0 / WORLD_SIZE.0) as usize;
+                let world_y = random::rand_range(rng, 0, BOARD_SIZE.1 / WORLD_SIZE.1) as usize;
+                // let world_x = 0;
+                // let world_y = 0;
                 let random_loc = Position::new(x as usize, y as usize);
                 let world_map_entity = &mut entity_map[world_y][world_x];
                 let world_map_terrain = &mut terrain_map[world_y][world_x];
@@ -146,6 +146,9 @@ impl World {
                 // if the random position is blank, then create an enemy there
                 if !world_map_terrain.contains_key(&random_loc)
                     && !world_map_entity.contains_key(&random_loc)
+                        // check if it is in the starting world. If it is, then make sure the x and
+                        // y positions are greater than 5
+                    && ((world_x, world_y) != (0, 0) || ((x > 5) && y > 5))
                 {
                     world_map_entity.insert(random_loc, (tile::BASIC_ENEMY, Entity::Enemy));
                     enemies.push(Enemy::new(
@@ -406,8 +409,14 @@ impl World {
             }
         };
 
-        let new_position =
-            Self::new_position(pos, direction.clone(), world, speed, entity_type.clone(), index); //Get where the entity is supposed to go
+        let new_position = Self::new_position(
+            pos,
+            direction.clone(),
+            world,
+            speed,
+            entity_type.clone(),
+            index,
+        ); //Get where the entity is supposed to go
 
         if !Self::coordinates_are_within_board(world, new_position.1) || new_position.0 == pos {
             //If new location is not within the board, returns false
@@ -479,7 +488,12 @@ impl World {
                             world.player.pos = new_position.0;
                         }
                     }
-                    Self::toggle_doors(&mut world.terrain_map, world.world_position, world.player.pos, world.boss_defeated);
+                    Self::toggle_doors(
+                        &mut world.terrain_map,
+                        world.world_position,
+                        world.player.pos,
+                        world.boss_defeated,
+                    );
                     return true;
                 }
 
@@ -681,9 +695,16 @@ impl World {
                 while lakes_added < LAKES_PER_WORLD {
                     let x = random::rand_range(rng, 5, WORLD_SIZE.0); // random x coordinate
                     let y = random::rand_range(rng, 5, WORLD_SIZE.1); // random y coordinate
-                    
+
                     let mut lake: HashMap<Position, [f32; 4]> = HashMap::new();
-                    Self::gen_lake_helper(rng, i*WORLD_SIZE.0 + x, j*WORLD_SIZE.1 + y, 0, terrain_map, &mut lake); // new lake centered at (x, y)
+                    Self::gen_lake_helper(
+                        rng,
+                        i * WORLD_SIZE.0 + x,
+                        j * WORLD_SIZE.1 + y,
+                        0,
+                        terrain_map,
+                        &mut lake,
+                    ); // new lake centered at (x, y)
                     if lake.len() > 0 {
                         Self::combine_into_terrain(terrain_map, &lake);
                         lakes_added += 1;
@@ -861,7 +882,7 @@ impl World {
             if BOSS_ROOMS.contains(&world_loc) {
                 continue;
             }
-            
+
             let mut mountain: HashMap<Position, [f32; 4]> = HashMap::new();
             Self::gen_mountain_helper(rng, x, y, 0, terrain_map, &mut mountain); // new lake centered at (x, y)
             if mountain.len() > 0 {
@@ -922,7 +943,7 @@ impl World {
         loc: Position,
         boss_defeated: [[bool; 7]; 7],
     ) {
-        let positions: [[i16 ; 4]; 8] = [
+        let positions: [[i16; 4]; 8] = [
             [1, 0, 0, WORLD_SIZE.1 / 2 - 1],
             [1, 0, 0, WORLD_SIZE.1 / 2],
             [-1, 0, WORLD_SIZE.0 - 1, WORLD_SIZE.1 / 2 - 1],
@@ -934,10 +955,12 @@ impl World {
         ];
 
         if BOSS_ROOMS.contains(&world_loc)
-            && loc.x != 0 && loc.x != WORLD_SIZE.0 as usize - 1
-            && loc.y != 0 && loc.y != WORLD_SIZE.1 as usize - 1
-            && !boss_defeated[world_loc.y][world_loc.x] {
-
+            && loc.x != 0
+            && loc.x != WORLD_SIZE.0 as usize - 1
+            && loc.y != 0
+            && loc.y != WORLD_SIZE.1 as usize - 1
+            && !boss_defeated[world_loc.y][world_loc.x]
+        {
             for pos in positions {
                 let x = pos[2] as usize;
                 let y = pos[3] as usize;
@@ -972,7 +995,7 @@ impl World {
         x: usize,
         y: usize,
         terrain_map: &[[HashMap<Position, [f32; 4]>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
-                 (BOARD_SIZE.1 / WORLD_SIZE.1) as usize],
+             (BOARD_SIZE.1 / WORLD_SIZE.1) as usize],
     ) -> bool {
         if x == 0 || x == BOARD_SIZE.0 as usize - 1 || y == 0 || y == BOARD_SIZE.1 as usize - 1 {
             return true;
@@ -987,7 +1010,7 @@ impl World {
             [-1, 0],
             [-1, -1],
             [0, -1],
-            [1, -1]
+            [1, -1],
         ];
 
         for dir in directions {
@@ -1013,7 +1036,8 @@ impl World {
         other: &HashMap<Position, [f32; 4]>,
     ) {
         for (pos, tile) in other {
-            let world_loc = Position::new((pos.x as i16 / 50) as usize, (pos.y as i16 / 50) as usize);
+            let world_loc =
+                Position::new((pos.x as i16 / 50) as usize, (pos.y as i16 / 50) as usize);
             let loc = Position::new(
                 (pos.x as i16 - (50 * world_loc.x as i16)) as usize,
                 (pos.y as i16 - (50 * world_loc.y as i16)) as usize,
@@ -1022,8 +1046,6 @@ impl World {
             if !terrain_map[world_loc.y][world_loc.x].contains_key(&loc) {
                 terrain_map[world_loc.y][world_loc.x].insert(loc, *tile);
             }
-
         }
     }
-
 }

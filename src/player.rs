@@ -65,6 +65,8 @@ pub struct Player {
 
     // This is the position queued by mouse clicks, used for teleportation, etc
     pub queued_position: Option<Position>,
+
+    projectile_cooldown: bool,
 }
 
 impl Player {
@@ -85,6 +87,7 @@ impl Player {
             health: MAX_PLAYER_HEALTH,
             energy: PLAYER_INITIAL_ENERGY,
             queued_position: None,
+            projectile_cooldown: false,
         };
         temp
     }
@@ -337,42 +340,58 @@ impl Player {
                 KeyCode::Down => {
                     world.player.direction = Direction::South;
                     World::travel(world, Entity::Player, None);
+                    world.player.projectile_cooldown = false;
                 }
                 KeyCode::Up => {
                     world.player.direction = Direction::North;
                     World::travel(world, Entity::Player, None);
+                    world.player.projectile_cooldown = false;
                 }
                 KeyCode::Left => {
                     world.player.direction = Direction::West;
                     World::travel(world, Entity::Player, None);
+                    world.player.projectile_cooldown = false;
                 }
                 KeyCode::Right => {
                     world.player.direction = Direction::East;
                     World::travel(world, Entity::Player, None);
+                    world.player.projectile_cooldown = false;
                 }
 
                 // Arbitrarily chosen for attack, can change later
                 MELEE_ATTACK_KEYCODE => {
                     Player::melee_attack(world);
+                    world.player.projectile_cooldown = false;
                 }
                 PROJECTILE_ATTACK_KEYCODE => {
-                    if world.player.energy > 0 {
+                    if world.player.energy > 0 && !world.player.projectile_cooldown {
                         Player::projectile_attack(world);
                         world.player.energy -= 1;
+                        world.player.projectile_cooldown = true;
                         // commented out so I can test everything
+                    } else {
+                        return false;
                     }
                 }
                 HEAL_KEYCODE => {
                     if world.player.energy >= HEAL_COST {
                         world.player.health += HEAL_ABILITY_RETURN;
                         world.player.energy -= HEAL_COST;
+                        world.player.projectile_cooldown = false;
+                    } else {
+                        return false;
                     }
                 }
                 BUILD_KEYCODE => {
-                    Player::build(world);
+                    if world.player.energy > 2 && Player::build(world) {
+                        world.player.projectile_cooldown = false;
+                    } else {
+                        return false;
+                    }
                 }
                 LIGHTNING_KEYCODE => {
                     Player::lightning(world);
+                    world.player.projectile_cooldown = false;
                 }
 
                 TELEPORT_KEYCODE => {
@@ -381,6 +400,7 @@ impl Player {
                     {
                         Self::teleport(world);
                     }
+                    world.player.projectile_cooldown = false;
                 }
                 _ => {
                     return false;
@@ -419,7 +439,7 @@ impl Player {
         }
     }
 
-    pub fn build(world: &mut World) {
+    pub fn build(world: &mut World) -> bool {
         if let Some(pos) = world.player.queued_position {
             if (pos.x as i32 - world.player.pos.x as i32).abs() < 2
                 && (pos.y as i32 - world.player.pos.y as i32).abs() < 2
@@ -438,10 +458,12 @@ impl Player {
                         if !atmosphere_map.contains_key(&pos) {
                             atmosphere_map.insert(pos, tile::STRUCTURE);
                             world.player.energy -= 2;
+                            return true;
                         } else {
                             match atmosphere_map.get(&pos).expect("This should be impossible because we checked that it contained a key before") {
                                 &tile::STRUCTURE => {
                                     atmosphere_map.remove(&pos);
+                                    return true;
                                 }
                                 _ => {}
                             }
@@ -449,24 +471,8 @@ impl Player {
                     }
                 }
             }
-
-            // make sure there are no enemies
-            // if !world.entity_positions.contains_key(&position) {
-            //     // check if there is terrain at the position
-            //     // If there is nothing, then build there
-            //     // If there is something, check if it's a build, and destroy it
-            //     match world.terrain_positions.get(&position) {
-            //         Some(color) => {
-            //             if *color == tile::STRUCTURE {
-            //                 world.terrain_positions.remove(&position);
-            //             }
-            //         }
-            //         None => {
-            //             world.terrain_positions.insert(position, tile::STRUCTURE);
-            //         }
-            //     }
-            // }
         }
+        false
     }
 
     pub fn melee_attack(world: &mut World) {
