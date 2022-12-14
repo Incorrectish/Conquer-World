@@ -1,7 +1,7 @@
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 
 pub enum Entity {
     Player,
-    Enemy(usize),
-    Projectile(usize),
+    Enemy,
+    Projectile,
 }
