@@ -858,7 +858,7 @@ impl World {
         random::bernoulli(rng, 1. - 0.10 * (dist as f32))
     }
 
-    fn toggle_doors(
+    pub fn toggle_doors(
         terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
                  (BOARD_SIZE.1 / WORLD_SIZE.1) as usize],
         world_loc: Position,
@@ -893,6 +893,20 @@ impl World {
                 }
                 if !terrain_map[world_y][world_x].contains_key(&wall_pos) {
                     terrain_map[world_y][world_x].insert(wall_pos, tile::WALL);
+                }
+            }
+        } else if boss_defeated[world_loc.y][world_loc.x] {
+            for pos in positions {
+                let x = pos[2] as usize;
+                let y = pos[3] as usize;
+                let world_x = (world_loc.x as i16 + pos[0]) as usize;
+                let world_y = (world_loc.y as i16 + pos[1]) as usize;
+                let wall_pos = Position::new(y, x);
+                if terrain_map[world_loc.y][world_loc.x].contains_key(&wall_pos) {
+                    terrain_map[world_loc.y][world_loc.x].remove(&wall_pos);
+                }
+                if terrain_map[world_y][world_x].contains_key(&wall_pos) {
+                    terrain_map[world_y][world_x].remove(&wall_pos);
                 }
             }
         }
