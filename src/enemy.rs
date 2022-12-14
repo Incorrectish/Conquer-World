@@ -10,8 +10,8 @@ use crate::{
 use std::{collections::HashMap, collections::LinkedList, cmp::max};
 
 const ENEMY_HEALTH: usize = 5;
-const PERMISSIBLE_TILES: [[f32; 4]; 2] = [tile::GRASS, tile::PROJECTILE_PLAYER];
-const PERMISSIBLE_TILES_DODGING: [[f32; 4]; 1] = [tile::GRASS];
+const PERMISSIBLE_TILES: [[f32; 4]; 3] = [tile::GRASS, tile::PROJECTILE_PLAYER, tile::BASIC_ENEMY];
+const PERMISSIBLE_TILES_DODGING: [[f32; 4]; 2] = [tile::GRASS, tile::BASIC_ENEMY];
 
 #[derive(Debug, Clone)]
 // This is basically the same as the enemy for now, but I am just testing an enemy system
@@ -103,11 +103,6 @@ impl Enemy {
         let world_pos = enemy.world_pos;
         for _ in 0..enemy.speed {
             if let Some(new_pos) = travel_path.pop_front() {
-                if let Some(tile) = world.atmosphere_map[world_pos.y][world_pos.x].get(&cur_pos) {
-                    if *tile == tile::STRUCTURE {
-                        return;
-                    }
-                }
                 if new_pos.x >= WORLD_SIZE.0 as usize || new_pos.y >= WORLD_SIZE.1 as usize {
                     return;
                 }
@@ -263,17 +258,31 @@ impl Enemy {
             let info = entity_map[position_info.1.y][position_info.1.x].get(&position_info.0);
             if let Some(info_under) = info {
                 if can_dodge_projectiles {
-                    if PERMISSIBLE_TILES_DODGING.contains(&info_under.0) {
+                    if PERMISSIBLE_TILES_DODGING.contains(&info_under.0) || info_under.1 == Entity::Player {
                         return true;
                     }
                 } else {
-                    if PERMISSIBLE_TILES.contains(&info_under.0) {
+                    if PERMISSIBLE_TILES.contains(&info_under.0) || info_under.1 == Entity::Player {
                         return true;
                     }
                 }
             }
             return false;
-        }
+        } if atmosphere_map[position_info.1.y][position_info.1.x].contains_key(&position_info.0) {
+            let info = atmosphere_map[position_info.1.y][position_info.1.x].get(&position_info.0);
+            if let Some(info_under) = info {
+                if can_dodge_projectiles {
+                    if PERMISSIBLE_TILES_DODGING.contains(&info_under) {
+                        return true;
+                    }
+                } else {
+                    if PERMISSIBLE_TILES.contains(&info_under) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        } 
         true
     }
 }
