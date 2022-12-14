@@ -191,7 +191,7 @@ impl Player {
                     &graphics::Quad,
                     graphics::DrawParam::new()
                         .dest_rect(graphics::Rect::new_i32(
-                            ((coord.0) as i32 + 80) * 5 + i * 53,
+                            ((coord.0) as i32 + 85) * 5 + i * 53,
                             ((coord.1) as i32 + 2) * 5,
                             5,
                             5,
@@ -314,7 +314,7 @@ impl Player {
                                 &graphics::Quad,
                                 graphics::DrawParam::new()
                                     .dest_rect(graphics::Rect::new_i32(
-                                        ((pos.0) as i32 + 80) * 5 + iteration * 53,
+                                        ((pos.0) as i32 + 85) * 5 + iteration * 53,
                                         ((pos.1) as i32 + 2) * 5,
                                         5,
                                         5,

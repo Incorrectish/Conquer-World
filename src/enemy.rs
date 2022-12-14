@@ -10,8 +10,8 @@ use crate::{
 use std::{collections::HashMap, collections::LinkedList, cmp::max};
 
 const ENEMY_HEALTH: usize = 5;
-const PERMISSIBLE_TILES: [[f32; 4]; 3] = [tile::GRASS, tile::PROJECTILE_PLAYER, tile::BASIC_ENEMY];
-const PERMISSIBLE_TILES_DODGING: [[f32; 4]; 2] = [tile::GRASS, tile::BASIC_ENEMY];
+const PERMISSIBLE_TILES: [[f32; 4]; 2] = [tile::GRASS, tile::PROJECTILE_PLAYER];
+const PERMISSIBLE_TILES_DODGING: [[f32; 4]; 1] = [tile::GRASS];
 
 #[derive(Debug, Clone)]
 // This is basically the same as the enemy for now, but I am just testing an enemy system
