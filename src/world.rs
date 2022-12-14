@@ -70,8 +70,7 @@ pub struct World {
         (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     pub atmosphere_map: [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
         (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
-    pub door_map: [[HashMap<Position, bool>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
-        (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
+    pub boss_defeated: [[bool; 7]; 7],
     pub rng: ThreadRng,
 }
 
@@ -85,12 +84,12 @@ impl World {
             (BOARD_SIZE.1 / WORLD_SIZE.1) as usize] = Default::default();
         let mut terrain_map: [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
             (BOARD_SIZE.1 / WORLD_SIZE.1) as usize] = Default::default();
-        let mut door_map: [[HashMap<Position, bool>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
-            (BOARD_SIZE.0 / WORLD_SIZE.0) as usize] = Default::default();
+        let mut boss_defeated = [[false; 7]; 7];
         World::gen_boss(&mut terrain_map);
         World::gen_outer_boss_walls(&mut terrain_map);
         World::gen_lake(&mut rng, &mut terrain_map);
         World::gen_mountain(&mut rng, &mut terrain_map);
+        // World::add_doors(&mut terrain_map);
         let player = Player::new();
         let starting_map = &mut entity_map[player.pos.y][player.pos.x];
         starting_map.insert(player.pos, (player.color, Entity::Player));
@@ -113,7 +112,7 @@ impl World {
             terrain_map,
             terrain_positions,
             atmosphere_map: Default::default(),
-            door_map,
+            boss_defeated,
             rng,
         }
     }
@@ -480,6 +479,7 @@ impl World {
                             world.player.pos = new_position.0;
                         }
                     }
+                    Self::toggle_doors(&mut world.terrain_map, world.world_position, world.player.pos, world.boss_defeated);
                     return true;
                 }
 
@@ -787,7 +787,7 @@ impl World {
                 // generates a thickness 2 wall around each mini boss room square
                 let mut world_map =
                     &mut terrain_map[corner[1] as usize / 50][corner[0] as usize / 50];
-                if i as i16 != WORLD_SIZE.0 / 2 - 1 {
+                if i as i16 != WORLD_SIZE.0 / 2 - 1 && i as i16 != WORLD_SIZE.0 / 2 {
                     let mut loc = Position::new(0, i);
                     world_map.insert(loc, tile::WALL);
                     loc = Position::new(i, 0);
@@ -839,14 +839,6 @@ impl World {
         // terrain_positions.remove(&Position::new((WORLD_SIZE.1 - 1) as usize, (WORLD_SIZE.0 + WORLD_SIZE.0 / 2) as usize));
     }
 
-    // separate function to generate doors on the walls
-    // terrain_map stores boolean so that it can be toggled on and off
-    fn gen_doors(
-        terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
-                 (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
-    ) {
-    }
-
     pub fn gen_mountain(
         rng: &mut ThreadRng,
         terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
@@ -880,7 +872,7 @@ impl World {
         );
         let world_map = &mut terrain_map[world_loc.y][world_loc.x];
         if !world_map.contains_key(&loc) {
-            world_map.insert(loc, tile::MOUNTAIN[min(4, dist / 3) as usize]);
+            world_map.insert(loc, tile::MOUNTAIN[min(4, (dist + 2) / 3) as usize]);
         }
 
         const DIRECTIONS: [[i16; 2]; 4] = [[0, 1], [0, -1], [1, 0], [-1, 0]]; // orthogonal dirs
@@ -903,13 +895,57 @@ impl World {
         random::bernoulli(rng, 1. - 0.10 * (dist as f32))
     }
 
-    fn add_doors() {
-        for room in BOSS_ROOMS {
-            let world_x = room.x;
-            let world_y = room.y;
+    pub fn toggle_doors(
+        terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
+                 (BOARD_SIZE.1 / WORLD_SIZE.1) as usize],
+        world_loc: Position,
+        loc: Position,
+        boss_defeated: [[bool; 7]; 7],
+    ) {
+        let positions: [[i16 ; 4]; 8] = [
+            [1, 0, 0, WORLD_SIZE.1 / 2 - 1],
+            [1, 0, 0, WORLD_SIZE.1 / 2],
+            [-1, 0, WORLD_SIZE.0 - 1, WORLD_SIZE.1 / 2 - 1],
+            [-1, 0, WORLD_SIZE.0 - 1, WORLD_SIZE.1 / 2],
+            [0, 1, WORLD_SIZE.0 / 2 - 1, 0],
+            [0, 1, WORLD_SIZE.0 / 2, 0],
+            [0, -1, WORLD_SIZE.0 / 2 - 1, WORLD_SIZE.1 - 1],
+            [0, -1, WORLD_SIZE.0 / 2, WORLD_SIZE.1 - 1],
+        ];
 
-            let loc_x = 0;
-            let loc_y = 24;
+        if (world_loc.x == 1 || world_loc.x == 3 || world_loc.x == 5)
+            && (world_loc.y == 1 || world_loc.y == 3 || world_loc.y == 5)
+            && loc.x != 0 && loc.x != WORLD_SIZE.0 as usize - 1
+            && loc.y != 0 && loc.y != WORLD_SIZE.1 as usize - 1
+            && !boss_defeated[world_loc.y][world_loc.x] {
+
+            for pos in positions {
+                let x = pos[2] as usize;
+                let y = pos[3] as usize;
+                let world_x = (world_loc.x as i16 + pos[0]) as usize;
+                let world_y = (world_loc.y as i16 + pos[1]) as usize;
+                let wall_pos = Position::new(y, x);
+                if !terrain_map[world_loc.y][world_loc.x].contains_key(&wall_pos) {
+                    terrain_map[world_loc.y][world_loc.x].insert(wall_pos, tile::WALL);
+                }
+                if !terrain_map[world_y][world_x].contains_key(&wall_pos) {
+                    terrain_map[world_y][world_x].insert(wall_pos, tile::WALL);
+                }
+            }
+        } else if boss_defeated[world_loc.y][world_loc.x] {
+            for pos in positions {
+                let x = pos[2] as usize;
+                let y = pos[3] as usize;
+                let world_x = (world_loc.x as i16 + pos[0]) as usize;
+                let world_y = (world_loc.y as i16 + pos[1]) as usize;
+                let wall_pos = Position::new(y, x);
+                if terrain_map[world_loc.y][world_loc.x].contains_key(&wall_pos) {
+                    terrain_map[world_loc.y][world_loc.x].remove(&wall_pos);
+                }
+                if terrain_map[world_y][world_x].contains_key(&wall_pos) {
+                    terrain_map[world_y][world_x].remove(&wall_pos);
+                }
+            }
         }
     }
 }

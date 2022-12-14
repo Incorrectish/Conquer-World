@@ -77,6 +77,10 @@ impl Boss {
         }
         curr_world.remove(&pos);
         world.bosses.remove(index);
+        // when kill is implemented this should reopen doors
+        world.boss_defeated[world.world_position.y][world.world_position.x] = true;
+        World::toggle_doors(&mut world.terrain_map, world.world_position,
+            world.player.pos, world.boss_defeated);
     }
 }
 
