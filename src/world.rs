@@ -87,8 +87,8 @@ impl World {
         let mut boss_defeated = [[false; 7]; 7];
         World::gen_boss(&mut terrain_map);
         World::gen_outer_boss_walls(&mut terrain_map);
-        World::gen_lake(&mut rng, &mut terrain_map);
         World::gen_mountain(&mut rng, &mut terrain_map);
+        World::gen_lake(&mut rng, &mut terrain_map);
         // World::add_doors(&mut terrain_map);
         let player = Player::new();
         let starting_map = &mut entity_map[player.pos.y][player.pos.x];
