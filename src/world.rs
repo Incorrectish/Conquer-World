@@ -1000,8 +1000,10 @@ impl World {
                 (other_y - (50 * world_loc.y as i16)) as usize,
             );
 
-            if terrain_map[world_loc.y][world_loc.x].contains_key(&loc) {
-                return true;
+            if let Some(tile) = terrain_map[world_loc.y][world_loc.x].get(&loc) {
+                if *tile == tile::WALL {
+                    return true;
+                }
             }
         }
         return false;
@@ -1022,7 +1024,6 @@ impl World {
             if !terrain_map[world_loc.y][world_loc.x].contains_key(&loc) {
                 terrain_map[world_loc.y][world_loc.x].insert(loc, *tile);
             }
-
         }
     }
 
