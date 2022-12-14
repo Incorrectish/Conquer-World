@@ -26,7 +26,7 @@ pub const BOSS_ROOMS: [Position; 5] = [
     Position::new(5, 5),
 ];
 const LAKES_PER_WORLD: i16 = 3;
-const TOTAL_MOUNTAINS: i16 = 75;
+const TOTAL_MOUNTAINS: i16 = 60;
 const ENEMY_COUNT: usize = 5;
 
 pub struct World {
@@ -711,9 +711,7 @@ impl World {
             let world_loc = Position::new((x / 50) as usize, (y / 50) as usize);
 
             let tile: [f32; 4];
-            if (world_loc.x == 1 || world_loc.x == 3 || world_loc.x == 5)
-                && (world_loc.y == 1 || world_loc.y == 3 || world_loc.y == 5)
-            {
+            if BOSS_ROOMS.contains(&world_loc) {
                 tile = tile::LAVA;
             } else {
                 tile = tile::WATER;
@@ -857,6 +855,12 @@ impl World {
         while mountains_added < TOTAL_MOUNTAINS {
             let x = random::rand_range(rng, 5, BOARD_SIZE.0); // random x coordinate
             let y = random::rand_range(rng, 5, BOARD_SIZE.1); // random y coordinate
+
+            let world_loc = Position::new((x / 50) as usize, (y / 50) as usize);
+
+            if BOSS_ROOMS.contains(&world_loc) {
+                continue;
+            }
             
             let mut mountain: HashMap<Position, [f32; 4]> = HashMap::new();
             Self::gen_mountain_helper(rng, x, y, 0, terrain_map, &mut mountain); // new lake centered at (x, y)
@@ -929,8 +933,7 @@ impl World {
             [0, -1, WORLD_SIZE.0 / 2, WORLD_SIZE.1 - 1],
         ];
 
-        if (world_loc.x == 1 || world_loc.x == 3 || world_loc.x == 5)
-            && (world_loc.y == 1 || world_loc.y == 3 || world_loc.y == 5)
+        if BOSS_ROOMS.contains(&world_loc)
             && loc.x != 0 && loc.x != WORLD_SIZE.0 as usize - 1
             && loc.y != 0 && loc.y != WORLD_SIZE.1 as usize - 1
             && !boss_defeated[world_loc.y][world_loc.x] {
