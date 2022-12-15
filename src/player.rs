@@ -25,6 +25,10 @@ const HEAL_COST: usize = 8;
 const MELEE_ATTACK_KEYCODE: VirtualKeyCode = KeyCode::A;
 // TODO look over these values
 const HEAL_ABILITY_RETURN: usize = 3;
+const DIRECTION_LEFT: VirtualKeyCode = KeyCode::N;
+const DIRECTION_DOWN: VirtualKeyCode = KeyCode::E;
+const DIRECTION_UP: VirtualKeyCode = KeyCode::I;
+const DIRECTION_RIGHT: VirtualKeyCode = KeyCode::O;
 const HEAL_KEYCODE: VirtualKeyCode = KeyCode::H;
 const TELEPORT_KEYCODE: VirtualKeyCode = KeyCode::T;
 const LIGHTNING_KEYCODE: VirtualKeyCode = KeyCode::L;
@@ -334,6 +338,7 @@ impl Player {
 
     // eventually this should be the functionality to like shoot projectiles and stuff but for now
     // it just handles like arrow keys
+    // Returns if the move should consume a turn
     pub fn use_input(key: KeyInput, world: &mut World) -> bool {
         match key.keycode {
             Some(key_pressed) => match key_pressed {
@@ -356,6 +361,26 @@ impl Player {
                     world.player.direction = Direction::East;
                     World::travel(world, Entity::Player, None);
                     world.player.projectile_cooldown = false;
+                }
+
+                DIRECTION_UP => {
+                    world.player.direction = Direction::North;
+                    return false;
+                }
+
+                DIRECTION_DOWN => {
+                    world.player.direction = Direction::South;
+                    return false;
+                }
+
+                DIRECTION_RIGHT => {
+                    world.player.direction = Direction::East;
+                    return false;
+                }
+
+                DIRECTION_LEFT => {
+                    world.player.direction = Direction::West;
+                    return false;
                 }
 
                 // Arbitrarily chosen for attack, can change later
@@ -446,9 +471,9 @@ impl Player {
             {
                 // get the things to check
                 let world_pos = world.world_position;
-                let mut terrain_map = &mut world.terrain_map[world_pos.y][world_pos.x];
-                let mut entity_map = &mut world.entity_map[world_pos.y][world_pos.x];
-                let mut atmosphere_map = &mut world.atmosphere_map[world_pos.y][world_pos.x];
+                let terrain_map = &world.terrain_map[world_pos.y][world_pos.x];
+                let entity_map = &world.entity_map[world_pos.y][world_pos.x];
+                let atmosphere_map = &mut world.atmosphere_map[world_pos.y][world_pos.x];
 
                 // make sure build position has no terrain
                 if !terrain_map.contains_key(&pos) {
@@ -513,6 +538,7 @@ impl Player {
             Entity::Projectile,
             Some(world.projectiles.len()),
         );
+        dbg!(projectile_spawn_pos);
         if projectile_spawn_pos.0 != world.player.pos
             && projectile_spawn_pos.1 == world.world_position
         {

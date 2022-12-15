@@ -15,7 +15,7 @@ use ggez::graphics;
 
 use rand::rngs::ThreadRng;
 
-use std::cmp::min;
+use std::{cmp::min, intrinsics::discriminant_value};
 use std::collections::HashMap;
 
 pub const BOSS_ROOMS: [Position; 5] = [
@@ -542,6 +542,15 @@ impl World {
         let mut x = pos.x as i16;
         let mut y = pos.y as i16;
         let mut world_pos = world.world_position;
+        if (entity_type == Entity::Projectile && x == 0 && direction == Direction::West) 
+            || (entity_type == Entity::Projectile && y == WORLD_SIZE.0 - 1 && direction == Direction::East)
+            || (entity_type == Entity::Projectile && x == 0 && direction == Direction::North)
+            || (entity_type == Entity::Projectile && y == WORLD_SIZE.1 - 1 && direction == Direction::South)
+        {
+
+        }
+
+
         match direction {
             Direction::North => {
                 y = y as i16 - travel_distance as i16;
