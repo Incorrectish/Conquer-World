@@ -26,8 +26,8 @@ impl Boss {
         let mut surrounding: [Option<Enemy>; 8] = Default::default();
         let mut index = 0;
         let mut direction = Direction::West;
-        for i in 0..3 {
-            for j in 0..3 {
+        for i in 0..=2 {
+            for j in 0..=2 {
                 if i != 1 || j != 1 {
                     surrounding[index] = Some(Enemy::minor_boss(x+i, y+j, world_position));
                     entity_loc.insert(Position::new(x+i, y+j), 
