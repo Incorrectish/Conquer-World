@@ -17,7 +17,7 @@ use ggez::{
     Context, GameError, GameResult,
 };
 
-const MOVES_TILL_ENERGY_REGEN: usize = 5;
+// const MOVES_TILL_ENERGY_REGEN: usize = 5;
 
 pub struct State {
     should_draw: bool,
@@ -120,10 +120,10 @@ impl ggez::event::EventHandler<GameError> for State {
         // Just takes in the user input and makes an action based off of it
         if Player::use_input(input, &mut self.world) {
             self.player_move_count += 1;
-            if self.player_move_count >= MOVES_TILL_ENERGY_REGEN {
-                self.world.player.change_energy(1);
-                self.player_move_count = 0;
-            }
+            // if self.player_move_count >= MOVES_TILL_ENERGY_REGEN {
+            //     self.world.player.change_energy(1);
+            //     self.player_move_count = 0;
+            // }
             Projectile::update(&mut self.world);
 
             // updates all the enemies in the world, for now only removes them once their health is
