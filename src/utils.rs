@@ -29,9 +29,9 @@ impl Boss {
         for i in 0..3 {
             for j in 0..3 {
                 if i != 1 || j != 1 {
-                    surrounding[index] = Some(Enemy::new(x+i, y+j, 1, tile::MINI_BOSS, world_position));
+                    surrounding[index] = Some(Enemy::minor_boss(x+i, y+j, world_position));
                     entity_loc.insert(Position::new(x+i, y+j), 
-                    (tile::MINI_BOSS, Entity::Enemy)
+                    (tile::MINOR_BOSS, Entity::Enemy)
                 );
                 index += 1;
                 } else {

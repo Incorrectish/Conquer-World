@@ -28,8 +28,8 @@ pub const CHASING_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0];
 pub const BOMBER_ENEMY: [f32; 4] = [0.0, 0.8, 0.3, 1.0];
 pub const SHOOTER_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0];
 pub const KNIGHT_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0];
-pub const OGRE_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0];
-pub const MINI_BOSS: [f32; 4] = [0.25, 0.2, 0.9, 1.0];
+pub const MAJOR_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0];
+pub const MINOR_BOSS: [f32; 4] = [0.25, 0.2, 0.9, 1.0];
 pub const MAJOR_BOSS: [f32; 4] = [0.8, 0.3, 0.3, 1.0];
 
 // pub const ENEMIES: [[f32; 4]; 7] = [

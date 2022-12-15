@@ -9,7 +9,7 @@ use crate::{
 };
 use std::{collections::HashMap, collections::LinkedList, cmp::max};
 
-const BASIC_ENEMY_HEALTH: usize = 5;
+const CHASING_ENEMY_HEALTH: usize = 5;
 const BOMBER_ENEMY_HEALTH: usize = 5;
 const KNIGHT_ENEMY_HEALTH: usize = 5;
 const SHOOTER_ENEMY_HEALTH: usize = 5;
@@ -19,7 +19,7 @@ const MAJOR_BOSS_HEALTH: usize = 5;
 const PERMISSIBLE_TILES: [[f32; 4]; 2] = [tile::GRASS, tile::PROJECTILE_PLAYER];
 const PERMISSIBLE_TILES_DODGING: [[f32; 4]; 1] = [tile::GRASS];
 const PERMISSIBLE_TILES_BOSS: [[f32; 4]; 0] = [];
-const BASIC_ENEMY_SPEED: usize = 1;
+const CHASING_ENEMY_SPEED: usize = 1;
 const BOMBER_ENEMY_SPEED: usize = 1;
 const KNIGHT_ENEMY_SPEED: usize = 1;
 const SHOOTER_ENEMY_SPEED: usize = 1;
@@ -83,34 +83,44 @@ impl Enemy {
 
     pub fn bomber(x: usize, y: usize, world_pos: Position) -> Self {
         Enemy::new(
-            x, y, BOMBER_ENEMY_SPEED, tile::BOMBER_ENEMY, BOMBER_ENEMY_HEALTH, BOMBER_ENEMY_SPEED, world_pos, true, false 
+            x, y, BOMBER_ENEMY_SPEED, tile::BOMBER_ENEMY, world_pos, BOMBER_ENEMY_HEALTH, true, false 
         ) 
     }
 
-    pub fn basic() -> Self {
+    pub fn chasing(x: usize, y: usize, world_pos: Position) -> Self {
         Enemy::new(
-            x, y, BOMBER_ENEMY_SPEED, tile::BASIC_ENEMY, BASIC_ENEMY_HEALTH, world_pos, false, false 
+            x, y, CHASING_ENEMY_SPEED, tile::CHASING_ENEMY, world_pos, CHASING_ENEMY_HEALTH, true, false 
         ) 
     }
 
-    pub fn major_enemy() -> Self {
-
+    pub fn major_enemy(x: usize, y: usize, world_pos: Position) -> Self {
+        Enemy::new(
+            x, y, MAJOR_ENEMY_SPEED, tile::MAJOR_ENEMY, world_pos, MAJOR_ENEMY_HEALTH, true, false 
+        ) 
     }
 
-    pub fn shooting_enemy() -> {
-
+    pub fn shooting_enemy(x: usize, y: usize, world_pos: Position) -> Self {
+        Enemy::new(
+            x, y, SHOOTER_ENEMY_SPEED, tile::SHOOTER_ENEMY, world_pos, SHOOTER_ENEMY_HEALTH, true, false 
+        ) 
     }
 
-    pub fn knight() -> Self {
-
+    pub fn knight(x: usize, y: usize, world_pos: Position) -> Self {
+        Enemy::new(
+            x, y, KNIGHT_ENEMY_SPEED, tile::KNIGHT_ENEMY, world_pos, KNIGHT_ENEMY_HEALTH, true, false 
+        ) 
     }
 
-    pub fn major_boss() -> Self {
-
+    pub fn major_boss(x: usize, y: usize, world_pos: Position) -> Self {
+        Enemy::new(
+            x, y, MAJOR_BOSS_SPEED, tile::MAJOR_BOSS, world_pos, MAJOR_BOSS_HEALTH, true, false 
+        ) 
     }
 
-    pub fn minor_boss() -> Self {
-
+    pub fn minor_boss(x: usize, y: usize, world_pos: Position) -> Self {
+        Enemy::new(
+            x, y, MINOR_BOSS_SPEED, tile::MINOR_BOSS, world_pos, MINOR_BOSS_HEALTH, true, false 
+        ) 
     }
 
 
@@ -172,7 +182,9 @@ impl Enemy {
         let world_pos = world.enemies[index].world_pos;
         // TODO
         if (world.terrain_map[world_pos.y][world_pos.x].contains_key(&new_pos)) {
-            if (PERMISSIBLE_TILES)
+            if (PERMISSIBLE_TILES.contains(world.terrain_map[world_pos.y][world_pos.x].get(&new_pos).unwrap())) {
+
+            }
         } 
         if new_pos == world.player.pos {
             world.player.damage(world.enemies[index].attack_damage);
@@ -198,7 +210,7 @@ impl Enemy {
     pub fn move_enemy(index: usize, world: &mut World) {
         // This gets the shortest path
         let can_dodge_projectiles = match world.enemies[index].color {
-            tile::BOMBER => true,
+            tile::BOMBER_ENEMY => true,
             _ => false,
         };
         let mut travel_path = Self::get_best_path(index, world, can_dodge_projectiles);

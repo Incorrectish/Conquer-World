@@ -10,7 +10,7 @@ const PERMISSIBLE_TILES: [[f32; 4]; 5] = [
     tile::GRASS,
     tile::PLAYER,
     tile::PROJECTILE_PLAYER,
-    tile::BASIC_ENEMY,
+    tile::CHASING_ENEMY,
 ];
 
 pub struct Projectile {
