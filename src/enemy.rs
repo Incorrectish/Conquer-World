@@ -16,9 +16,11 @@ const SHOOTER_ENEMY_HEALTH: usize = 5;
 const MAJOR_ENEMY_HEALTH: usize = 5;
 const MINOR_BOSS_HEALTH: usize = 5;
 const MAJOR_BOSS_HEALTH: usize = 5;
+
 const PERMISSIBLE_TILES: [[f32; 4]; 2] = [tile::GRASS, tile::PROJECTILE_PLAYER];
 const PERMISSIBLE_TILES_DODGING: [[f32; 4]; 1] = [tile::GRASS];
 const PERMISSIBLE_TILES_BOSS: [[f32; 4]; 0] = [];
+
 const CHASING_ENEMY_SPEED: usize = 1;
 const BOMBER_ENEMY_SPEED: usize = 1;
 const KNIGHT_ENEMY_SPEED: usize = 1;
@@ -26,6 +28,14 @@ const SHOOTER_ENEMY_SPEED: usize = 1;
 const MAJOR_ENEMY_SPEED: usize = 1;
 const MINOR_BOSS_SPEED: usize = 1;
 const MAJOR_BOSS_SPEED: usize = 1;
+
+const CHASING_ENEMY_ENERGY_RETURN: usize = 3;
+const BOMBER_ENEMY_ENERGY_RETURN: usize = 5;
+const KNIGHT_ENEMY_ENERGY_RETURN: usize = 12;
+const SHOOTER_ENEMY_ENERGY_RETURN: usize = 7;
+const MAJOR_ENEMY_ENERGY_RETURN: usize = 25;
+const MINOR_BOSS_ENERGY_RETURN: usize = 100;
+const MAJOR_BOSS_ENERGY_RETURN: usize = 100;
 
 #[derive(Debug, Clone)]
 // This is basically the same as the enemy for now, but I am just testing an enemy system
@@ -150,6 +160,17 @@ impl Enemy {
 
     pub fn kill(world: &mut World, index: usize) {
         // for now all it does is remove the tile on the world "board"
+        let delta = match world.enemies[index].color {
+            tile::CHASING_ENEMY => CHASING_ENEMY_ENERGY_RETURN,
+            tile::BOMBER_ENEMY => BOMBER_ENEMY_ENERGY_RETURN,
+            tile::MAJOR_ENEMY => MAJOR_ENEMY_ENERGY_RETURN,
+            tile::SHOOTER_ENEMY => SHOOTER_ENEMY_ENERGY_RETURN,
+            tile::KNIGHT_ENEMY => KNIGHT_ENEMY_ENERGY_RETURN,
+            tile::MINOR_BOSS => MINOR_BOSS_ENERGY_RETURN,
+            tile::MAJOR_BOSS => MAJOR_BOSS_ENERGY_RETURN,
+            _ => unreachable!("Cannot be anything other than the enemy tiles"),
+        } as i32;
+        world.player.change_energy(delta);
         let pos = world.enemies[index].pos;
         world.entity_map[world.enemies[index].world_pos.y][world.enemies[index].world_pos.x].remove(&pos);
         world.enemies.remove(index);
