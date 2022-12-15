@@ -182,8 +182,18 @@ impl Enemy {
         let world_pos = world.enemies[index].world_pos;
         // TODO
         if (world.terrain_map[world_pos.y][world_pos.x].contains_key(&new_pos)) {
-            if (PERMISSIBLE_TILES.contains(world.terrain_map[world_pos.y][world_pos.x].get(&new_pos).unwrap())) {
-
+            if (!PERMISSIBLE_TILES.contains(world.terrain_map[world_pos.y][world_pos.x].get(&new_pos).unwrap())) {
+                return;
+            }
+        } 
+        if (world.atmosphere_map[world_pos.y][world_pos.x].contains_key(&new_pos)) {
+            if (!PERMISSIBLE_TILES.contains(world.atmosphere_map[world_pos.y][world_pos.x].get(&new_pos).unwrap())) {
+                return;
+            }
+        } 
+        if (world.entity_map[world_pos.y][world_pos.x].contains_key(&new_pos)) {
+            if (!PERMISSIBLE_TILES.contains(&world.entity_map[world_pos.y][world_pos.x].get(&new_pos).unwrap().0)) {
+                return;
             }
         } 
         if new_pos == world.player.pos {
