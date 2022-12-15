@@ -174,8 +174,13 @@ impl World {
     ) {
         for room_coord in BOSS_ROOMS {
             let world_map_entity = &mut entity_map[room_coord.y][room_coord.x];
+<<<<<<< HEAD
             let x = WORLD_SIZE.0 as usize / 2;
             let y = WORLD_SIZE.1 as usize / 2;
+=======
+            let x = WORLD_SIZE.0 as usize / 2 - 1;
+            let y = WORLD_SIZE.1 as usize / 2 + 3 - UNIVERSAL_OFFSET as usize;
+>>>>>>> 31b3744d887fd0fb57ab27723e98fd51619c4f8f
             bosses.push(Boss::new(
                 x as usize,
                 y as usize,
