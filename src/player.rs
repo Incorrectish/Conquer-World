@@ -22,6 +22,8 @@ const MAX_PLAYER_ENERGY: usize = 100;
 const PLAYER_MELEE_DAMAGE: usize = 1;
 const TELEPORTATION_COST: usize = 10;
 const HEAL_COST: usize = 8;
+const FIRE_COST: usize = 15;
+const LIGHTNING_COST: usize = 15;
 const MELEE_ATTACK_KEYCODE: VirtualKeyCode = KeyCode::A;
 // TODO look over these values
 const HEAL_ABILITY_RETURN: usize = 3;
@@ -41,6 +43,11 @@ const PLAYER_PROJECTILE_DAMAGE: usize = 1;
 const PLAYER_INITIAL_SPEED: usize = 1;
 const PLAYER_INITIAL_ENERGY: usize = 100;
 const PERMISSIBLE_TILES: [[f32; 4]; 1] = [tile::GRASS];
+const LIGHTNING_COOLDOWN: usize = 5;
+const TELEPORT_COOLDOWN: usize = 5;
+const FIRE_COOLDOWN: usize = 5;
+const SLAM_COOLDOWN: usize = 2;
+const PROJECTILE_COOLDOWN: usize = 1;
 
 // This is with the covered tile model, but we could use the static/dynamic board paradighm or
 // something else entirely
@@ -70,7 +77,12 @@ pub struct Player {
     // This is the position queued by mouse clicks, used for teleportation, etc
     pub queued_position: Option<Position>,
 
-    projectile_cooldown: bool,
+    // Cooldowns for the various abilities
+    projectile_cooldown: i16,
+    lightning_cooldown: i16,
+    slam_cooldown: i16,
+    fire_cooldown: i16,
+    teleport_cooldown: i16,
 }
 
 impl Player {
@@ -91,7 +103,11 @@ impl Player {
             health: MAX_PLAYER_HEALTH,
             energy: PLAYER_INITIAL_ENERGY,
             queued_position: None,
-            projectile_cooldown: false,
+            projectile_cooldown: 0,
+            slam_cooldown: 0,
+            fire_cooldown: 0,
+            lightning_cooldown: 0,
+            teleport_cooldown: 0,
         };
         temp
     }
@@ -226,8 +242,7 @@ impl Player {
         if health_check > 75 {
             master_heart_color = stage4;
             health_check -= 75;
-        }
-        else if health_check > 50 {
+        } else if health_check > 50 {
             master_heart_color = stage3;
             health_check -= 50;
         } else if health_check > 25 {
@@ -246,16 +261,18 @@ impl Player {
                     let mut temp_heart_color = master_heart_color; //Temp color incase it switches due to half heart
                     while outline[i].0 + offset != outline[i + 1].0 {
                         let pos = (outline[i].0 + offset, outline[i].1); //Get the position going to be colored (saves space)
-                        //If it is only half a full heart, only color in half (stop at x position 6)
-                        //However, if the color isn't red, color in the other half the color one stage down
+                                                                         //If it is only half a full heart, only color in half (stop at x position 6)
+                                                                         //However, if the color isn't red, color in the other half the color one stage down
                         if health_check >= 5
-                            || (outline[i].0 + offset <= (12 / 5 * health_check) as usize || master_heart_color != stage1)
+                            || (outline[i].0 + offset <= (12 / 5 * health_check) as usize
+                                || master_heart_color != stage1)
                         {
-                            if health_check < 5 && outline[i].0 + offset > (12 / 5 * health_check) as usize {
+                            if health_check < 5
+                                && outline[i].0 + offset > (12 / 5 * health_check) as usize
+                            {
                                 if master_heart_color == stage4 {
                                     temp_heart_color = stage3;
-                                }
-                                else if master_heart_color == stage3 {
+                                } else if master_heart_color == stage3 {
                                     temp_heart_color = stage2;
                                 } else if master_heart_color == stage2 {
                                     temp_heart_color = stage1;
@@ -302,8 +319,7 @@ impl Player {
         if energy_check > 75 {
             master_energy_color = stage4;
             energy_check -= 75;
-        }
-        else if energy_check > 50 {
+        } else if energy_check > 50 {
             master_energy_color = stage3;
             energy_check -= 50;
         } else if energy_check > 25 {
@@ -318,13 +334,14 @@ impl Player {
                     let mut offset = 1;
                     let mut temp_energy_color = master_energy_color;
                     if energy_check >= 5
-                        || (outline[i + 1].1 >= (12 / 5 * (5 - energy_check)) as usize || master_energy_color != stage1)
+                        || (outline[i + 1].1 >= (12 / 5 * (5 - energy_check)) as usize
+                            || master_energy_color != stage1)
                     {
-                        if energy_check < 5 && outline[i].1 < (12 / 5 * (5 - energy_check)) as usize {
+                        if energy_check < 5 && outline[i].1 < (12 / 5 * (5 - energy_check)) as usize
+                        {
                             if master_energy_color == stage4 {
                                 temp_energy_color = stage3;
-                            }
-                            else if master_energy_color == stage3 {
+                            } else if master_energy_color == stage3 {
                                 temp_energy_color = stage2;
                             } else if master_energy_color == stage2 {
                                 temp_energy_color = stage1;
@@ -360,22 +377,38 @@ impl Player {
                 KeyCode::Down => {
                     world.player.direction = Direction::South;
                     World::travel(world, Entity::Player, None);
-                    world.player.projectile_cooldown = false;
+                    world.player.projectile_cooldown -= 1;
+                    world.player.slam_cooldown -= 1;
+                    world.player.fire_cooldown -= 1;
+                    world.player.lightning_cooldown -= 1;
+                    world.player.teleport_cooldown -= 1;
                 }
                 KeyCode::Up => {
                     world.player.direction = Direction::North;
                     World::travel(world, Entity::Player, None);
-                    world.player.projectile_cooldown = false;
+                    world.player.projectile_cooldown -= 1;
+                    world.player.slam_cooldown -= 1;
+                    world.player.fire_cooldown -= 1;
+                    world.player.lightning_cooldown -= 1;
+                    world.player.teleport_cooldown -= 1;
                 }
                 KeyCode::Left => {
                     world.player.direction = Direction::West;
                     World::travel(world, Entity::Player, None);
-                    world.player.projectile_cooldown = false;
+                    world.player.projectile_cooldown -= 1;
+                    world.player.slam_cooldown -= 1;
+                    world.player.fire_cooldown -= 1;
+                    world.player.lightning_cooldown -= 1;
+                    world.player.teleport_cooldown -= 1;
                 }
                 KeyCode::Right => {
                     world.player.direction = Direction::East;
                     World::travel(world, Entity::Player, None);
-                    world.player.projectile_cooldown = false;
+                    world.player.projectile_cooldown -= 1;
+                    world.player.slam_cooldown -= 1;
+                    world.player.fire_cooldown -= 1;
+                    world.player.lightning_cooldown -= 1;
+                    world.player.teleport_cooldown -= 1;
                 }
 
                 DIRECTION_UP => {
@@ -401,13 +434,21 @@ impl Player {
                 // Arbitrarily chosen for attack, can change later
                 MELEE_ATTACK_KEYCODE => {
                     Player::melee_attack(world);
-                    world.player.projectile_cooldown = false;
+                    world.player.projectile_cooldown -= 1;
+                    world.player.slam_cooldown -= 1;
+                    world.player.fire_cooldown -= 1;
+                    world.player.lightning_cooldown -= 1;
+                    world.player.teleport_cooldown -= 1;
                 }
                 PROJECTILE_ATTACK_KEYCODE => {
-                    if world.player.energy > 0 && !world.player.projectile_cooldown {
+                    if world.player.energy > 0 && world.player.projectile_cooldown <= 0 {
                         Player::projectile_attack(world);
                         world.player.energy -= 1;
-                        world.player.projectile_cooldown = true;
+                        world.player.projectile_cooldown = PROJECTILE_COOLDOWN as i16;
+                        world.player.slam_cooldown -= 1;
+                        world.player.fire_cooldown -= 1;
+                        world.player.lightning_cooldown -= 1;
+                        world.player.teleport_cooldown -= 1;
                     } else {
                         return false;
                     }
@@ -416,30 +457,75 @@ impl Player {
                     if world.player.energy >= HEAL_COST {
                         world.player.health += HEAL_ABILITY_RETURN;
                         world.player.energy -= HEAL_COST;
-                        world.player.projectile_cooldown = false;
+                        world.player.projectile_cooldown -= 1;
+                        world.player.slam_cooldown -= 1;
+                        world.player.fire_cooldown -= 1;
+                        world.player.lightning_cooldown -= 1;
+                        world.player.teleport_cooldown -= 1;
                     } else {
                         return false;
                     }
                 }
                 BUILD_KEYCODE => {
                     if world.player.energy > 2 && Player::build(world) {
-                        world.player.projectile_cooldown = false;
+                        world.player.projectile_cooldown -= 1;
+                        world.player.slam_cooldown -= 1;
+                        world.player.fire_cooldown -= 1;
+                        world.player.lightning_cooldown -= 1;
+                        world.player.teleport_cooldown -= 1;
                     } else {
                         return false;
                     }
                 }
                 LIGHTNING_KEYCODE => {
-                    Player::lightning(world);
-                    world.player.projectile_cooldown = false;
+                    if world.player.energy >= LIGHTNING_COST && world.player.lightning_cooldown <= 0
+                    {
+                        Player::lightning(world);
+                        world.player.projectile_cooldown -= 1;
+                        world.player.slam_cooldown -= 1;
+                        world.player.fire_cooldown -= 1;
+                        world.player.lightning_cooldown = LIGHTNING_COOLDOWN as i16;
+                        world.player.teleport_cooldown -= 1;
+                    } else {
+                        return false;
+                    }
                 }
 
+                // TODO FINISH COSTS REFACTORING
                 TELEPORT_KEYCODE => {
                     if world.player.energy >= TELEPORTATION_COST
                         && world.player.queued_position.is_some()
+                        && world.player.teleport_cooldown <= 0
                     {
                         Self::teleport(world);
+                        world.player.projectile_cooldown -= 1;
+                        world.player.slam_cooldown -= 1;
+                        world.player.fire_cooldown -= 1;
+                        world.player.lightning_cooldown -= 1;
+                        world.player.teleport_cooldown = TELEPORT_COOLDOWN as i16;
+                    } else {
+                        return false;
                     }
-                    world.player.projectile_cooldown = false;
+                }
+                SLAM_KEYCODE => {
+                    if world.player.slam_cooldown <= 0 {
+                        Self::slam(world);
+                        world.player.projectile_cooldown -= 1;
+                        world.player.slam_cooldown = SLAM_COOLDOWN as i16;
+                        world.player.fire_cooldown -= 1;
+                        world.player.lightning_cooldown -= 1;
+                        world.player.teleport_cooldown -= 1;
+                    }
+                }
+                FLAME_KEYCODE => {
+                    if world.player.slam_cooldown <= 0 {
+                        Self::slam(world);
+                        world.player.projectile_cooldown -= 1;
+                        world.player.slam_cooldown -= 1;
+                        world.player.fire_cooldown = FIRE_COOLDOWN as i16;
+                        world.player.lightning_cooldown -= 1;
+                        world.player.teleport_cooldown -= 1;
+                    }
                 }
                 _ => {
                     return false;
@@ -451,6 +537,8 @@ impl Player {
         }
         return true;
     }
+
+    pub fn slam(world: &mut World) {}
 
     pub fn lightning(world: &mut World) {
         // if let Some(queued_position) = world.player.queued_position {
@@ -552,7 +640,6 @@ impl Player {
             Entity::Projectile,
             Some(world.projectiles.len()),
         );
-        dbg!(projectile_spawn_pos);
         if projectile_spawn_pos.0 != world.player.pos
             && projectile_spawn_pos.1 == world.world_position
         {
