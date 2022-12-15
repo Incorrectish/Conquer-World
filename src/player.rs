@@ -552,7 +552,6 @@ impl Player {
             Entity::Projectile,
             Some(world.projectiles.len()),
         );
-        dbg!(projectile_spawn_pos);
         if projectile_spawn_pos.0 != world.player.pos
             && projectile_spawn_pos.1 == world.world_position
         {
