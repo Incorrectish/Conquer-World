@@ -13,8 +13,7 @@ const BOSS_HEALTH: usize = 100;
 pub struct Boss {
     pub position: Position,
     pub color: [f32; 4],
-    pub surrounding: [Option<Enemy>; 8],
-    pub direction: Direction,
+    pub surrounding: Vec<Option<Enemy>>,
     pub world_position: Position,
     pub health: usize,
 }
@@ -23,33 +22,36 @@ impl Boss {
     pub fn new(x: usize, y: usize, color: [f32; 4], world_position: Position,
     entity_loc: &mut HashMap<Position, ([f32; 4], Entity)>,
     ) -> Self {
-        let mut surrounding: [Option<Enemy>; 8] = Default::default();
+
+        let mut surrounding: Vec<Option<Enemy>> = Vec::new();
         let mut index = 0;
-        let mut direction = Direction::West;
-        for i in 0..=2 {
-            for j in 0..=2 {
-                if i != 1 || j != 1 {
-                    surrounding[index] = Some(Enemy::minor_boss(x+i, y+j, world_position));
-                    entity_loc.insert(Position::new(x+i, y+j), 
-                    (tile::MINOR_BOSS, Entity::Enemy)
-                );
-                index += 1;
-                } else {
-                    entity_loc.insert(Position::new(x+i, y+j), 
-                    (tile::MAJOR_BOSS, Entity::Enemy));
+        if color == tile::MAJOR_BOSS {
+            for i in 0..=6 {
+                for j in 0..=6 {
+                    if i == 0 || j == 0 || i == 6 || j == 6 {
+                        surrounding.push(Some(Enemy::minor_boss(x+i, y+j, world_position)));
+                        entity_loc.insert(Position::new(x+i, y+j), 
+                        (tile::MINOR_BOSS, Entity::Enemy)
+                    );
+                    index += 1;
+                    } else { 
+                        entity_loc.insert(Position::new(x+i, y+j), 
+                        (tile::MAJOR_BOSS, Entity::Enemy));
+                    }
                 }
             }
+        } else {
+
         }
         Boss {
             position: Position::new(x, y),
             color,
             surrounding,
-            direction: Direction::North,
             world_position,
             health: BOSS_HEALTH,
         }
     }
-
+    
     pub fn update(world: &mut World) {
         // for index in (0..world.bosses.len()).rev() {
         //     if world.bosses[index].health <= 0 {
