@@ -17,8 +17,8 @@ use ggez::winit::event::VirtualKeyCode;
 use std::collections::HashMap;
 
 // Can change easily
-const MAX_PLAYER_HEALTH: usize = 30;
-const MAX_PLAYER_ENERGY: usize = 30;
+const MAX_PLAYER_HEALTH: usize = 100;
+const MAX_PLAYER_ENERGY: usize = 100;
 const PLAYER_MELEE_DAMAGE: usize = 1;
 const TELEPORTATION_COST: usize = 10;
 const HEAL_COST: usize = 8;
@@ -39,7 +39,7 @@ const PROJECTILE_ATTACK_KEYCODE: VirtualKeyCode = KeyCode::Space;
 const PLAYER_PROJECTILE_SPEED: usize = 1;
 const PLAYER_PROJECTILE_DAMAGE: usize = 1;
 const PLAYER_INITIAL_SPEED: usize = 1;
-const PLAYER_INITIAL_ENERGY: usize = 30;
+const PLAYER_INITIAL_ENERGY: usize = 100;
 const PERMISSIBLE_TILES: [[f32; 4]; 1] = [tile::GRASS];
 
 // This is with the covered tile model, but we could use the static/dynamic board paradighm or
@@ -218,16 +218,21 @@ impl Player {
         iteration: i32,
     ) {
         let master_heart_color: [f32; 4]; //True value for specific heart, used so half hearts can be colored correctly
+        let stage4 = [0.145, 0.682, 0.745, 1.0];
         let stage3 = [0.2, 0.8, 0.2, 1.0];
         let stage2 = [1.0, 0.8, 0.1, 1.0];
         let stage1 = [1.0, 0.1, 0.1, 1.0];
-        let mut health_check: i32 = self.health as i32 - (iteration as i32 * 2); //Checks if you have half, full, or no healthpoints on specific heart
-        if health_check > 20 {
+        let mut health_check: i32 = self.health as i32 - (iteration as i32 * 5); //Checks what chunk you're of health you're on
+        if health_check > 75 {
+            master_heart_color = stage4;
+            health_check -= 75;
+        }
+        else if health_check > 50 {
             master_heart_color = stage3;
-            health_check -= 20;
-        } else if health_check > 10 {
+            health_check -= 50;
+        } else if health_check > 25 {
             master_heart_color = stage2;
-            health_check -= 10;
+            health_check -= 25;
         } else {
             master_heart_color = stage1;
         }
@@ -241,21 +246,24 @@ impl Player {
                     let mut temp_heart_color = master_heart_color; //Temp color incase it switches due to half heart
                     while outline[i].0 + offset != outline[i + 1].0 {
                         let pos = (outline[i].0 + offset, outline[i].1); //Get the position going to be colored (saves space)
-                        if pos == (2, 2) || pos == (3, 2) || pos == (2, 3) {
-                            //For the three white pixels :)
-                            temp_heart_color = [1.0, 1.0, 1.0, 1.0];
-                        }
-                        //If it is only half a heart, only color in half (stop at x position 6)
+                        //If it is only half a full heart, only color in half (stop at x position 6)
                         //However, if the color isn't red, color in the other half the color one stage down
-                        if health_check != 1
-                            || (outline[i].0 + offset <= 6 || master_heart_color != stage1)
+                        if health_check >= 5
+                            || (outline[i].0 + offset <= (12 / 5 * health_check) as usize || master_heart_color != stage1)
                         {
-                            if health_check == 1 && outline[i].0 + offset > 6 {
-                                if master_heart_color == stage3 {
+                            if health_check < 5 && outline[i].0 + offset > (12 / 5 * health_check) as usize {
+                                if master_heart_color == stage4 {
+                                    temp_heart_color = stage3;
+                                }
+                                else if master_heart_color == stage3 {
                                     temp_heart_color = stage2;
                                 } else if master_heart_color == stage2 {
                                     temp_heart_color = stage1;
                                 }
+                            }
+                            if pos == (2, 2) || pos == (3, 2) || pos == (2, 3) {
+                                //For the three white pixels :)
+                                temp_heart_color = [1.0, 1.0, 1.0, 1.0];
                             }
                             canvas.draw(
                                 &graphics::Quad,
@@ -286,17 +294,21 @@ impl Player {
         iteration: i32,
     ) {
         let master_energy_color: [f32; 4];
+        let stage4 = [0.0, 0.1, 0.3, 1.0];
         let stage3 = [0.15, 0.2, 0.85, 1.0];
         let stage2 = [0.4, 0.45, 0.8, 1.0];
         let stage1 = [0.0, 0.6, 0.98, 1.0];
-        let mut energy_check: i32 = self.energy as i32 - (iteration as i32 * 2);
-
-        if energy_check > 20 {
+        let mut energy_check: i32 = self.energy as i32 - (iteration as i32 * 5);
+        if energy_check > 75 {
+            master_energy_color = stage4;
+            energy_check -= 75;
+        }
+        else if energy_check > 50 {
             master_energy_color = stage3;
-            energy_check -= 20;
-        } else if energy_check > 10 {
+            energy_check -= 50;
+        } else if energy_check > 25 {
             master_energy_color = stage2;
-            energy_check -= 10;
+            energy_check -= 25;
         } else {
             master_energy_color = stage1;
         }
@@ -305,11 +317,14 @@ impl Player {
                 if outline[i].1 == outline[i + 1].1 {
                     let mut offset = 1;
                     let mut temp_energy_color = master_energy_color;
-                    if (energy_check != 1)
-                        || (outline[i + 1].1 >= 6 || master_energy_color != stage1)
+                    if energy_check >= 5
+                        || (outline[i + 1].1 >= (12 / 5 * (5 - energy_check)) as usize || master_energy_color != stage1)
                     {
-                        if energy_check == 1 && outline[i].1 < 6 {
-                            if master_energy_color == stage3 {
+                        if energy_check < 5 && outline[i].1 < (12 / 5 * (5 - energy_check)) as usize {
+                            if master_energy_color == stage4 {
+                                temp_energy_color = stage3;
+                            }
+                            else if master_energy_color == stage3 {
                                 temp_energy_color = stage2;
                             } else if master_energy_color == stage2 {
                                 temp_energy_color = stage1;
@@ -393,7 +408,6 @@ impl Player {
                         Player::projectile_attack(world);
                         world.player.energy -= 1;
                         world.player.projectile_cooldown = true;
-                        // commented out so I can test everything
                     } else {
                         return false;
                     }
