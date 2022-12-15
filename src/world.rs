@@ -15,7 +15,7 @@ use ggez::graphics;
 
 use rand::rngs::ThreadRng;
 
-use std::{cmp::min, intrinsics::discriminant_value};
+use std::cmp::min;
 use std::collections::HashMap;
 
 pub const BOSS_ROOMS: [Position; 5] = [
