@@ -179,12 +179,6 @@ impl World {
                         ));
                         break;
                     }
-                    enemies.push(Enemy::bomber(
-                        x as usize,
-                        y as usize,
-                        Position::new(world_x, world_y),
-                    ));
-                    break;
                 }
             }
         }
