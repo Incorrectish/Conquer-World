@@ -153,7 +153,9 @@ impl Enemy {
                 Enemy::kill(world, index);
             } else {
                 if world.world_position == world.enemies[index].world_pos {
-                    Self::move_enemy(index, world);
+                    if world.player.is_visible() {
+                        Self::move_enemy(index, world);
+                    }
                 }
             }
         }

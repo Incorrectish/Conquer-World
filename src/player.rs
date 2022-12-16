@@ -34,14 +34,15 @@ const INVISIBILITY_DURATION: usize = 7;
 const MELEE_ATTACK_KEYCODE: VirtualKeyCode = KeyCode::A;
 
 // TODO look over these values
-const DIRECTION_LEFT: VirtualKeyCode = KeyCode::N;
-const DIRECTION_DOWN: VirtualKeyCode = KeyCode::E;
-const DIRECTION_UP: VirtualKeyCode = KeyCode::I;
-const DIRECTION_RIGHT: VirtualKeyCode = KeyCode::O;
+const DIRECTION_LEFT: VirtualKeyCode = KeyCode::W;
+const DIRECTION_DOWN: VirtualKeyCode = KeyCode::S;
+const DIRECTION_UP: VirtualKeyCode = KeyCode::N;
+const INVISIBILITY_KEYCODE: VirtualKeyCode = KeyCode::I;
+const DIRECTION_RIGHT: VirtualKeyCode = KeyCode::E;
 const HEAL_KEYCODE: VirtualKeyCode = KeyCode::H;
 const TELEPORT_KEYCODE: VirtualKeyCode = KeyCode::T;
 const LIGHTNING_KEYCODE: VirtualKeyCode = KeyCode::L;
-const SLAM_KEYCODE: VirtualKeyCode = KeyCode::S;
+const SLAM_KEYCODE: VirtualKeyCode = KeyCode::Z;
 const FLAME_KEYCODE: VirtualKeyCode = KeyCode::F;
 const BUILD_KEYCODE: VirtualKeyCode = KeyCode::B;
 const PROJECTILE_ATTACK_KEYCODE: VirtualKeyCode = KeyCode::Space;
@@ -55,7 +56,7 @@ const TELEPORT_COOLDOWN: usize = 5;
 const FIRE_COOLDOWN: usize = 5;
 const SLAM_COOLDOWN: usize = 1;
 const PROJECTILE_COOLDOWN: usize = 1;
-const INVISIBILITY_COOLDOWN: usize = 25;
+const INVISIBILITY_COOLDOWN: usize = 25 + INVISIBILITY_DURATION;
 
 // This is with the covered tile model, but we could use the static/dynamic board paradighm or
 // something else entirely
@@ -94,6 +95,7 @@ pub struct Player {
     slam_cooldown: i16,
     fire_cooldown: i16,
     teleport_cooldown: i16,
+    invisiblity_cooldown: i16,
 }
 
 impl Player {
@@ -105,7 +107,7 @@ impl Player {
         self.health -= damage;
     }
 
-    pub fn visible(&self) -> bool {
+    pub fn is_visible(&self) -> bool {
         self.visible <= 0
     }
 
@@ -124,6 +126,7 @@ impl Player {
             fire_cooldown: 0,
             lightning_cooldown: 0,
             teleport_cooldown: 0,
+            invisiblity_cooldown: 0,
         };
         temp
     }
@@ -398,6 +401,8 @@ impl Player {
                     world.player.fire_cooldown -= 1;
                     world.player.lightning_cooldown -= 1;
                     world.player.teleport_cooldown -= 1;
+                    world.player.invisiblity_cooldown -= 1;
+                    world.player.visible -= 1;
                 }
                 KeyCode::Up => {
                     world.player.direction = Direction::North;
@@ -407,6 +412,8 @@ impl Player {
                     world.player.fire_cooldown -= 1;
                     world.player.lightning_cooldown -= 1;
                     world.player.teleport_cooldown -= 1;
+                    world.player.invisiblity_cooldown -= 1;
+                    world.player.visible -= 1;
                 }
                 KeyCode::Left => {
                     world.player.direction = Direction::West;
@@ -416,6 +423,8 @@ impl Player {
                     world.player.fire_cooldown -= 1;
                     world.player.lightning_cooldown -= 1;
                     world.player.teleport_cooldown -= 1;
+                    world.player.invisiblity_cooldown -= 1;
+                    world.player.visible -= 1;
                 }
                 KeyCode::Right => {
                     world.player.direction = Direction::East;
@@ -425,6 +434,8 @@ impl Player {
                     world.player.fire_cooldown -= 1;
                     world.player.lightning_cooldown -= 1;
                     world.player.teleport_cooldown -= 1;
+                    world.player.invisiblity_cooldown -= 1;
+                    world.player.visible -= 1;
                 }
 
                 DIRECTION_UP => {
@@ -455,6 +466,8 @@ impl Player {
                     world.player.fire_cooldown -= 1;
                     world.player.lightning_cooldown -= 1;
                     world.player.teleport_cooldown -= 1;
+                    world.player.invisiblity_cooldown -= 1;
+                    world.player.visible -= 1;
                 }
                 PROJECTILE_ATTACK_KEYCODE => {
                     if world.player.energy > 0 && world.player.projectile_cooldown <= 0 {
@@ -465,6 +478,8 @@ impl Player {
                         world.player.fire_cooldown -= 1;
                         world.player.lightning_cooldown -= 1;
                         world.player.teleport_cooldown -= 1;
+                    world.player.invisiblity_cooldown -= 1;
+                    world.player.visible -= 1;
                     } else {
                         return false;
                     }
@@ -478,6 +493,8 @@ impl Player {
                         world.player.fire_cooldown -= 1;
                         world.player.lightning_cooldown -= 1;
                         world.player.teleport_cooldown -= 1;
+                    world.player.invisiblity_cooldown -= 1;
+                    world.player.visible -= 1;
                     } else {
                         return false;
                     }
@@ -489,6 +506,8 @@ impl Player {
                         world.player.fire_cooldown -= 1;
                         world.player.lightning_cooldown -= 1;
                         world.player.teleport_cooldown -= 1;
+                    world.player.invisiblity_cooldown -= 1;
+                    world.player.visible -= 1;
                     } else {
                         return false;
                     }
@@ -504,6 +523,8 @@ impl Player {
                         world.player.fire_cooldown -= 1;
                         world.player.lightning_cooldown = LIGHTNING_COOLDOWN as i16;
                         world.player.teleport_cooldown -= 1;
+                    world.player.invisiblity_cooldown -= 1;
+                    world.player.visible -= 1;
                     } else {
                         return false;
                     }
@@ -521,6 +542,8 @@ impl Player {
                         world.player.fire_cooldown -= 1;
                         world.player.lightning_cooldown -= 1;
                         world.player.teleport_cooldown = TELEPORT_COOLDOWN as i16;
+                    world.player.invisiblity_cooldown -= 1;
+                    world.player.visible -= 1;
                     } else {
                         return false;
                     }
@@ -533,6 +556,8 @@ impl Player {
                         world.player.fire_cooldown -= 1;
                         world.player.lightning_cooldown -= 1;
                         world.player.teleport_cooldown -= 1;
+                    world.player.invisiblity_cooldown -= 1;
+                    world.player.visible -= 1;
                     }
                 }
                 FLAME_KEYCODE => {
@@ -543,6 +568,14 @@ impl Player {
                         world.player.fire_cooldown = FIRE_COOLDOWN as i16;
                         world.player.lightning_cooldown -= 1;
                         world.player.teleport_cooldown -= 1;
+                    world.player.invisiblity_cooldown -= 1;
+                    world.player.visible -= 1;
+                    }
+                }
+                INVISIBILITY_KEYCODE => {
+                    if world.player.energy >= INVISIBILITY_COST && world.player.invisiblity_cooldown <= 0 {
+                        world.player.visible = INVISIBILITY_DURATION as i16;
+                        world.player.invisiblity_cooldown = INVISIBILITY_COOLDOWN as i16;
                     }
                 }
                 _ => {
