@@ -20,8 +20,8 @@ use std::collections::HashMap;
 // Can change easily
 const MAX_PLAYER_HEALTH: usize = 100;
 const MAX_PLAYER_ENERGY: usize = 100;
-const PLAYER_MELEE_DAMAGE: usize = 25;
-const PLAYER_SLAM_DAMAGE: usize = 15;
+const PLAYER_MELEE_DAMAGE: usize = 50;
+const PLAYER_SLAM_DAMAGE: usize = 30;
 const TELEPORTATION_COST: usize = 50;
 const HEAL_COST: usize = 20;
 const FIRE_COST: usize = 30;
@@ -104,6 +104,9 @@ impl Player {
     }
 
     pub fn damage(&mut self, damage: usize) {
+        if (self.health as i32 - damage as i32 <= 0) {
+            panic!("You lose");
+        }
         self.health -= damage;
     }
 
