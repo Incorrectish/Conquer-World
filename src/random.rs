@@ -15,6 +15,3 @@ pub fn bernoulli(rng: &mut ChaCha8Rng, p: f32) -> bool {
     rand_range(rng, 0, 1000) < ((1000. * p) as i16)
 }
 
-pub fn coin_flip(rng: &mut ThreadRng) -> bool {
-    rand_range(rng, 0, 2) > 0
-}
