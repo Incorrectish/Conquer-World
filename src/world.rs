@@ -353,8 +353,14 @@ impl World {
         let curr_world_entity_map = &self.entity_map[self.world_position.y][self.world_position.x];
 
         for (loc, color) in curr_world_entity_map {
-            // if (loc.y < (self.world_position.y * WORLD_SIZE.1 as usize) && (self.world_position.x * WORLD_SIZE.0 as usize) > 0) {
-            // }
+            let mut color = color.0;
+            if color == tile::PLAYER {
+                color = if self.player.is_visible() {
+                    tile::PLAYER
+                } else {
+                    tile::PLAYER_INVISIBLE
+                }
+            }
             canvas.draw(
                 &graphics::Quad,
                 graphics::DrawParam::new()
@@ -369,7 +375,7 @@ impl World {
                         TILE_SIZE.0 as i32,
                         TILE_SIZE.1 as i32,
                     ))
-                    .color(color.0),
+                    .color(color),
             )
         }
 

@@ -81,4 +81,7 @@ pub const BOSS_ASTEROID_REAL: [f32; 4] = [1.0, 0.5, 0.0, 1.0];
 //     [0.8, 0.3, 0.3, 1.0],
 // ];
 
-pub const PLAYER: [f32; 4] = [1.0, 1.0, 1.0, 0.5];
+pub const PLAYER: [f32; 4] = [0.5, 0.5, 0.5, 1.0];
+
+const INVIS_TRANSPARENCY: f32 = 0.3;
+pub const PLAYER_INVISIBLE: [f32; 4] = [0.5, 0.5, 0.5, INVIS_TRANSPARENCY];

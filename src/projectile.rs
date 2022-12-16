@@ -103,6 +103,7 @@ impl Projectile {
                     world.projectiles[index as usize].color = tile::LIGHTNING_INITIAL;
                     world.atmosphere_map[world_pos.y][world_pos.x]
                         .insert(pos, tile::LIGHTNING_INITIAL);
+                    dbg!("here");
                 }
                 tile::LIGHTNING_INITIAL => {
                     let pos = world.projectiles[index as usize].pos;
@@ -110,8 +111,10 @@ impl Projectile {
                     world.projectiles[index as usize].color = tile::LIGHTNING_SECONDARY;
                     world.atmosphere_map[world_pos.y][world_pos.x]
                         .insert(pos, tile::LIGHTNING_SECONDARY);
+                    dbg!("here, initial");
                 }
                 tile::LIGHTNING_SECONDARY => {
+                    dbg!("here, second");
                     const deltas: [i16; 3] = [0, 1, -1];
                     let pos = world.projectiles[index as usize].pos;
                     let world_pos = world.projectiles[index as usize].world_pos;
@@ -143,6 +146,7 @@ impl Projectile {
                     }
                 }
                 tile::LIGHTNING_FINAL => {
+                    dbg!("here, final");
                     const deltas: [i16; 3] = [0, 1, -1];
                     let pos = world.projectiles[index as usize].pos;
                     let world_pos = world.projectiles[index as usize].world_pos;

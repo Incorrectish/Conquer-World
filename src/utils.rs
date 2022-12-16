@@ -232,7 +232,7 @@ impl Boss {
         }
         
         if world.bosses[index].color == tile::MAJOR_BOSS {
-            if Boss::generate_asteroid(world, world.bosses[index].asteroid_cooldown) {
+            if world.player.is_visible() && Boss::generate_asteroid(world, world.bosses[index].asteroid_cooldown) {
                 world.bosses[index].asteroid_cooldown = 0;
             } else {
                 world.bosses[index].asteroid_cooldown += 1;
@@ -267,12 +267,11 @@ impl Boss {
     pub fn generate_laser(world: &mut World, num_lasers: usize) {
         let rng = &mut world.rng;
         for _ in 0..num_lasers {
-            let coord: Position;
-            if Boss::coin_flip(rng) {
-                coord = Position::new(0,random::rand_range(rng, 0, BOARD_SIZE.1) as usize);
+            let coord: Position = if Boss::coin_flip(rng) {
+                Position::new(0,random::rand_range(rng, 0, BOARD_SIZE.1) as usize)
             } else {
-                coord = Position::new(random::rand_range(rng, 0, BOARD_SIZE.0) as usize, 0);
-            }
+                Position::new(random::rand_range(rng, 0, BOARD_SIZE.0) as usize, 0)
+            };
             world.boss_lasers.push((coord, tile::BOSS_LASER_STAGE_1, LASER_LINGER_VALUE));
         }
     }
