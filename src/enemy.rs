@@ -4,9 +4,10 @@ use crate::{
     tile::{self, PROJECTILE_PLAYER},
     utils::Position,
     world::World,
-    BOARD_SIZE, TILE_SIZE, WORLD_SIZE,
+    BOARD_SIZE, TILE_SIZE, WORLD_SIZE, UNIVERSAL_OFFSET,
     projectile::Projectile,
 };
+use ggez::graphics::{self, Canvas};
 use std::{collections::HashMap, collections::LinkedList, cmp::max};
 
 const CHASING_ENEMY_HEALTH: usize = 5;
@@ -247,32 +248,77 @@ impl Enemy {
         let mut travel_path = Self::get_best_path(index, world, can_dodge_projectiles);
         let enemy = &world.enemies[index];
         let mut cur_pos = enemy.pos;
+        println!("{} {} {} {} {}", index, enemy.color[0], enemy.color[1], enemy.color[2], travel_path.len());
         for _ in 0..enemy.speed {
+            println!("step 1");
             if let Some(new_pos) = travel_path.pop_front() {
-                if new_pos.x >= WORLD_SIZE.0 as usize || new_pos.y >= WORLD_SIZE.1 as usize {
-                    Self::move_enemy_with_deltas(index, world);
-                    return;
-                }
-                if new_pos == world.player.pos {
-                    world.player.damage(world.enemies[index].attack_damage);
-                } else {
-                    let mut index_proj: i32 = 0;
-                    for _ in 0..world.projectiles.len() {
-                        if new_pos == world.projectiles[index_proj as usize].pos 
+                println!("branch 1");
+                if Self::match_color(&world.enemies[index].color, &tile::CHASING_ENEMY) {
+                    if new_pos.x >= WORLD_SIZE.0 as usize || new_pos.y >= WORLD_SIZE.1 as usize {
+                        Self::move_enemy_with_deltas(index, world);
+                        return;
+                    }
+                    if new_pos == world.player.pos {
+                        world.player.damage(world.enemies[index].attack_damage);
+                    } else {
+                        let mut index_proj: i32 = 0;
+                        for _ in 0..world.projectiles.len() {
+                            if new_pos == world.projectiles[index_proj as usize].pos 
                             && world.enemies[index].world_pos == world.projectiles[index_proj as usize].world_pos {
                                 world.enemies[index].damage(world.projectiles[index_proj as usize].damage);
                                 Projectile::kill(index_proj as usize, world);
                                 index_proj -= 1;
                             }
-                        index_proj += 1
+                            index_proj += 1
+                        }
+                        // simply updates the render queue
+                        World::update_position(world, cur_pos, (new_pos, world.world_position));
+                        world.enemies[index].pos = new_pos;
+                        cur_pos = new_pos;
                     }
-                    // simply updates the render queue
-                    World::update_position(world, cur_pos, (new_pos, world.world_position));
-                    world.enemies[index].pos = new_pos;
-                    cur_pos = new_pos;
+                } else if Self::match_color(&world.enemies[index].color, &tile::BOMBER_ENEMY) {
+                    // activate bomber if within range (no movement)
+                    if Self::player_within_spaces(&cur_pos, &world, 2) {
+                        println!("{}", index);
+                        world.enemies[index].color = tile::BOMBER_ENEMY_ACTIVATED;
+                        let curr_world = &mut world.entity_map[world.world_position.y][world.world_position.x];
+                        curr_world.insert(cur_pos, (world.enemies[index].color, Entity::Enemy));
+                        return;
+                    }
+
+                    // otherwise move as normal chaser enemy
+                    if new_pos.x >= WORLD_SIZE.0 as usize || new_pos.y >= WORLD_SIZE.1 as usize {
+                        Self::move_enemy_with_deltas(index, world);
+                        return;
+                    }
+                    if new_pos == world.player.pos {
+                        world.player.damage(world.enemies[index].attack_damage);
+                    } else {
+                        let mut index_proj: i32 = 0;
+                        for _ in 0..world.projectiles.len() {
+                            if new_pos == world.projectiles[index_proj as usize].pos 
+                            && world.enemies[index].world_pos == world.projectiles[index_proj as usize].world_pos {
+                                world.enemies[index].damage(world.projectiles[index_proj as usize].damage);
+                                Projectile::kill(index_proj as usize, world);
+                                index_proj -= 1;
+                            }
+                            index_proj += 1
+                        }
+                        // simply updates the render queue
+                        World::update_position(world, cur_pos, (new_pos, world.world_position));
+                        world.enemies[index].pos = new_pos;
+                        cur_pos = new_pos;
+                    }
+                } else if Self::match_color(&world.enemies[index].color, &tile::BOMBER_ENEMY_ACTIVATED) {
+                    println!("branch 2");
+                    if Self::player_within_spaces(&cur_pos, &world, 2) {
+                        world.player.damage(world.enemies[index].attack_damage);
+                    }
+                    Self::create_bomber_explosion(&cur_pos, world);
+                } else {
+                    println!("branch 3");
+                    break;
                 }
-            } else {
-                break;
             }
         }
     }
@@ -439,5 +485,50 @@ impl Enemy {
 
     pub fn is_boss(&self) -> bool {
         self.is_boss
+    }
+
+    pub fn match_color(a: &[f32; 4], b: &[f32; 4]) -> bool {
+        const EPSILON: f32 = 0.000001;
+        return (a[0] - b[0]).abs() < EPSILON
+            && (a[1] - b[1]).abs() < EPSILON
+            && (a[2] - b[2]).abs() < EPSILON;
+    }
+
+    pub fn player_within_spaces(pos: &Position, world: &World, spaces: i16) -> bool {
+        (world.player.pos.x as i16 - pos.x as i16).abs() as usize
+            + (world.player.pos.y as i16 - pos.y as i16).abs() as usize <= spaces as usize
+    }
+
+    pub fn draw_bomber_explosion(world: &mut World, canvas: &mut graphics::Canvas) {
+        let mut curr_world = &mut world.bomber_explosions[world.world_position.y][world.world_position.x];
+        for tile in curr_world {
+            let x = tile.0.x;
+            let y = tile.0.y;
+            canvas.draw(
+                &graphics::Quad,
+                graphics::DrawParam::new()
+                    .dest_rect(graphics::Rect::new_i32(
+                        x as i32 * TILE_SIZE.0 as i32,
+                        (y as i32 + UNIVERSAL_OFFSET as i32) * TILE_SIZE.1 as i32,
+                        TILE_SIZE.0 as i32,
+                        TILE_SIZE.1 as i32,
+                    ))
+                    .color(tile.1),
+            )
+        }
+    }
+
+    pub fn create_bomber_explosion(pos: &Position, world: &mut World) {
+        for i in -2..=2_i16 {
+            for j in -(2-i.abs())..=(2-i.abs()) {
+                let x = pos.x as i16 + i;
+                let y = pos.y as i16 + j;
+                if x >= 0 && x < WORLD_SIZE.0 && y >= 0 && y < WORLD_SIZE.1 {
+                    world.bomber_explosions[world.world_position.x][world.world_position.y].push((Position::new(x as usize, y as usize), 
+                        tile::BOMBER_EXPLOSION[((i.abs()+j.abs())/2) as usize]));
+                }
+            }
+        }
+
     }
 }
