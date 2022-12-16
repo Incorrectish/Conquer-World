@@ -248,11 +248,8 @@ impl Enemy {
         let mut travel_path = Self::get_best_path(index, world, can_dodge_projectiles);
         let enemy = &world.enemies[index];
         let mut cur_pos = enemy.pos;
-        println!("{} {} {} {} {}", index, enemy.color[0], enemy.color[1], enemy.color[2], travel_path.len());
         for _ in 0..enemy.speed {
-            println!("step 1");
             if let Some(new_pos) = travel_path.pop_front() {
-                println!("branch 1");
                 if Self::match_color(&world.enemies[index].color, &tile::CHASING_ENEMY) {
                     if new_pos.x >= WORLD_SIZE.0 as usize || new_pos.y >= WORLD_SIZE.1 as usize {
                         Self::move_enemy_with_deltas(index, world);
@@ -279,7 +276,6 @@ impl Enemy {
                 } else if Self::match_color(&world.enemies[index].color, &tile::BOMBER_ENEMY) {
                     // activate bomber if within range (no movement)
                     if Self::player_within_spaces(&cur_pos, &world, 2) {
-                        println!("{}", index);
                         world.enemies[index].color = tile::BOMBER_ENEMY_ACTIVATED;
                         let curr_world = &mut world.entity_map[world.world_position.y][world.world_position.x];
                         curr_world.insert(cur_pos, (world.enemies[index].color, Entity::Enemy));
@@ -310,13 +306,11 @@ impl Enemy {
                         cur_pos = new_pos;
                     }
                 } else if Self::match_color(&world.enemies[index].color, &tile::BOMBER_ENEMY_ACTIVATED) {
-                    println!("branch 2");
                     if Self::player_within_spaces(&cur_pos, &world, 2) {
                         world.player.damage(world.enemies[index].attack_damage);
                     }
                     Self::create_bomber_explosion(&cur_pos, world);
                 } else {
-                    println!("branch 3");
                     break;
                 }
             }
