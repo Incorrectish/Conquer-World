@@ -10,13 +10,13 @@ use crate::{
 use ggez::graphics::{self, Canvas};
 use std::{cmp::max, collections::HashMap, collections::LinkedList};
 
-const CHASING_ENEMY_HEALTH: usize = 5;
-const BOMBER_ENEMY_HEALTH: usize = 5;
-const KNIGHT_ENEMY_HEALTH: usize = 5;
-const SHOOTER_ENEMY_HEALTH: usize = 5;
-const MAJOR_ENEMY_HEALTH: usize = 5;
-const MINOR_BOSS_HEALTH: usize = 5;
-const MAJOR_BOSS_HEALTH: usize = 5;
+const CHASING_ENEMY_HEALTH: usize = 50;
+const BOMBER_ENEMY_HEALTH: usize = 25;
+const KNIGHT_ENEMY_HEALTH: usize = 100;
+const SHOOTER_ENEMY_HEALTH: usize = 25;
+const MAJOR_ENEMY_HEALTH: usize = 200;
+const MINOR_BOSS_HEALTH: usize = 500;
+const MAJOR_BOSS_HEALTH: usize = 1000;
 
 const PERMISSIBLE_TILES: [[f32; 4]; 4] = [
     tile::GRASS,
