@@ -162,9 +162,23 @@ impl World {
                         // y positions are greater than 5
                     && ((world_x, world_y) != (0, 0) || ((x > 5) && y > 5))
                 {
-//                    world_map_entity.insert(random_loc, (tile::CHASING_ENEMY, Entity::Enemy));
-                    world_map_entity.insert(random_loc, (tile::BOMBER_ENEMY, Entity::Enemy));
-//                    enemies.push(Enemy::chasing(
+                    if Boss::coin_flip(rng) {
+                        world_map_entity.insert(random_loc, (tile::CHASING_ENEMY, Entity::Enemy));
+                        enemies.push(Enemy::chasing(
+                            x as usize,
+                            y as usize,
+                            Position::new(world_x, world_y),
+                        ));
+                        
+                    } else {
+                        world_map_entity.insert(random_loc, (tile::BOMBER_ENEMY, Entity::Enemy));
+                        enemies.push(Enemy::bomber(
+                            x as usize,
+                            y as usize,
+                            Position::new(world_x, world_y),
+                        ));
+                        break;
+                    }
                     enemies.push(Enemy::bomber(
                         x as usize,
                         y as usize,

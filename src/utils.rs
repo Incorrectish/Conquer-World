@@ -246,8 +246,8 @@ impl Boss {
                 && laser.1 == tile::BOSS_LASER_REAL 
                 && world.player.pos.y != 0
                 && world.player.pos.x != 0
-                && world.player.pos.y != WORLD_SIZE.1 as usize- 1
-                && world.player.pos.x != WORLD_SIZE.0 as usize- 1 {
+                && world.player.pos.y != WORLD_SIZE.1 as usize - 1
+                && world.player.pos.x != WORLD_SIZE.0 as usize - 1 {
                     world.player.damage(LASER_DAMAGE);
                 }
             }
