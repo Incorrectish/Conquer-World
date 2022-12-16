@@ -75,6 +75,8 @@ pub struct World {
         (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     pub boss_defeated: [[bool; 7]; 7],
     pub boss_lasers: Vec<(Position, [f32; 4])>,
+    pub bomber_explosions: [[Vec<(Position, [f32; 4])>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
+        (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     pub rng: ChaCha8Rng,
 }
 
@@ -99,6 +101,8 @@ impl World {
         starting_map.insert(player.pos, (player.color, Entity::Player));
         let mut enemies = Vec::new();
         let mut bosses = Vec::new();
+        let mut bomber_explosions: [[Vec<(Position, [f32; 4])>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
+            (BOARD_SIZE.1 / WORLD_SIZE.1) as usize] = Default::default();
         World::gen_enemies(&mut rng, &mut terrain_map, &mut entity_map, &mut enemies);
         World::gen_bosses(&mut terrain_map, &mut entity_map, &mut bosses);
         World {
@@ -117,8 +121,9 @@ impl World {
             terrain_positions,
             atmosphere_map: Default::default(),
             boss_defeated,
-            rng,
             boss_lasers: Vec::new(),
+            bomber_explosions,
+            rng,
         }
     }
 
@@ -155,8 +160,10 @@ impl World {
                         // y positions are greater than 5
                     && ((world_x, world_y) != (0, 0) || ((x > 5) && y > 5))
                 {
-                    world_map_entity.insert(random_loc, (tile::CHASING_ENEMY, Entity::Enemy));
-                    enemies.push(Enemy::chasing(
+//                    world_map_entity.insert(random_loc, (tile::CHASING_ENEMY, Entity::Enemy));
+                    world_map_entity.insert(random_loc, (tile::BOMBER_ENEMY, Entity::Enemy));
+//                    enemies.push(Enemy::chasing(
+                    enemies.push(Enemy::bomber(
                         x as usize,
                         y as usize,
                         Position::new(world_x, world_y),
@@ -270,6 +277,7 @@ impl World {
         if BOSS_ROOMS.contains(&self.world_position) {
             Boss::draw_lasers(self, canvas);
         }
+        Enemy::draw_bomber_explosion(self, canvas);
         
         //Draw the black bar on top that has the health/energy indicators
         for i in 0..WORLD_SIZE.0 {
