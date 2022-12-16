@@ -74,6 +74,7 @@ pub struct World {
     pub atmosphere_map: [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
         (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     pub boss_defeated: [[bool; 7]; 7],
+    pub boss_lasers: Vec<(Position, [f32; 4])>,
     pub rng: ChaCha8Rng,
 }
 
@@ -117,6 +118,7 @@ impl World {
             atmosphere_map: Default::default(),
             boss_defeated,
             rng,
+            boss_lasers: Vec::new(),
         }
     }
 
@@ -264,6 +266,11 @@ impl World {
 
     //This function draws the whole entire world that is seen by the player
     pub fn draw(&mut self, canvas: &mut graphics::Canvas) {
+        //Draw lasers if in boss room
+        if BOSS_ROOMS.contains(&self.world_position) {
+            Boss::draw_lasers(self, canvas);
+        }
+        
         //Draw the black bar on top that has the health/energy indicators
         for i in 0..WORLD_SIZE.0 {
             for j in 0..UNIVERSAL_OFFSET {
@@ -488,6 +495,9 @@ impl World {
                             Self::update_position(world, world.player.pos, new_position);
                             world.player.pos = new_position.0;
                         }
+                    }
+                    if(BOSS_ROOMS.contains(&world.world_position)) {
+                        Boss::grid_attack(world, 5);
                     }
                     Self::toggle_doors(
                         &mut world.terrain_map,

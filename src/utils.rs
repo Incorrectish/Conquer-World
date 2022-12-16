@@ -5,16 +5,20 @@ use crate::{
     world::World,
     BOARD_SIZE, TILE_SIZE, UNIVERSAL_OFFSET, WORLD_SIZE,
     entity::Entity,
+    random,
 };
 use std::collections::HashMap;
+use rand::rngs::ThreadRng;
+use rand::rngs;
+use ggez::graphics::{self, Canvas};
+use rand_chacha::ChaCha8Rng;
 
 const BOSS_HEALTH: usize = 100;
 
 pub struct Boss {
     pub position: Position,
     pub color: [f32; 4],
-    pub surrounding: [Option<Enemy>; 8],
-    pub direction: Direction,
+    pub surrounding: Vec<Option<Enemy>>,
     pub world_position: Position,
     pub health: usize,
 }
@@ -23,33 +27,35 @@ impl Boss {
     pub fn new(x: usize, y: usize, color: [f32; 4], world_position: Position,
     entity_loc: &mut HashMap<Position, ([f32; 4], Entity)>,
     ) -> Self {
-        let mut surrounding: [Option<Enemy>; 8] = Default::default();
-        let mut index = 0;
-        let mut direction = Direction::West;
-        for i in 0..=2 {
-            for j in 0..=2 {
-                if i != 1 || j != 1 {
-                    surrounding[index] = Some(Enemy::minor_boss(x+i, y+j, world_position));
-                    entity_loc.insert(Position::new(x+i, y+j), 
-                    (tile::MINOR_BOSS, Entity::Enemy)
-                );
-                index += 1;
-                } else {
-                    entity_loc.insert(Position::new(x+i, y+j), 
-                    (tile::MAJOR_BOSS, Entity::Enemy));
+
+        let mut surrounding: Vec<Option<Enemy>> = Vec::new();
+        
+        if color == tile::MAJOR_BOSS {
+            for i in 0..=6 {
+                for j in 0..=6 {
+                    if i == 0 || j == 0 || i == 6 || j == 6 {
+                        surrounding.push(Some(Enemy::minor_boss(x+i, y+j, world_position)));
+                        entity_loc.insert(Position::new(x+i, y+j), 
+                        (tile::BOSS_SURROUNDINGS, Entity::Enemy)
+                    );
+                    } else { 
+                        entity_loc.insert(Position::new(x+i, y+j), 
+                        (tile::MAJOR_BOSS, Entity::Enemy));
+                    }
                 }
             }
+        } else {
+
         }
         Boss {
             position: Position::new(x, y),
             color,
             surrounding,
-            direction: Direction::North,
             world_position,
             health: BOSS_HEALTH,
         }
     }
-
+    
     pub fn update(world: &mut World) {
         // for index in (0..world.bosses.len()).rev() {
         //     if world.bosses[index].health <= 0 {
@@ -62,10 +68,87 @@ impl Boss {
         // }
     }
 
-    pub fn move_boss(index: usize, world: &mut World) {
+    pub fn draw_lasers(world: &mut World, canvas: &mut graphics::Canvas) {
+        for lasers in &mut world.boss_lasers {
+            let mut special_case = true;
+            if lasers.0 == Position::new(0,0) {
+                if Boss::coin_flip(&mut world.rng) {
+                    special_case = false;
+                }
+            }
 
+            if lasers.0.x == 0 && special_case {
+                for i in 0..WORLD_SIZE.0 {
+                    canvas.draw(
+                        &graphics::Quad,
+                        graphics::DrawParam::new()
+                            .dest_rect(graphics::Rect::new_i32(
+                                (i) as i32 * TILE_SIZE.0 as i32,
+                                ((lasers.0.y) as i32 + UNIVERSAL_OFFSET as i32) * TILE_SIZE.1 as i32,
+                                TILE_SIZE.0 as i32,
+                                TILE_SIZE.1 as i32,
+                            ))
+                            .color(lasers.1),
+                    )
+                }
+            } else {
+                for i in 0..WORLD_SIZE.0 {
+                    canvas.draw(
+                        &graphics::Quad,
+                        graphics::DrawParam::new()
+                            .dest_rect(graphics::Rect::new_i32(
+                                (lasers.0.x) as i32 * TILE_SIZE.0 as i32,
+                               ((i) as i32 + UNIVERSAL_OFFSET as i32) * TILE_SIZE.1 as i32,
+                                TILE_SIZE.0 as i32,
+                                TILE_SIZE.1 as i32,
+                            ))
+                            .color(lasers.1),
+                    )
+                }
+            }
+        }   
     }
 
+    pub fn coin_flip(rng: &mut ChaCha8Rng) -> bool {
+        random::rand_range(rng, 0, 2) > 0
+    }
+
+    pub fn grid_attack(world: &mut World, num_laser: usize) {
+        Boss::generate_laser(world, num_laser);
+        let lasers = &mut world.boss_lasers;
+        for index in (0..lasers.len()).rev() {
+            match lasers[index].1 {
+                tile::BOSS_LASER_STAGE_1 => {
+                    lasers[index].1 = tile::BOSS_LASER_STAGE_2;
+                },
+
+                tile::BOSS_LASER_STAGE_2 => {
+                    lasers[index].1 = tile::BOSS_LASER_STAGE_3;
+                },
+
+                tile::BOSS_LASER_STAGE_3 => {
+                    lasers[index].1 = tile::BOSS_LASER_REAL;
+                },
+
+                _ => {
+                    lasers.remove(index);
+                }
+            }
+        }
+    }
+
+    pub fn generate_laser(world: &mut World, num_lasers: usize) {
+        let rng = &mut world.rng;
+        for _ in 0..num_lasers {
+            let coord: Position;
+            if Boss::coin_flip(rng) {
+                coord = Position::new(0,random::rand_range(rng, 0, BOARD_SIZE.1) as usize);
+            } else {
+                coord = Position::new(random::rand_range(rng, 0, BOARD_SIZE.0) as usize, 0);
+            }
+            world.boss_lasers.push((coord, tile::BOSS_LASER_STAGE_1));
+        }
+    }
     pub fn kill(world: &mut World, index: usize) {
         let pos = world.bosses[index].position;
         let world_pos = world.bosses[index].world_position;
