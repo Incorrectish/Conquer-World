@@ -164,6 +164,8 @@ impl Enemy {
         let delta = match world.enemies[index].color {
             tile::CHASING_ENEMY => CHASING_ENEMY_ENERGY_RETURN,
             tile::BOMBER_ENEMY => BOMBER_ENEMY_ENERGY_RETURN,
+            tile::BOMBER_ENEMY_ACTIVATED => BOMBER_ENEMY_ENERGY_RETURN,
+            tile::BOMBER_ENEMY_DEACTIVATED => BOMBER_ENEMY_ENERGY_RETURN,
             tile::MAJOR_ENEMY => MAJOR_ENEMY_ENERGY_RETURN,
             tile::SHOOTER_ENEMY => SHOOTER_ENEMY_ENERGY_RETURN,
             tile::KNIGHT_ENEMY => KNIGHT_ENEMY_ENERGY_RETURN,
@@ -311,6 +313,8 @@ impl Enemy {
                         world.player.damage(world.enemies[index].attack_damage);
                     }
                     Self::create_bomber_explosion(&cur_pos, world);
+                } else if Self::match_color(&world.enemies[index].color, &tile::BOMBER_ENEMY_DEACTIVATED) {
+                    Self::kill(world, index);
                 } else {
                     break;
                 }
@@ -495,7 +499,7 @@ impl Enemy {
     }
 
     pub fn draw_bomber_explosion(world: &mut World, canvas: &mut graphics::Canvas) {
-        let mut curr_world = &mut world.bomber_explosions[world.world_position.y][world.world_position.x];
+        let curr_world = &mut world.bomber_explosions[world.world_position.y][world.world_position.x];
         for tile in curr_world {
             let x = tile.0.x;
             let y = tile.0.y;
@@ -511,6 +515,7 @@ impl Enemy {
                     .color(tile.1),
             )
         }
+        world.bomber_explosions[world.world_position.y][world.world_position.x].clear();
     }
 
     pub fn create_bomber_explosion(pos: &Position, world: &mut World) {
@@ -519,11 +524,10 @@ impl Enemy {
                 let x = pos.x as i16 + i;
                 let y = pos.y as i16 + j;
                 if x >= 0 && x < WORLD_SIZE.0 && y >= 0 && y < WORLD_SIZE.1 {
-                    world.bomber_explosions[world.world_position.x][world.world_position.y].push((Position::new(x as usize, y as usize), 
+                    world.bomber_explosions[world.world_position.y][world.world_position.x].push((Position::new(x as usize, y as usize), 
                         tile::BOMBER_EXPLOSION[((i.abs()+j.abs())/2) as usize]));
                 }
             }
         }
-
     }
 }

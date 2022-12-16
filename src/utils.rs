@@ -230,10 +230,13 @@ impl Boss {
                 }
             }
         }
-        if Boss::generate_asteroid(world, world.bosses[index].asteroid_cooldown) {
-            world.bosses[index].asteroid_cooldown = 0;
-        } else {
-            world.bosses[index].asteroid_cooldown += 1;
+        
+        if world.bosses[index].color == tile::MAJOR_BOSS {
+            if Boss::generate_asteroid(world, world.bosses[index].asteroid_cooldown) {
+                world.bosses[index].asteroid_cooldown = 0;
+            } else {
+                world.bosses[index].asteroid_cooldown += 1;
+            }
         }
 
         if BOSS_ROOMS.contains(&world.world_position) {
