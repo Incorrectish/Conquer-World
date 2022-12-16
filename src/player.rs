@@ -6,7 +6,8 @@ use crate::{
     tile,
     utils::Position,
     world::World,
-    BOARD_SIZE, TILE_SIZE, UNIVERSAL_OFFSET, WORLD_SIZE,
+    utils::Boss,
+    BOARD_SIZE, TILE_SIZE, UNIVERSAL_OFFSET, WORLD_SIZE, world::BOSS_ROOMS,
 };
 
 use std::cmp::{max, min};
@@ -86,7 +87,6 @@ pub struct Player {
 
     // duration of visibility: 0 means visible, N > 0 means invisible for N more turns
     visible: i16,
-
 
     // Cooldowns for the various abilities
     projectile_cooldown: i16,
@@ -494,7 +494,9 @@ impl Player {
                     }
                 }
                 LIGHTNING_KEYCODE => {
-                    if world.player.energy >= LIGHTNING_COST && world.player.lightning_cooldown <= 0
+                    if world.player.energy >= LIGHTNING_COST
+                        && world.player.lightning_cooldown <= 0
+                        && world.player.queued_position.is_some()
                     {
                         Player::lightning(world);
                         world.player.projectile_cooldown -= 1;
@@ -551,6 +553,9 @@ impl Player {
                 return false;
             }
         }
+        if BOSS_ROOMS.contains(&world.world_position) {
+            Boss::update(world);
+        }
         return true;
     }
 
@@ -562,15 +567,17 @@ impl Player {
         //     Direction::North =>(0, -1),
         //     Direction::South => (0, 1),
         // };
-        const delta_xs: [i16; 4] = [0, 0, -1, 1]; 
-        const delta_ys: [i16; 4] = [1, -1, 0, 0]; 
+        const deltas: [i16; 3] = [0, -1, 1];
 
         // check all the enemies
         for enemy in &mut world.enemies {
             // it's fine if the position is out of bounds, because we aren't indexing anything
-            for delta_x in delta_xs {
-                for delta_y in delta_ys {
-                    let position = Position::new((world.player.pos.x as i16 + delta_x) as usize, (world.player.pos.y as i16 + delta_y) as usize);
+            for delta_x in deltas {
+                for delta_y in deltas {
+                    let position = Position::new(
+                        (world.player.pos.x as i16 + delta_x) as usize,
+                        (world.player.pos.y as i16 + delta_y) as usize,
+                    );
                     if enemy.pos == position {
                         enemy.damage(PLAYER_SLAM_DAMAGE);
                     }
@@ -580,18 +587,19 @@ impl Player {
     }
 
     pub fn lightning(world: &mut World) {
-        // if let Some(queued_position) = world.player.queued_position {
-        //     // TODO: Damage
-        //     let projectile = Projectile::new(
-        //         queued_position.x,
-        //         queued_position.y,
-        //         0,
-        //         3,
-        //         Direction::North,
-        //         tile::LIGHTNING_PLACEHOLDER,
-        //     );
-        //     world.projectiles.push(projectile)
-        // }
+        let pos = world
+            .player
+            .queued_position
+            .expect("This method should never be called without a queued position");
+
+        let world_pos = world.world_position;
+        // queued positions are definitionally valid, so no checking needs to be done
+        world
+            .projectiles
+            .push(Projectile::lightning(pos.x, pos.y, world_pos));
+
+        // Queue it to draw
+        world.atmosphere_map[world_pos.y][world_pos.x].insert(pos, tile::LIGHTNING_INITIAL);
     }
 
     // THIS METHOD EXPECTS A QUEUED POSITION
@@ -666,6 +674,14 @@ impl Player {
                 }
             }
         }
+
+        if let Some(terrain) = world.terrain_map[world_pos.y][world_pos.x].get(&attacking_position) {
+            if terrain == &tile::BOSS_SURROUNDINGS {
+                Boss::damage(world, PLAYER_MELEE_DAMAGE, world_pos);
+            }
+  
+        }
+        
     }
 
     // // This function should just spawn a projectile, the mechanics of dealing with the projectile
