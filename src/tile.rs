@@ -37,6 +37,12 @@ pub const SMART_PROJECTILE: [f32; 4] = [4.0/255.0, 188.0/255.0, 253.0/255.0, 1.0
 
 pub const CHASING_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0]; //Regular enemy we have right now
 pub const BOMBER_ENEMY: [f32; 4] = [0.0, 0.8, 0.3, 1.0]; //Suicide bomber, can dodge projectiles, destroys structures (AOE), moves 2 tiles per turn
+pub const BOMBER_ENEMY_ACTIVATED: [f32; 4] = [0.3, 0.1, 0.1, 1.0]; //Suicide bomber, can dodge projectiles, destroys structures (AOE), moves 2 tiles per turn
+pub const BOMBER_EXPLOSION: [[f32; 4]; 3] = [
+    [1.0, 0.0, 0.0, 1.0],
+    [1.0, 0.3, 0.3, 1.0],
+    [1.0, 0.6, 0.6, 1.0]
+]; //Suicide bomber, can dodge projectiles, destroys structures (AOE), moves 2 tiles per turn
 pub const SHOOTER_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0]; //shoots projectiels lower helath, cant move when shooting projectile
 pub const KNIGHT_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0]; //Tanky regular enemy, 2 tile range of attack
 pub const MAJOR_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0]; //3x3 higher health than knight, lower damage, can shoot projectiles maybe
