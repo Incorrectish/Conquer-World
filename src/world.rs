@@ -170,6 +170,11 @@ impl World {
                         y as usize,
                         Position::new(world_x, world_y),
                     ));
+                    // enemies.push(Enemy::chasing(
+                    //     x as usize,
+                    //     y as usize,
+                    //     Position::new(world_x, world_y),
+                    // ));
                     break;
                 }
             }
