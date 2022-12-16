@@ -8,7 +8,7 @@ use std::collections::HashMap;
 const LIGHTNING_DAMAGE: usize = 50;
 const LIGHTNING_SPEED: usize = 0;
 const LIGHTNING_SIZE: i16 = 2;
-const PLAYER_PROJECTILE_DAMAGE: usize = 10;
+const PLAYER_PROJECTILE_DAMAGE: usize = 20;
 const PLAYER_PROJECTILE_SPEED: usize = 1;
 const FIRE_DAMAGE_INITIAL: usize = 1;
 const FIRE_DAMAGE_SECONDARY: usize = 1;
