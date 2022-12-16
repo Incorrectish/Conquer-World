@@ -41,15 +41,37 @@ impl Projectile {
         direction: Direction,
         world_pos: Position,
     ) -> Self {
-        Projectile { pos: Position::new(x, y), speed: PLAYER_PROJECTILE_SPEED, direction, color: tile::PROJECTILE_PLAYER, damage: PLAYER_PROJECTILE_DAMAGE, world_pos }
+        Projectile {
+            pos: Position::new(x, y),
+            speed: PLAYER_PROJECTILE_SPEED,
+            direction,
+            color: tile::PROJECTILE_PLAYER,
+            damage: PLAYER_PROJECTILE_DAMAGE,
+            world_pos,
+        }
     }
 
-    pub fn lightning(x: usize, y: usize, direction: Direction, world_pos: Position) -> Self {
-        Projectile { pos: Position::new(x, y), speed: LIGHTNING_SPEED, direction, color: tile::LIGHTNING_PLACEHOLDER, damage: LIGHTNING_DAMAGE, world_pos }
+    pub fn lightning(x: usize, y: usize, world_pos: Position) -> Self {
+        Projectile {
+            pos: Position::new(x, y),
+            speed: LIGHTNING_SPEED,
+            direction: Direction::North,
+            color: tile::LIGHTNING_PLACEHOLDER,
+            damage: LIGHTNING_DAMAGE,
+            world_pos,
+        }
     }
+
 
     pub fn fire(x: usize, y: usize, direction: Direction, world_pos: Position) -> Self {
-        Projectile { pos: Position::new(x, y), speed: FIRE_SPEED, direction, color: tile::FIRE_PLACEHOLDER, damage: FIRE_DAMAGE_INITIAL, world_pos }
+        Projectile {
+            pos: Position::new(x, y),
+            speed: FIRE_SPEED,
+            direction,
+            color: tile::FIRE_PLACEHOLDER,
+            damage: FIRE_DAMAGE_INITIAL,
+            world_pos,
+        }
     }
 
     fn new(
@@ -75,10 +97,71 @@ impl Projectile {
         let mut index: i32 = 0;
         for _ in 0..world.projectiles.len() {
             match world.projectiles[index as usize].color {
-                tile::LIGHTNING_PLACEHOLDER => {}
-                tile::LIGHTNING_INITIAL => {}
-                tile::LIGHTNING_SECONDARY => {}
-                tile::LIGHTNING_FINAL => {}
+                tile::LIGHTNING_PLACEHOLDER => {
+                    let pos = world.projectiles[index as usize].pos;
+                    let world_pos = world.projectiles[index as usize].world_pos;
+                    world.projectiles[index as usize].color = tile::LIGHTNING_INITIAL;
+                    world.atmosphere_map[world_pos.y][world_pos.x]
+                        .insert(pos, tile::LIGHTNING_INITIAL);
+                }
+                tile::LIGHTNING_INITIAL => {
+                    let pos = world.projectiles[index as usize].pos;
+                    let world_pos = world.projectiles[index as usize].world_pos;
+                    world.projectiles[index as usize].color = tile::LIGHTNING_SECONDARY;
+                    world.atmosphere_map[world_pos.y][world_pos.x]
+                        .insert(pos, tile::LIGHTNING_SECONDARY);
+                }
+                tile::LIGHTNING_SECONDARY => {
+                    const deltas: [i16; 3] = [0, 1, -1];
+                    let pos = world.projectiles[index as usize].pos;
+                    let world_pos = world.projectiles[index as usize].world_pos;
+                    world.projectiles[index as usize].color = tile::LIGHTNING_FINAL;
+                    // basically checks the 8 around and including the projectile and turns
+                    // them to their original state
+                    for x_delta in deltas {
+                        for y_delta in deltas {
+                            if pos.x < (WORLD_SIZE.0 - x_delta) as usize
+                                && pos.y < (WORLD_SIZE.1 - y_delta) as usize
+                                && pos.x as i16 >= -x_delta
+                                && pos.y as i16 >= -y_delta
+                            {
+                                let new_position = Position::new(
+                                            (pos.x as i16 + x_delta) as usize,
+                                            (pos.y as i16 + y_delta) as usize,
+                                            );
+                                world.atmosphere_map[world_pos.y][world_pos.x].insert(new_position, tile::LIGHTNING_FINAL);
+                                for enemy in &mut world.enemies {
+                                    if enemy.pos == new_position {
+                                        enemy.damage(LIGHTNING_DAMAGE);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                tile::LIGHTNING_FINAL => {
+                    const deltas: [i16; 3] = [0, 1, -1];
+                    let pos = world.projectiles[index as usize].pos;
+                    let world_pos = world.projectiles[index as usize].world_pos;
+                    world.projectiles.remove(index as usize);
+                    // basically checks the 8 around and including the projectile and turns
+                    // them to their original state
+                    for x_delta in deltas {
+                        for y_delta in deltas {
+                            if pos.x < (WORLD_SIZE.0 - x_delta) as usize
+                                && pos.y < (WORLD_SIZE.1 - y_delta) as usize
+                                && pos.x as i16 >= -x_delta
+                                && pos.y as i16 >= -y_delta
+                            {
+                                let new_position = Position::new(
+                                            (pos.x as i16 + x_delta) as usize,
+                                            (pos.y as i16 + y_delta) as usize,
+                                            );
+                                world.atmosphere_map[world_pos.y][world_pos.x].remove(&new_position);
+                            }
+                        }
+                    }
+                }
                 tile::FIRE_PLACEHOLDER => {}
                 tile::FIRE_INITIAL => {}
                 tile::FIRE_SECONDARY => {}
