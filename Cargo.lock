@@ -11,6 +11,7 @@ dependencies = [
  "ggez",
  "oorandom",
  "rand",
+ "rand_chacha",
  "serde",
 ]
 
