@@ -43,13 +43,17 @@ pub const MAJOR_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0]; //3x3 higher health than
 
 
 
-pub const MINOR_BOSS: [f32; 4] = [0.25, 0.2, 0.9, 1.0]; //5x5 boss in the 4 dungeons
+pub const MINOR_BOSS: [f32; 4] = [0.2, 0.8, 0.2, 1.0]; //5x5 boss in the 4 dungeons
 pub const MAJOR_BOSS: [f32; 4] = [0.8, 0.3, 0.3, 1.0]; //7x7 boss in thd middle room
 pub const BOSS_SURROUNDINGS: [f32; 4] = [0.25, 0.2, 0.9, 1.0];
-pub const BOSS_LASER_STAGE_1: [f32; 4] = [1.0, 0.0, 0.0, 0.1];
-pub const BOSS_LASER_STAGE_2: [f32; 4] = [1.0, 0.0, 0.0, 0.4];
-pub const BOSS_LASER_STAGE_3: [f32; 4] = [1.0, 0.0, 0.0, 0.7];
+pub const BOSS_LASER_STAGE_1: [f32; 4] = [0.8, 0.6, 0.6, 0.3];
+pub const BOSS_LASER_STAGE_2: [f32; 4] = [1.0, 0.0, 0.0, 0.5];
 pub const BOSS_LASER_REAL: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
+pub const BOSS_ASTEROID_STAGE_1: [f32; 4] = [0.99, 0.8, 0.7, 0.2];
+pub const BOSS_ASTEROID_STAGE_2: [f32; 4] = [0.98, 0.8, 0.5, 0.3];
+pub const BOSS_ASTEROID_STAGE_3: [f32; 4] = [1.0, 0.5, 0.15, 0.5];
+pub const BOSS_ASTEROID_REAL: [f32; 4] = [1.0, 0.5, 0.0, 1.0];
+
 
 
 

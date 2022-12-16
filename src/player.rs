@@ -6,7 +6,8 @@ use crate::{
     tile,
     utils::Position,
     world::World,
-    BOARD_SIZE, TILE_SIZE, UNIVERSAL_OFFSET, WORLD_SIZE,
+    utils::Boss,
+    BOARD_SIZE, TILE_SIZE, UNIVERSAL_OFFSET, WORLD_SIZE, world::BOSS_ROOMS,
 };
 
 use std::cmp::{max, min};
@@ -551,6 +552,9 @@ impl Player {
                 return false;
             }
         }
+        if BOSS_ROOMS.contains(&world.world_position) {
+            Boss::update(world);
+        }
         return true;
     }
 
@@ -666,6 +670,14 @@ impl Player {
                 }
             }
         }
+
+        if let Some(terrain) = world.terrain_map[world_pos.y][world_pos.x].get(&attacking_position) {
+            if terrain == &tile::BOSS_SURROUNDINGS {
+                Boss::damage(world, PLAYER_MELEE_DAMAGE, world_pos);
+            }
+  
+        }
+        
     }
 
     // // This function should just spawn a projectile, the mechanics of dealing with the projectile

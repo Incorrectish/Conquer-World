@@ -129,7 +129,6 @@ impl ggez::event::EventHandler<GameError> for State {
             // updates all the enemies in the world, for now only removes them once their health is
             // less than or equal to 0
             Enemy::update(&mut self.world);
-            Boss::update(&mut self.world);
             self.should_draw = true;
         }
         Ok(())

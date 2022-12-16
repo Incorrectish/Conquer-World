@@ -8,7 +8,7 @@ use crate::{
     tile::{self, FLOOR, PLAYER, *},
     utils::Boss,
     utils::Position,
-    BOARD_SIZE, TILE_SIZE, UNIVERSAL_OFFSET, WORLD_SIZE,
+    BOARD_SIZE, TILE_SIZE, UNIVERSAL_OFFSET, WORLD_SIZE, 
 };
 
 use ggez::graphics;
@@ -74,7 +74,8 @@ pub struct World {
     pub atmosphere_map: [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
         (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     pub boss_defeated: [[bool; 7]; 7],
-    pub boss_lasers: Vec<(Position, [f32; 4])>,
+    pub boss_lasers: Vec<(Position, [f32; 4], usize)>,
+    pub boss_asteroids: Vec<(Position, [f32; 4], usize)>,
     pub rng: ChaCha8Rng,
 }
 
@@ -119,6 +120,7 @@ impl World {
             boss_defeated,
             rng,
             boss_lasers: Vec::new(),
+            boss_asteroids: Vec::new(),
         }
     }
 
@@ -177,16 +179,27 @@ impl World {
         bosses: &mut Vec<Boss>,
     ) {
         for room_coord in BOSS_ROOMS {
-            let world_map_entity = &mut entity_map[room_coord.y][room_coord.x];
-            let x = WORLD_SIZE.0 as usize / 2 - 1;
-            let y = WORLD_SIZE.1 as usize / 2 + 3 - UNIVERSAL_OFFSET as usize;
-            bosses.push(Boss::new(
-                x as usize,
-                y as usize,
-                tile::MAJOR_BOSS,
-                room_coord,
-                world_map_entity,
-            ));
+            let world_map_terrain = &mut terrain_map[room_coord.y][room_coord.x];
+            let x = WORLD_SIZE.0 as usize / 2 - 3;
+            let y = WORLD_SIZE.1 as usize / 2 - 3;
+            if room_coord == Position::new(3,3) {
+                bosses.push(Boss::new(
+                    x as usize,
+                    y as usize,
+                    tile::MAJOR_BOSS,
+                    room_coord,
+                    world_map_terrain,
+                ));
+            } else {
+                bosses.push(Boss::new(
+                    x as usize,
+                    y as usize,
+                    tile::MINOR_BOSS,
+                    room_coord,
+                    world_map_terrain,
+                ));
+            }
+           
         }
     }
 
@@ -268,9 +281,13 @@ impl World {
     pub fn draw(&mut self, canvas: &mut graphics::Canvas) {
         //Draw lasers if in boss room
         if BOSS_ROOMS.contains(&self.world_position) {
-            Boss::draw_lasers(self, canvas);
+            for index in 0..self.bosses.len() {
+                if self.bosses[index].world_position == self.world_position {
+                    Boss::draw_boss_stuff(self, canvas, index);
+                }
+            }
         }
-        
+
         //Draw the black bar on top that has the health/energy indicators
         for i in 0..WORLD_SIZE.0 {
             for j in 0..UNIVERSAL_OFFSET {
@@ -496,9 +513,7 @@ impl World {
                             world.player.pos = new_position.0;
                         }
                     }
-                    if(BOSS_ROOMS.contains(&world.world_position)) {
-                        Boss::grid_attack(world, 5);
-                    }
+
                     Self::toggle_doors(
                         &mut world.terrain_map,
                         world.world_position,
