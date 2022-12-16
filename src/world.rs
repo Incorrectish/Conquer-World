@@ -73,6 +73,8 @@ pub struct World {
         (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     pub boss_defeated: [[bool; 7]; 7],
     pub rng: ThreadRng,
+    
+    pub boss_lasers: Vec<(Position, [f32; 4])>,
 }
 
 impl World {
@@ -115,6 +117,7 @@ impl World {
             atmosphere_map: Default::default(),
             boss_defeated,
             rng,
+            boss_lasers: Vec::new(),
         }
     }
 

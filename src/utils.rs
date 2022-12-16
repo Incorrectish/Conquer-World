@@ -5,8 +5,12 @@ use crate::{
     world::World,
     BOARD_SIZE, TILE_SIZE, UNIVERSAL_OFFSET, WORLD_SIZE,
     entity::Entity,
+    random,
 };
 use std::collections::HashMap;
+use rand::rngs::ThreadRng;
+use rand::rngs;
+use ggez::graphics::{self, Canvas};
 
 const BOSS_HEALTH: usize = 100;
 
@@ -31,7 +35,7 @@ impl Boss {
                     if i == 0 || j == 0 || i == 6 || j == 6 {
                         surrounding.push(Some(Enemy::minor_boss(x+i, y+j, world_position)));
                         entity_loc.insert(Position::new(x+i, y+j), 
-                        (tile::MINOR_BOSS, Entity::Enemy)
+                        (tile::BOSS_SURROUNDINGS, Entity::Enemy)
                     );
                     index += 1;
                     } else { 
@@ -64,10 +68,52 @@ impl Boss {
         // }
     }
 
-    pub fn move_boss(index: usize, world: &mut World) {
-
+    pub fn draw_lasers(world: &mut World, canvas: &mut graphics::Canvas) {
+        for lasers in &mut world.boss_lasers {
+            
+        }   
     }
 
+    pub fn coin_flip(rng: &mut ThreadRng) -> bool {
+        random::rand_range(rng, 0, 2) > 0
+    }
+
+    pub fn grid_attack(stage: usize, world: &mut World, num_laser: usize) {
+        Boss::generate_laser(world, num_laser);
+        let lasers = &mut world.boss_lasers;
+        for index in (0..lasers.len()).rev() {
+            match lasers[index].1 {
+                tile::BOSS_LASER_STAGE_1 => {
+                    lasers[index].1 = tile::BOSS_LASER_STAGE_2;
+                },
+
+                tile::BOSS_LASER_STAGE_2 => {
+                    lasers[index].1 = tile::BOSS_LASER_STAGE_3;
+                },
+
+                tile::BOSS_LASER_STAGE_3 => {
+                    lasers[index].1 = tile::BOSS_LASER_REAL;
+                },
+
+                _ => {
+                    lasers.remove(index);
+                }
+            }
+        }
+    }
+
+    pub fn generate_laser(world: &mut World, num_lasers: usize) {
+        let rng = &mut world.rng;
+        for _ in 0..num_lasers {
+            let coord: Position;
+            if Boss::coin_flip(rng) {
+                coord = Position::new(0,random::rand_range(rng, 0, BOARD_SIZE.1) as usize);
+            } else {
+                coord = Position::new(random::rand_range(rng, 0, BOARD_SIZE.0) as usize, 0);
+            }
+            world.boss_lasers.push((coord, tile::BOSS_LASER_STAGE_1));
+        }
+    }
     pub fn kill(world: &mut World, index: usize) {
         let pos = world.bosses[index].position;
         let world_pos = world.bosses[index].world_position;
