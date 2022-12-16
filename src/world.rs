@@ -189,8 +189,8 @@ impl World {
     //Draws the map on the top right and corner of the world
     pub fn draw_world_map(&self, canvas: &mut graphics::Canvas) {
         //Get number of cells on each x and y axis
-        let mut x = BOARD_SIZE.0 as usize / 50;
-        let mut y = BOARD_SIZE.1 as usize / 50;
+        let mut x = BOARD_SIZE.0 as usize / WORLD_SIZE.0 as usize;
+        let mut y = BOARD_SIZE.1 as usize / WORLD_SIZE.0 as usize;
         let player_indicator = [0.9, 0.1, 0.1, 1.0]; //Color of the dot on the map
         const dungeon_indicator: [f32; 4] = [0.1, 0.5, 0.1, 1.0]; //Color of boss indicators
         const boss_room_indicator: [f32; 4] = [0.1, 0.5, 0.1, 1.0]; //Color of boss indicators
@@ -355,9 +355,9 @@ impl World {
     // crossing edge
     pub fn coordinates_are_within_board(world: &mut World, world_position: Position) -> bool {
         return world_position.x > 0
-            || world_position.x < WORLD_SIZE.0 as usize / 50
+            || world_position.x < WORLD_SIZE.0 as usize / WORLD_SIZE.0 as usize
             || world_position.y > 0
-            || world_position.y < WORLD_SIZE.1 as usize / 50;
+            || world_position.y < WORLD_SIZE.1 as usize / WORLD_SIZE.0 as usize;
     }
 
     //Takes in a previous location and new location Position object and updates that specific
@@ -593,7 +593,7 @@ impl World {
                         }
                         _ => {
                             y = 0;
-                            if world_pos.y == BOARD_SIZE.1 as usize / 50 {
+                            if world_pos.y == BOARD_SIZE.1 as usize / WORLD_SIZE.0 as usize {
                                 return (Position::new(pos.x as usize, pos.y as usize), world_pos);
                             }
                             world_pos =
@@ -617,7 +617,7 @@ impl World {
                         }
                         _ => {
                             x = 0;
-                            if world_pos.x == BOARD_SIZE.1 as usize / 50 {
+                            if world_pos.x == BOARD_SIZE.1 as usize / WORLD_SIZE.0 as usize {
                                 return (Position::new(pos.x as usize, pos.y as usize), world_pos);
                             }
                             world_pos =
@@ -673,8 +673,8 @@ impl World {
         let y: usize = (BOARD_SIZE.1 as usize) / 2 - 1;
 
         // builds a 12x12 square around the center of WALL tiles
-        let world_map = &mut terrain_map[(WORLD_SIZE.1 / 50 / 2 + 1) as usize]
-            [(WORLD_SIZE.0 / 50 / 2 + 1) as usize];
+        let world_map = &mut terrain_map[(WORLD_SIZE.1 / WORLD_SIZE.0 / 2 + 1) as usize]
+            [(WORLD_SIZE.0 / WORLD_SIZE.0  / 2 + 1) as usize];
         for i in 0..12 {
             for j in 0..12 {
                 let loc = Position::new(x - 5 + i as usize, y - 5 + j as usize);
@@ -737,7 +737,7 @@ impl World {
         let pos = Position::new(x as usize, y as usize);
         if !Self::has_adjacent_terrain(x as usize, y as usize, &terrain_map) {
             // sets curr tile to water
-            let world_loc = Position::new((x / 50) as usize, (y / 50) as usize);
+            let world_loc = Position::new((x / WORLD_SIZE.0) as usize, (y / WORLD_SIZE.0) as usize);
 
             let tile: [f32; 4];
             if BOSS_ROOMS.contains(&world_loc) {
@@ -820,10 +820,10 @@ impl World {
         ];
 
         for corner in UP_LEFT_CORNERS {
-            for i in 0..50 {
+            for i in 0..WORLD_SIZE.0 as usize {
                 // generates a thickness 2 wall around each mini boss room square
                 let mut world_map =
-                    &mut terrain_map[corner[1] as usize / 50][corner[0] as usize / 50];
+                    &mut terrain_map[corner[1] as usize / WORLD_SIZE.0 as usize][corner[0] as usize / WORLD_SIZE.0 as usize];
                 if i as i16 != WORLD_SIZE.0 / 2 - 1 && i as i16 != WORLD_SIZE.0 / 2 {
                     let mut loc = Position::new(0, i);
                     world_map.insert(loc, tile::WALL);
@@ -835,22 +835,22 @@ impl World {
                     world_map.insert(loc, tile::WALL);
 
                     world_map =
-                        &mut terrain_map[corner[1] as usize / 50][corner[0] as usize / 50 + 1];
+                        &mut terrain_map[corner[1] as usize / WORLD_SIZE.0 as usize][corner[0] as usize / WORLD_SIZE.0 as usize + 1];
                     loc = Position::new(0, i);
                     world_map.insert(loc, tile::WALL);
 
                     world_map =
-                        &mut terrain_map[corner[1] as usize / 50][corner[0] as usize / 50 - 1];
+                        &mut terrain_map[corner[1] as usize / WORLD_SIZE.0 as usize][corner[0] as usize / WORLD_SIZE.0 as usize - 1];
                     loc = Position::new(WORLD_SIZE.0 as usize - 1, i);
                     world_map.insert(loc, tile::WALL);
 
                     world_map =
-                        &mut terrain_map[corner[1] as usize / 50 + 1][corner[0] as usize / 50];
+                        &mut terrain_map[corner[1] as usize / WORLD_SIZE.0 as usize + 1][corner[0] as usize / WORLD_SIZE.0 as usize];
                     loc = Position::new(i, 0);
                     world_map.insert(loc, tile::WALL);
 
                     world_map =
-                        &mut terrain_map[corner[1] as usize / 50 - 1][corner[0] as usize / 50];
+                        &mut terrain_map[corner[1] as usize / WORLD_SIZE.0 as usize - 1][corner[0] as usize / WORLD_SIZE.0 as usize];
                     loc = Position::new(i, WORLD_SIZE.1 as usize - 1);
                     world_map.insert(loc, tile::WALL);
                 }
@@ -886,7 +886,7 @@ impl World {
             let x = random::rand_range(rng, 5, BOARD_SIZE.0); // random x coordinate
             let y = random::rand_range(rng, 5, BOARD_SIZE.1); // random y coordinate
 
-            let world_loc = Position::new((x / 50) as usize, (y / 50) as usize);
+            let world_loc = Position::new((x / WORLD_SIZE.0) as usize, (y / WORLD_SIZE.0) as usize);
 
             if BOSS_ROOMS.contains(&world_loc) {
                 continue;
@@ -1026,10 +1026,10 @@ impl World {
             let other_x = x as i16 + dir[0];
             let other_y = y as i16 + dir[1];
 
-            let world_loc = Position::new((other_x / 50) as usize, (other_y / 50) as usize);
+            let world_loc = Position::new((other_x / WORLD_SIZE.0) as usize, (other_y / WORLD_SIZE.0) as usize);
             let loc = Position::new(
-                (other_x - (50 * world_loc.x as i16)) as usize,
-                (other_y - (50 * world_loc.y as i16)) as usize,
+                (other_x - (WORLD_SIZE.0 * world_loc.x as i16)) as usize,
+                (other_y - (WORLD_SIZE.0 * world_loc.y as i16)) as usize,
             );
 
             if let Some(tile) = terrain_map[world_loc.y][world_loc.x].get(&loc) {
@@ -1048,10 +1048,10 @@ impl World {
     ) {
         for (pos, tile) in other {
             let world_loc =
-                Position::new((pos.x as i16 / 50) as usize, (pos.y as i16 / 50) as usize);
+                Position::new((pos.x as i16 / WORLD_SIZE.0) as usize, (pos.y as i16 / WORLD_SIZE.0) as usize);
             let loc = Position::new(
-                (pos.x as i16 - (50 * world_loc.x as i16)) as usize,
-                (pos.y as i16 - (50 * world_loc.y as i16)) as usize,
+                (pos.x as i16 - (WORLD_SIZE.0 * world_loc.x as i16)) as usize,
+                (pos.y as i16 - (WORLD_SIZE.0 * world_loc.y as i16)) as usize,
             );
 
             if !terrain_map[world_loc.y][world_loc.x].contains_key(&loc) {

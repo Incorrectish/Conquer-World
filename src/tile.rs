@@ -33,13 +33,13 @@ pub const FIRE_TERTIARY: [f32; 4] = [226.0/255.0, 88.0/255.0, 34.0/255.0, 1.0];
 pub const FIRE_FINAL: [f32; 4] = [215.0/255.0, 53.0/255.0, 2.0/255.0, 1.0];
 
 
-pub const CHASING_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0];
-pub const BOMBER_ENEMY: [f32; 4] = [0.0, 0.8, 0.3, 1.0];
-pub const SHOOTER_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0];
-pub const KNIGHT_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0];
-pub const MAJOR_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0];
-pub const MINOR_BOSS: [f32; 4] = [0.25, 0.2, 0.9, 1.0];
-pub const MAJOR_BOSS: [f32; 4] = [0.8, 0.3, 0.3, 1.0];
+pub const CHASING_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0]; //Regular enemy we have right now
+pub const BOMBER_ENEMY: [f32; 4] = [0.0, 0.8, 0.3, 1.0]; //Suicide bomber, can dodge projectiles, destroys structures (AOE), moves 2 tiles per turn
+pub const SHOOTER_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0]; //shoots projectiels lower helath, cant move when shooting projectile
+pub const KNIGHT_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0]; //Tanky regular enemy, 2 tile range of attack
+pub const MAJOR_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0]; //3x3 higher health than knight, lower damage, can shoot projectiles maybe
+pub const MINOR_BOSS: [f32; 4] = [0.25, 0.2, 0.9, 1.0]; //5x5 boss in the 4 dungeons
+pub const MAJOR_BOSS: [f32; 4] = [0.8, 0.3, 0.3, 1.0]; //7x7 boss in thd middle room
 
 // pub const ENEMIES: [[f32; 4]; 7] = [
 //     // basic
