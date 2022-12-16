@@ -14,6 +14,8 @@ use crate::{
 use ggez::graphics;
 
 use rand::rngs::ThreadRng;
+use rand::prelude::*;
+use rand_chacha::ChaCha8Rng;
 
 use std::cmp::min;
 use std::collections::HashMap;
@@ -72,12 +74,12 @@ pub struct World {
     pub atmosphere_map: [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
         (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     pub boss_defeated: [[bool; 7]; 7],
-    pub rng: ThreadRng,
+    pub rng: ChaCha8Rng,
 }
 
 impl World {
     pub fn new() -> Self {
-        let mut rng = rand::thread_rng();
+        let mut rng = ChaCha8Rng::seed_from_u64(0);
         let entity_positions = HashMap::new();
         let terrain_positions = HashMap::new();
         let mut entity_map: [[HashMap<Position, ([f32; 4], Entity)>;
@@ -119,7 +121,7 @@ impl World {
     }
 
     pub fn gen_enemies(
-        rng: &mut ThreadRng,
+        rng: &mut ChaCha8Rng,
         terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
                  (BOARD_SIZE.1 / WORLD_SIZE.1) as usize],
 
@@ -693,7 +695,7 @@ impl World {
 
     // generates water tiles around the map
     pub fn gen_lake(
-        rng: &mut ThreadRng,
+        rng: &mut ChaCha8Rng,
         terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
                  (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     ) {
@@ -726,7 +728,7 @@ impl World {
     // limited probabilistically (probability of expansion decreases as we range further from the
     // center)
     fn gen_lake_helper(
-        rng: &mut ThreadRng,
+        rng: &mut ChaCha8Rng,
         x: i16,
         y: i16,
         dist: i16,
@@ -769,12 +771,12 @@ impl World {
     }
 
     // Gets probability of continuing to expand lake outwards
-    fn prob_expand_lake(rng: &mut ThreadRng, dist: i16) -> bool {
+    fn prob_expand_lake(rng: &mut ChaCha8Rng, dist: i16) -> bool {
         random::bernoulli(rng, 1. - 0.15 * (dist as f32))
     }
 
     // adds a little variability to lake color
-    pub fn related_color(rng: &mut ThreadRng, color: [f32; 4]) -> [f32; 4] {
+    pub fn related_color(rng: &mut ChaCha8Rng, color: [f32; 4]) -> [f32; 4] {
         if color == tile::WATER {
             const MAX_DIFF: f32 = 0.05;
             return [
@@ -877,7 +879,7 @@ impl World {
     }
 
     pub fn gen_mountain(
-        rng: &mut ThreadRng,
+        rng: &mut ChaCha8Rng,
         terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
                  (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     ) {
@@ -905,7 +907,7 @@ impl World {
     // limited probabilistically (probability of expansion decreases as we range further from the
     // center)
     fn gen_mountain_helper(
-        rng: &mut ThreadRng,
+        rng: &mut ChaCha8Rng,
         x: i16,
         y: i16,
         dist: i16,
@@ -941,7 +943,7 @@ impl World {
     }
 
     // Gets probability of continuing to expand lake outwards
-    fn prob_expand_mountain(rng: &mut ThreadRng, dist: i16) -> bool {
+    fn prob_expand_mountain(rng: &mut ChaCha8Rng, dist: i16) -> bool {
         random::bernoulli(rng, 1. - 0.10 * (dist as f32))
     }
 
