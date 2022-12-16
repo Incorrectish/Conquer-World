@@ -19,18 +19,20 @@ use std::collections::HashMap;
 // Can change easily
 const MAX_PLAYER_HEALTH: usize = 100;
 const MAX_PLAYER_ENERGY: usize = 100;
-const PLAYER_MELEE_DAMAGE: usize = 1;
+const PLAYER_MELEE_DAMAGE: usize = 25;
+const PLAYER_SLAM_DAMAGE: usize = 15;
 const TELEPORTATION_COST: usize = 10;
-const HEAL_COST: usize = 8;
+const HEAL_COST: usize = 20;
 const FIRE_COST: usize = 15;
+const HEAL_ABILITY_RETURN: usize = 20;
 const LIGHTNING_COST: usize = 15;
 const INVISIBILITY_COST: usize = 50;
 
 const INVISIBILITY_DURATION: usize = 7;
 
 const MELEE_ATTACK_KEYCODE: VirtualKeyCode = KeyCode::A;
+
 // TODO look over these values
-const HEAL_ABILITY_RETURN: usize = 3;
 const DIRECTION_LEFT: VirtualKeyCode = KeyCode::N;
 const DIRECTION_DOWN: VirtualKeyCode = KeyCode::E;
 const DIRECTION_UP: VirtualKeyCode = KeyCode::I;
@@ -50,7 +52,7 @@ const PERMISSIBLE_TILES: [[f32; 4]; 1] = [tile::GRASS];
 const LIGHTNING_COOLDOWN: usize = 5;
 const TELEPORT_COOLDOWN: usize = 5;
 const FIRE_COOLDOWN: usize = 5;
-const SLAM_COOLDOWN: usize = 2;
+const SLAM_COOLDOWN: usize = 1;
 const PROJECTILE_COOLDOWN: usize = 1;
 const INVISIBILITY_COOLDOWN: usize = 25;
 
@@ -552,7 +554,30 @@ impl Player {
         return true;
     }
 
-    pub fn slam(world: &mut World) {}
+    pub fn slam(world: &mut World) {
+        // this gets the positions that should be damaged
+        // let delta = match world.player.direction.clone() {
+        //     Direction::East => (1, 0),
+        //     Direction::West => (-1, 0),
+        //     Direction::North =>(0, -1),
+        //     Direction::South => (0, 1),
+        // };
+        const delta_xs: [i16; 4] = [0, 0, -1, 1]; 
+        const delta_ys: [i16; 4] = [1, -1, 0, 0]; 
+
+        // check all the enemies
+        for enemy in &mut world.enemies {
+            // it's fine if the position is out of bounds, because we aren't indexing anything
+            for delta_x in delta_xs {
+                for delta_y in delta_ys {
+                    let position = Position::new((world.player.pos.x as i16 + delta_x) as usize, (world.player.pos.y as i16 + delta_y) as usize);
+                    if enemy.pos == position {
+                        enemy.damage(PLAYER_SLAM_DAMAGE);
+                    }
+                }
+            }
+        }
+    }
 
     pub fn lightning(world: &mut World) {
         // if let Some(queued_position) = world.player.queued_position {
@@ -657,13 +682,10 @@ impl Player {
         if projectile_spawn_pos.0 != world.player.pos
             && projectile_spawn_pos.1 == world.world_position
         {
-            let projectile = Projectile::new(
+            let projectile = Projectile::player_projectile(
                 projectile_spawn_pos.0.x,
                 projectile_spawn_pos.0.y,
-                PLAYER_PROJECTILE_SPEED,
-                PLAYER_PROJECTILE_DAMAGE,
                 world.player.direction.clone(),
-                tile::PROJECTILE_PLAYER,
                 world.world_position,
             );
             for index in 0..world.enemies.len() {

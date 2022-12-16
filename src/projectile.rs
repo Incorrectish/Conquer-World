@@ -41,12 +41,16 @@ impl Projectile {
         direction: Direction,
         world_pos: Position,
     ) -> Self {
-        Self {}
+        Projectile { pos: Position::new(x, y), speed: PLAYER_PROJECTILE_SPEED, direction, color: tile::PROJECTILE_PLAYER, damage: PLAYER_PROJECTILE_DAMAGE, world_pos }
     }
 
-    pub fn lightning(x: usize, y: usize, direction: Direction, world_pos: Position) -> Self {}
+    pub fn lightning(x: usize, y: usize, direction: Direction, world_pos: Position) -> Self {
+        Projectile { pos: Position::new(x, y), speed: LIGHTNING_SPEED, direction, color: tile::LIGHTNING_PLACEHOLDER, damage: LIGHTNING_DAMAGE, world_pos }
+    }
 
-    pub fn fire(x: usize, y: usize, direction: Direction, world_pos: Position) -> Self {}
+    pub fn fire(x: usize, y: usize, direction: Direction, world_pos: Position) -> Self {
+        Projectile { pos: Position::new(x, y), speed: FIRE_SPEED, direction, color: tile::FIRE_PLACEHOLDER, damage: FIRE_DAMAGE_INITIAL, world_pos }
+    }
 
     fn new(
         x: usize,

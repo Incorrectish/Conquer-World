@@ -12,3 +12,7 @@ pub fn rand_fraction(rng: &mut ThreadRng) -> f32 {
 pub fn bernoulli(rng: &mut ThreadRng, p: f32) -> bool {
     rand_range(rng, 0, 1000) < ((1000. * p) as i16)
 }
+
+pub fn coin_flip(rng: &mut ThreadRng) -> bool {
+    rand_range(rng, 0, 2) > 0
+}
