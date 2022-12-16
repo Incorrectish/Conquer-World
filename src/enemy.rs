@@ -164,6 +164,8 @@ impl Enemy {
         let delta = match world.enemies[index].color {
             tile::CHASING_ENEMY => CHASING_ENEMY_ENERGY_RETURN,
             tile::BOMBER_ENEMY => BOMBER_ENEMY_ENERGY_RETURN,
+            tile::BOMBER_ENEMY_ACTIVATED => BOMBER_ENEMY_ENERGY_RETURN,
+            tile::BOMBER_ENEMY_DEACTIVATED => BOMBER_ENEMY_ENERGY_RETURN,
             tile::MAJOR_ENEMY => MAJOR_ENEMY_ENERGY_RETURN,
             tile::SHOOTER_ENEMY => SHOOTER_ENEMY_ENERGY_RETURN,
             tile::KNIGHT_ENEMY => KNIGHT_ENEMY_ENERGY_RETURN,
@@ -248,11 +250,8 @@ impl Enemy {
         let mut travel_path = Self::get_best_path(index, world, can_dodge_projectiles);
         let enemy = &world.enemies[index];
         let mut cur_pos = enemy.pos;
-        println!("{} {} {} {} {}", index, enemy.color[0], enemy.color[1], enemy.color[2], travel_path.len());
         for _ in 0..enemy.speed {
-            println!("step 1");
             if let Some(new_pos) = travel_path.pop_front() {
-                println!("branch 1");
                 if Self::match_color(&world.enemies[index].color, &tile::CHASING_ENEMY) {
                     if new_pos.x >= WORLD_SIZE.0 as usize || new_pos.y >= WORLD_SIZE.1 as usize {
                         Self::move_enemy_with_deltas(index, world);
@@ -279,7 +278,6 @@ impl Enemy {
                 } else if Self::match_color(&world.enemies[index].color, &tile::BOMBER_ENEMY) {
                     // activate bomber if within range (no movement)
                     if Self::player_within_spaces(&cur_pos, &world, 2) {
-                        println!("{}", index);
                         world.enemies[index].color = tile::BOMBER_ENEMY_ACTIVATED;
                         let curr_world = &mut world.entity_map[world.world_position.y][world.world_position.x];
                         curr_world.insert(cur_pos, (world.enemies[index].color, Entity::Enemy));
@@ -310,13 +308,16 @@ impl Enemy {
                         cur_pos = new_pos;
                     }
                 } else if Self::match_color(&world.enemies[index].color, &tile::BOMBER_ENEMY_ACTIVATED) {
-                    println!("branch 2");
+                    world.enemies[index].color = tile::BOMBER_ENEMY_DEACTIVATED;
+                    let curr_world = &mut world.entity_map[world.world_position.y][world.world_position.x];
+                    curr_world.insert(cur_pos, (world.enemies[index].color, Entity::Enemy));
                     if Self::player_within_spaces(&cur_pos, &world, 2) {
                         world.player.damage(world.enemies[index].attack_damage);
                     }
                     Self::create_bomber_explosion(&cur_pos, world);
+                } else if Self::match_color(&world.enemies[index].color, &tile::BOMBER_ENEMY_DEACTIVATED) {
+                    Self::kill(world, index);
                 } else {
-                    println!("branch 3");
                     break;
                 }
             }
@@ -500,7 +501,7 @@ impl Enemy {
     }
 
     pub fn draw_bomber_explosion(world: &mut World, canvas: &mut graphics::Canvas) {
-        let mut curr_world = &mut world.bomber_explosions[world.world_position.y][world.world_position.x];
+        let curr_world = &mut world.bomber_explosions[world.world_position.y][world.world_position.x];
         for tile in curr_world {
             let x = tile.0.x;
             let y = tile.0.y;
@@ -516,6 +517,7 @@ impl Enemy {
                     .color(tile.1),
             )
         }
+        world.bomber_explosions[world.world_position.y][world.world_position.x].clear();
     }
 
     pub fn create_bomber_explosion(pos: &Position, world: &mut World) {
@@ -524,11 +526,10 @@ impl Enemy {
                 let x = pos.x as i16 + i;
                 let y = pos.y as i16 + j;
                 if x >= 0 && x < WORLD_SIZE.0 && y >= 0 && y < WORLD_SIZE.1 {
-                    world.bomber_explosions[world.world_position.x][world.world_position.y].push((Position::new(x as usize, y as usize), 
+                    world.bomber_explosions[world.world_position.y][world.world_position.x].push((Position::new(x as usize, y as usize), 
                         tile::BOMBER_EXPLOSION[((i.abs()+j.abs())/2) as usize]));
                 }
             }
         }
-
     }
 }
