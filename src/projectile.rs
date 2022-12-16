@@ -5,6 +5,16 @@ use crate::{
 use ggez::graphics::{self, Canvas};
 use std::collections::HashMap;
 
+const LIGHTNING_DAMAGE: usize = 1;
+const LIGHTNING_SPEED: usize = 1;
+const PLAYER_PROJECTILE_DAMAGE: usize = 1;
+const PLAYER_PROJECTILE_SPEED: usize = 1;
+const FIRE_DAMAGE_INITIAL: usize = 1;
+const FIRE_DAMAGE_SECONDARY: usize = 1;
+const FIRE_DAMAGE_TERTIARY: usize = 1;
+const FIRE_DAMAGE_FINAL: usize = 1;
+const FIRE_SPEED: usize = 1;
+
 const PERMISSIBLE_TILES: [[f32; 4]; 5] = [
     tile::WATER,
     tile::GRASS,
@@ -25,7 +35,20 @@ pub struct Projectile {
 }
 
 impl Projectile {
-    pub fn new(
+    pub fn player_projectile(
+        x: usize,
+        y: usize,
+        direction: Direction,
+        world_pos: Position,
+    ) -> Self {
+        Self {}
+    }
+
+    pub fn lightning(x: usize, y: usize, direction: Direction, world_pos: Position) -> Self {}
+
+    pub fn fire(x: usize, y: usize, direction: Direction, world_pos: Position) -> Self {}
+
+    fn new(
         x: usize,
         y: usize,
         speed: usize,
@@ -34,15 +57,14 @@ impl Projectile {
         color: [f32; 4],
         player_pos: Position,
     ) -> Self {
-        let temp = Projectile {
+        Projectile {
             pos: Position::new(x, y),
             speed,
             damage,
             direction,
             color,
             world_pos: player_pos,
-        };
-        temp
+        }
     }
 
     pub fn update(world: &mut World) {

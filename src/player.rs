@@ -24,6 +24,10 @@ const TELEPORTATION_COST: usize = 10;
 const HEAL_COST: usize = 8;
 const FIRE_COST: usize = 15;
 const LIGHTNING_COST: usize = 15;
+const INVISIBILITY_COST: usize = 50;
+
+const INVISIBILITY_DURATION: usize = 7;
+
 const MELEE_ATTACK_KEYCODE: VirtualKeyCode = KeyCode::A;
 // TODO look over these values
 const HEAL_ABILITY_RETURN: usize = 3;
@@ -48,6 +52,7 @@ const TELEPORT_COOLDOWN: usize = 5;
 const FIRE_COOLDOWN: usize = 5;
 const SLAM_COOLDOWN: usize = 2;
 const PROJECTILE_COOLDOWN: usize = 1;
+const INVISIBILITY_COOLDOWN: usize = 25;
 
 // This is with the covered tile model, but we could use the static/dynamic board paradighm or
 // something else entirely
@@ -77,6 +82,10 @@ pub struct Player {
     // This is the position queued by mouse clicks, used for teleportation, etc
     pub queued_position: Option<Position>,
 
+    // duration of visibility: 0 means visible, N > 0 means invisible for N more turns
+    visible: i16,
+
+
     // Cooldowns for the various abilities
     projectile_cooldown: i16,
     lightning_cooldown: i16,
@@ -94,6 +103,10 @@ impl Player {
         self.health -= damage;
     }
 
+    pub fn visible(&self) -> bool {
+        self.visible <= 0
+    }
+
     pub fn new() -> Self {
         let temp = Self {
             pos: Position::new(0, 0),
@@ -103,6 +116,7 @@ impl Player {
             health: MAX_PLAYER_HEALTH,
             energy: PLAYER_INITIAL_ENERGY,
             queued_position: None,
+            visible: 0,
             projectile_cooldown: 0,
             slam_cooldown: 0,
             fire_cooldown: 0,
