@@ -11,6 +11,7 @@ use std::collections::HashMap;
 use rand::rngs::ThreadRng;
 use rand::rngs;
 use ggez::graphics::{self, Canvas};
+use rand_chacha::ChaCha8Rng;
 
 const BOSS_HEALTH: usize = 100;
 
@@ -28,7 +29,7 @@ impl Boss {
     ) -> Self {
 
         let mut surrounding: Vec<Option<Enemy>> = Vec::new();
-        let mut index = 0;
+        
         if color == tile::MAJOR_BOSS {
             for i in 0..=6 {
                 for j in 0..=6 {
@@ -37,7 +38,6 @@ impl Boss {
                         entity_loc.insert(Position::new(x+i, y+j), 
                         (tile::BOSS_SURROUNDINGS, Entity::Enemy)
                     );
-                    index += 1;
                     } else { 
                         entity_loc.insert(Position::new(x+i, y+j), 
                         (tile::MAJOR_BOSS, Entity::Enemy));
@@ -70,15 +70,50 @@ impl Boss {
 
     pub fn draw_lasers(world: &mut World, canvas: &mut graphics::Canvas) {
         for lasers in &mut world.boss_lasers {
-            
+            let mut special_case = true;
+            if lasers.0 == Position::new(0,0) {
+                if Boss::coin_flip(&mut world.rng) {
+                    special_case = false;
+                }
+            }
+
+            if lasers.0.x == 0 && special_case {
+                for i in 0..WORLD_SIZE.0 {
+                    canvas.draw(
+                        &graphics::Quad,
+                        graphics::DrawParam::new()
+                            .dest_rect(graphics::Rect::new_i32(
+                                (i) as i32 * TILE_SIZE.0 as i32,
+                                ((lasers.0.y) as i32 + UNIVERSAL_OFFSET as i32) * TILE_SIZE.1 as i32,
+                                TILE_SIZE.0 as i32,
+                                TILE_SIZE.1 as i32,
+                            ))
+                            .color(lasers.1),
+                    )
+                }
+            } else {
+                for i in 0..WORLD_SIZE.0 {
+                    canvas.draw(
+                        &graphics::Quad,
+                        graphics::DrawParam::new()
+                            .dest_rect(graphics::Rect::new_i32(
+                                (lasers.0.x) as i32 * TILE_SIZE.0 as i32,
+                               ((i) as i32 + UNIVERSAL_OFFSET as i32) * TILE_SIZE.1 as i32,
+                                TILE_SIZE.0 as i32,
+                                TILE_SIZE.1 as i32,
+                            ))
+                            .color(lasers.1),
+                    )
+                }
+            }
         }   
     }
 
-    pub fn coin_flip(rng: &mut ThreadRng) -> bool {
+    pub fn coin_flip(rng: &mut ChaCha8Rng) -> bool {
         random::rand_range(rng, 0, 2) > 0
     }
 
-    pub fn grid_attack(stage: usize, world: &mut World, num_laser: usize) {
+    pub fn grid_attack(world: &mut World, num_laser: usize) {
         Boss::generate_laser(world, num_laser);
         let lasers = &mut world.boss_lasers;
         for index in (0..lasers.len()).rev() {
