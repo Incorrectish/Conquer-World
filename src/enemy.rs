@@ -311,6 +311,9 @@ impl Enemy {
                         cur_pos = new_pos;
                     }
                 } else if Self::match_color(&world.enemies[index].color, &tile::BOMBER_ENEMY_ACTIVATED) {
+                    world.enemies[index].color = tile::BOMBER_ENEMY_DEACTIVATED;
+                    let curr_world = &mut world.entity_map[world.world_position.y][world.world_position.x];
+                    curr_world.insert(cur_pos, (world.enemies[index].color, Entity::Enemy));
                     if Self::player_within_spaces(&cur_pos, &world, 2) {
                         world.player.damage(world.enemies[index].attack_damage);
                     }
