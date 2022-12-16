@@ -5,9 +5,10 @@ use crate::{
 use ggez::graphics::{self, Canvas};
 use std::collections::HashMap;
 
-const LIGHTNING_DAMAGE: usize = 1;
-const LIGHTNING_SPEED: usize = 1;
-const PLAYER_PROJECTILE_DAMAGE: usize = 1;
+const LIGHTNING_DAMAGE: usize = 50;
+const LIGHTNING_SPEED: usize = 0;
+const LIGHTNING_SIZE: i16 = 2;
+const PLAYER_PROJECTILE_DAMAGE: usize = 10;
 const PLAYER_PROJECTILE_SPEED: usize = 1;
 const FIRE_DAMAGE_INITIAL: usize = 1;
 const FIRE_DAMAGE_SECONDARY: usize = 1;
@@ -61,7 +62,6 @@ impl Projectile {
             world_pos,
         }
     }
-
 
     pub fn fire(x: usize, y: usize, direction: Direction, world_pos: Position) -> Self {
         Projectile {
@@ -118,21 +118,24 @@ impl Projectile {
                     world.projectiles[index as usize].color = tile::LIGHTNING_FINAL;
                     // basically checks the 8 around and including the projectile and turns
                     // them to their original state
-                    for x_delta in deltas {
-                        for y_delta in deltas {
-                            if pos.x < (WORLD_SIZE.0 - x_delta) as usize
-                                && pos.y < (WORLD_SIZE.1 - y_delta) as usize
-                                && pos.x as i16 >= -x_delta
-                                && pos.y as i16 >= -y_delta
-                            {
-                                let new_position = Position::new(
-                                            (pos.x as i16 + x_delta) as usize,
-                                            (pos.y as i16 + y_delta) as usize,
-                                            );
-                                world.atmosphere_map[world_pos.y][world_pos.x].insert(new_position, tile::LIGHTNING_FINAL);
-                                for enemy in &mut world.enemies {
-                                    if enemy.pos == new_position {
-                                        enemy.damage(LIGHTNING_DAMAGE);
+                    for i in 1..=LIGHTNING_SIZE {
+                        for x_delta in deltas {
+                            for y_delta in deltas {
+                                if pos.x < (WORLD_SIZE.0 - x_delta * i) as usize
+                                    && pos.y < (WORLD_SIZE.1 - y_delta * i) as usize
+                                    && pos.x as i16 >= -(x_delta * i)
+                                    && pos.y as i16 >= -(y_delta * i)
+                                {
+                                    let new_position = Position::new(
+                                        (pos.x as i16 + (x_delta * i)) as usize,
+                                        (pos.y as i16 + (y_delta * i)) as usize,
+                                    );
+                                    world.atmosphere_map[world_pos.y][world_pos.x]
+                                        .insert(new_position, tile::LIGHTNING_FINAL);
+                                    for enemy in &mut world.enemies {
+                                        if enemy.pos == new_position {
+                                            enemy.damage(LIGHTNING_DAMAGE);
+                                        }
                                     }
                                 }
                             }
@@ -146,18 +149,21 @@ impl Projectile {
                     world.projectiles.remove(index as usize);
                     // basically checks the 8 around and including the projectile and turns
                     // them to their original state
-                    for x_delta in deltas {
-                        for y_delta in deltas {
-                            if pos.x < (WORLD_SIZE.0 - x_delta) as usize
-                                && pos.y < (WORLD_SIZE.1 - y_delta) as usize
-                                && pos.x as i16 >= -x_delta
-                                && pos.y as i16 >= -y_delta
-                            {
-                                let new_position = Position::new(
-                                            (pos.x as i16 + x_delta) as usize,
-                                            (pos.y as i16 + y_delta) as usize,
-                                            );
-                                world.atmosphere_map[world_pos.y][world_pos.x].remove(&new_position);
+                    for i in 1..=LIGHTNING_SIZE {
+                        for x_delta in deltas {
+                            for y_delta in deltas {
+                                if pos.x < (WORLD_SIZE.0 - x_delta * i) as usize
+                                    && pos.y < (WORLD_SIZE.1 - y_delta * i) as usize
+                                    && pos.x as i16 >= -(x_delta * i)
+                                    && pos.y as i16 >= -(y_delta * i)
+                                {
+                                    let new_position = Position::new(
+                                        (pos.x as i16 + (x_delta * i)) as usize,
+                                        (pos.y as i16 + (y_delta * i)) as usize,
+                                    );
+                                    world.atmosphere_map[world_pos.y][world_pos.x]
+                                        .remove(&new_position);
+                                }
                             }
                         }
                     }
