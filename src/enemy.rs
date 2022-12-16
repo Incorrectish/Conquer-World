@@ -18,8 +18,8 @@ const MAJOR_ENEMY_HEALTH: usize = 5;
 const MINOR_BOSS_HEALTH: usize = 5;
 const MAJOR_BOSS_HEALTH: usize = 5;
 
-const PERMISSIBLE_TILES: [[f32; 4]; 2] = [tile::GRASS, tile::PROJECTILE_PLAYER];
-const PERMISSIBLE_TILES_DODGING: [[f32; 4]; 1] = [tile::GRASS];
+const PERMISSIBLE_TILES: [[f32; 4]; 4] = [tile::GRASS, tile::PROJECTILE_PLAYER, tile::LIGHTNING_SECONDARY, tile::LIGHTNING_INITIAL];
+const PERMISSIBLE_TILES_DODGING: [[f32; 4]; 3] = [tile::GRASS, tile::LIGHTNING_INITIAL, tile::LIGHTNING_SECONDARY];
 const PERMISSIBLE_TILES_BOSS: [[f32; 4]; 0] = [];
 
 const CHASING_ENEMY_SPEED: usize = 1;
@@ -169,6 +169,7 @@ impl Enemy {
             tile::KNIGHT_ENEMY => KNIGHT_ENEMY_ENERGY_RETURN,
             tile::MINOR_BOSS => MINOR_BOSS_ENERGY_RETURN,
             tile::MAJOR_BOSS => MAJOR_BOSS_ENERGY_RETURN,
+            tile::BOMBER_ENEMY_ACTIVATED => 0,
             _ => unreachable!("Cannot be anything other than the enemy tiles"),
         } as i32;
         world.player.change_energy(delta);
@@ -248,11 +249,8 @@ impl Enemy {
         let mut travel_path = Self::get_best_path(index, world, can_dodge_projectiles);
         let enemy = &world.enemies[index];
         let mut cur_pos = enemy.pos;
-        println!("{} {} {} {} {}", index, enemy.color[0], enemy.color[1], enemy.color[2], travel_path.len());
         for _ in 0..enemy.speed {
-            println!("step 1");
             if let Some(new_pos) = travel_path.pop_front() {
-                println!("branch 1");
                 if Self::match_color(&world.enemies[index].color, &tile::CHASING_ENEMY) {
                     if new_pos.x >= WORLD_SIZE.0 as usize || new_pos.y >= WORLD_SIZE.1 as usize {
                         Self::move_enemy_with_deltas(index, world);
@@ -279,7 +277,6 @@ impl Enemy {
                 } else if Self::match_color(&world.enemies[index].color, &tile::BOMBER_ENEMY) {
                     // activate bomber if within range (no movement)
                     if Self::player_within_spaces(&cur_pos, &world, 2) {
-                        println!("{}", index);
                         world.enemies[index].color = tile::BOMBER_ENEMY_ACTIVATED;
                         let curr_world = &mut world.entity_map[world.world_position.y][world.world_position.x];
                         curr_world.insert(cur_pos, (world.enemies[index].color, Entity::Enemy));
@@ -310,13 +307,11 @@ impl Enemy {
                         cur_pos = new_pos;
                     }
                 } else if Self::match_color(&world.enemies[index].color, &tile::BOMBER_ENEMY_ACTIVATED) {
-                    println!("branch 2");
                     if Self::player_within_spaces(&cur_pos, &world, 2) {
                         world.player.damage(world.enemies[index].attack_damage);
                     }
                     Self::create_bomber_explosion(&cur_pos, world);
                 } else {
-                    println!("branch 3");
                     break;
                 }
             }
