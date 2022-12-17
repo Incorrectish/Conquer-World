@@ -47,7 +47,7 @@ const MAJOR_ENEMY_ENERGY_RETURN: usize = 25;
 const MINOR_BOSS_ENERGY_RETURN: usize = 100;
 const MAJOR_BOSS_ENERGY_RETURN: usize = 100;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 // This is basically the same as the enemy for now, but I am just testing an enemy system
 pub struct Enemy {
     // This is the position in the form (x, y)
@@ -317,15 +317,17 @@ impl Enemy {
         } else {
             let mut index_proj: i32 = 0;
             for _ in 0..world.projectiles.len() {
-                if new_pos == world.projectiles[index_proj as usize].pos
-                    && world.enemies[index].world_pos
-                        == world.projectiles[index_proj as usize].world_pos
-                {
-                    world.enemies[index].damage(world.projectiles[index_proj as usize].damage);
-                    Projectile::kill(index_proj as usize, world);
-                    index_proj -= 1;
+                if world.projectiles[index_proj as usize].color == tile::PROJECTILE_PLAYER {
+                    if new_pos == world.projectiles[index_proj as usize].pos
+                        && world.enemies[index].world_pos
+                            == world.projectiles[index_proj as usize].world_pos
+                    {
+                        world.enemies[index].damage(world.projectiles[index_proj as usize].damage);
+                        Projectile::kill(index_proj as usize, world);
+                        index_proj -= 1;
+                    }
+                    index_proj += 1
                 }
-                index_proj += 1
             }
             // simply updates the render queue
             World::update_position(
@@ -360,16 +362,20 @@ impl Enemy {
                     } else {
                         let mut index_proj: i32 = 0;
                         for _ in 0..world.projectiles.len() {
-                            if new_pos == world.projectiles[index_proj as usize].pos
-                                && world.enemies[index].world_pos
-                                    == world.projectiles[index_proj as usize].world_pos
+                            if world.projectiles[index_proj as usize].color
+                                == tile::PROJECTILE_PLAYER
                             {
-                                world.enemies[index]
-                                    .damage(world.projectiles[index_proj as usize].damage);
-                                Projectile::kill(index_proj as usize, world);
-                                index_proj -= 1;
+                                if new_pos == world.projectiles[index_proj as usize].pos
+                                    && world.enemies[index].world_pos
+                                        == world.projectiles[index_proj as usize].world_pos
+                                {
+                                    world.enemies[index]
+                                        .damage(world.projectiles[index_proj as usize].damage);
+                                    Projectile::kill(index_proj as usize, world);
+                                    index_proj -= 1;
+                                }
+                                index_proj += 1
                             }
-                            index_proj += 1
                         }
                         // simply updates the render queue
                         World::update_position(world, cur_pos, (new_pos, world.world_position));
@@ -396,16 +402,20 @@ impl Enemy {
                     } else {
                         let mut index_proj: i32 = 0;
                         for _ in 0..world.projectiles.len() {
-                            if new_pos == world.projectiles[index_proj as usize].pos
-                                && world.enemies[index].world_pos
-                                    == world.projectiles[index_proj as usize].world_pos
+                            if world.projectiles[index_proj as usize].color
+                                == tile::PROJECTILE_PLAYER
                             {
-                                world.enemies[index]
-                                    .damage(world.projectiles[index_proj as usize].damage);
-                                Projectile::kill(index_proj as usize, world);
-                                index_proj -= 1;
+                                if new_pos == world.projectiles[index_proj as usize].pos
+                                    && world.enemies[index].world_pos
+                                        == world.projectiles[index_proj as usize].world_pos
+                                {
+                                    world.enemies[index]
+                                        .damage(world.projectiles[index_proj as usize].damage);
+                                    Projectile::kill(index_proj as usize, world);
+                                    index_proj -= 1;
+                                }
+                                index_proj += 1
                             }
-                            index_proj += 1
                         }
                         // simply updates the render queue
                         World::update_position(world, cur_pos, (new_pos, world.world_position));

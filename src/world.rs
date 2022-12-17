@@ -432,7 +432,7 @@ impl World {
             //Check what type of entity is moving and match the corresponding values
             Entity::Player => (
                 world.player.pos,
-                world.player.direction.clone(),
+                world.player.direction,
                 world.player.speed,
                 None,
             ),
@@ -458,7 +458,7 @@ impl World {
 
         let new_position = Self::new_position(
             pos,
-            direction.clone(),
+            direction,
             world,
             speed,
             entity_type.clone(),

@@ -4,10 +4,11 @@ use crate::{
     entity::Entity,
     projectile::Projectile,
     tile,
+    utils::Boss,
     utils::Position,
     world::World,
-    utils::Boss,
-    BOARD_SIZE, TILE_SIZE, UNIVERSAL_OFFSET, WORLD_SIZE, world::BOSS_ROOMS,
+    world::BOSS_ROOMS,
+    BOARD_SIZE, TILE_SIZE, UNIVERSAL_OFFSET, WORLD_SIZE,
 };
 
 use std::cmp::{max, min};
@@ -22,7 +23,7 @@ const MAX_PLAYER_HEALTH: usize = 100;
 const MAX_PLAYER_ENERGY: usize = 100;
 const PLAYER_MELEE_DAMAGE: usize = 50;
 const PLAYER_SLAM_DAMAGE: usize = 30;
-const TELEPORTATION_COST: usize = 50;
+const TELEPORTATION_COST: usize = 5;
 const HEAL_COST: usize = 20;
 const FIRE_COST: usize = 30;
 const HEAL_ABILITY_RETURN: usize = 20;
@@ -52,7 +53,7 @@ const PLAYER_INITIAL_SPEED: usize = 1;
 const PLAYER_INITIAL_ENERGY: usize = 100;
 const PERMISSIBLE_TILES: [[f32; 4]; 1] = [tile::GRASS];
 const LIGHTNING_COOLDOWN: usize = 5;
-const TELEPORT_COOLDOWN: usize = 5;
+const TELEPORT_COOLDOWN: usize = 1;
 const FIRE_COOLDOWN: usize = 5;
 const SLAM_COOLDOWN: usize = 1;
 const PROJECTILE_COOLDOWN: usize = 1;
@@ -481,8 +482,8 @@ impl Player {
                         world.player.fire_cooldown -= 1;
                         world.player.lightning_cooldown -= 1;
                         world.player.teleport_cooldown -= 1;
-                    world.player.invisiblity_cooldown -= 1;
-                    world.player.visible -= 1;
+                        world.player.invisiblity_cooldown -= 1;
+                        world.player.visible -= 1;
                     } else {
                         return false;
                     }
@@ -496,8 +497,8 @@ impl Player {
                         world.player.fire_cooldown -= 1;
                         world.player.lightning_cooldown -= 1;
                         world.player.teleport_cooldown -= 1;
-                    world.player.invisiblity_cooldown -= 1;
-                    world.player.visible -= 1;
+                        world.player.invisiblity_cooldown -= 1;
+                        world.player.visible -= 1;
                     } else {
                         return false;
                     }
@@ -509,8 +510,8 @@ impl Player {
                         world.player.fire_cooldown -= 1;
                         world.player.lightning_cooldown -= 1;
                         world.player.teleport_cooldown -= 1;
-                    world.player.invisiblity_cooldown -= 1;
-                    world.player.visible -= 1;
+                        world.player.invisiblity_cooldown -= 1;
+                        world.player.visible -= 1;
                     } else {
                         return false;
                     }
@@ -526,8 +527,8 @@ impl Player {
                         world.player.fire_cooldown -= 1;
                         world.player.lightning_cooldown = LIGHTNING_COOLDOWN as i16;
                         world.player.teleport_cooldown -= 1;
-                    world.player.invisiblity_cooldown -= 1;
-                    world.player.visible -= 1;
+                        world.player.invisiblity_cooldown -= 1;
+                        world.player.visible -= 1;
                     } else {
                         return false;
                     }
@@ -545,8 +546,8 @@ impl Player {
                         world.player.fire_cooldown -= 1;
                         world.player.lightning_cooldown -= 1;
                         world.player.teleport_cooldown = TELEPORT_COOLDOWN as i16;
-                    world.player.invisiblity_cooldown -= 1;
-                    world.player.visible -= 1;
+                        world.player.invisiblity_cooldown -= 1;
+                        world.player.visible -= 1;
                     } else {
                         return false;
                     }
@@ -559,24 +560,26 @@ impl Player {
                         world.player.fire_cooldown -= 1;
                         world.player.lightning_cooldown -= 1;
                         world.player.teleport_cooldown -= 1;
-                    world.player.invisiblity_cooldown -= 1;
-                    world.player.visible -= 1;
+                        world.player.invisiblity_cooldown -= 1;
+                        world.player.visible -= 1;
                     }
                 }
                 FLAME_KEYCODE => {
                     if world.player.slam_cooldown <= 0 {
-                        Self::slam(world);
+                        Self::fire_attack(world);
                         world.player.projectile_cooldown -= 1;
                         world.player.slam_cooldown -= 1;
                         world.player.fire_cooldown = FIRE_COOLDOWN as i16;
                         world.player.lightning_cooldown -= 1;
                         world.player.teleport_cooldown -= 1;
-                    world.player.invisiblity_cooldown -= 1;
-                    world.player.visible -= 1;
+                        world.player.invisiblity_cooldown -= 1;
+                        world.player.visible -= 1;
                     }
                 }
                 INVISIBILITY_KEYCODE => {
-                    if world.player.energy >= INVISIBILITY_COST && world.player.invisiblity_cooldown <= 0 {
+                    if world.player.energy >= INVISIBILITY_COST
+                        && world.player.invisiblity_cooldown <= 0
+                    {
                         world.player.visible = INVISIBILITY_DURATION as i16;
                         world.player.invisiblity_cooldown = INVISIBILITY_COOLDOWN as i16;
                     }
@@ -595,14 +598,27 @@ impl Player {
         return true;
     }
 
+    pub fn fire_attack(world: &mut World) {
+        let (pos, world_pos) = World::new_position(
+            world.player.pos,
+            world.player.direction,
+            world,
+            world.player.speed,
+            Entity::Player,
+            None,
+        );
+
+        // queued positions are definitionally valid, so no checking needs to be done
+        world
+            .projectiles
+            .push(Projectile::player_fire(pos.x, pos.y, world.player.direction, world_pos));
+
+        // Queue it to draw
+        world.atmosphere_map[world_pos.y][world_pos.x].insert(pos, tile::FIRE_PLACEHOLDER);
+    }
+
     pub fn slam(world: &mut World) {
-        // this gets the positions that should be damaged
-        // let delta = match world.player.direction.clone() {
-        //     Direction::East => (1, 0),
-        //     Direction::West => (-1, 0),
-        //     Direction::North =>(0, -1),
-        //     Direction::South => (0, 1),
-        // };
+        // this gets the deltas which allow us to generate the positions around the player
         const deltas: [i16; 3] = [0, -1, 1];
 
         // check all the enemies
@@ -635,7 +651,7 @@ impl Player {
             .push(Projectile::lightning(pos.x, pos.y, world_pos));
 
         // Queue it to draw
-        world.atmosphere_map[world_pos.y][world_pos.x].insert(pos, tile::LIGHTNING_INITIAL);
+        world.atmosphere_map[world_pos.y][world_pos.x].insert(pos, tile::LIGHTNING_PLACEHOLDER);
     }
 
     // THIS METHOD EXPECTS A QUEUED POSITION
@@ -690,7 +706,7 @@ impl Player {
         // the direction that they are facing
         let (attacking_position, _) = World::new_position(
             world.player.pos,
-            world.player.direction.clone(),
+            world.player.direction,
             world,
             world.player.speed,
             Entity::Player,
@@ -711,13 +727,12 @@ impl Player {
             }
         }
 
-        if let Some(terrain) = world.terrain_map[world_pos.y][world_pos.x].get(&attacking_position) {
+        if let Some(terrain) = world.terrain_map[world_pos.y][world_pos.x].get(&attacking_position)
+        {
             if terrain == &tile::BOSS_SURROUNDINGS {
                 Boss::damage(world, PLAYER_MELEE_DAMAGE, world_pos);
             }
-  
         }
-        
     }
 
     // // This function should just spawn a projectile, the mechanics of dealing with the projectile
@@ -725,7 +740,7 @@ impl Player {
     pub fn projectile_attack(world: &mut World) {
         let projectile_spawn_pos = World::new_position(
             world.player.pos,
-            world.player.direction.clone(),
+            world.player.direction,
             world,
             world.player.speed,
             Entity::Projectile,
