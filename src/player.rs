@@ -489,7 +489,7 @@ impl Player {
                     }
                 }
                 HEAL_KEYCODE => {
-                    if world.player.energy >= HEAL_COST {
+                    if world.player.energy >= HEAL_COST && world.player.health < 100 {
                         world.player.health += HEAL_ABILITY_RETURN;
                         world.player.energy -= HEAL_COST;
                         world.player.projectile_cooldown -= 1;

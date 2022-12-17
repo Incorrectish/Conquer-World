@@ -13,10 +13,10 @@ const LIGHTNING_SPEED: usize = 0;
 const LIGHTNING_SIZE: i16 = 2;
 const PLAYER_PROJECTILE_DAMAGE: usize = 20;
 const PLAYER_PROJECTILE_SPEED: usize = 1;
-const FIRE_DAMAGE_INITIAL: usize = 1;
-const FIRE_DAMAGE_SECONDARY: usize = 1;
-const FIRE_DAMAGE_TERTIARY: usize = 1;
-const FIRE_DAMAGE_FINAL: usize = 1;
+const FIRE_DAMAGE_INITIAL: usize = 100;
+const FIRE_DAMAGE_SECONDARY: usize = 100;
+const FIRE_DAMAGE_TERTIARY: usize = 100;
+const FIRE_DAMAGE_FINAL: usize = 100;
 const FIRE_SPEED: usize = 1;
 
 const PERMISSIBLE_TILES: [[f32; 4]; 5] = [
@@ -190,6 +190,7 @@ impl Projectile {
                     world.projectiles[index as usize].color = tile::FIRE_SECONDARY;
                     world.atmosphere_map[world_pos.y][world_pos.x].remove(&old_pos);
                     let (new_pos, new_world_pos) = World::new_position(old_pos, world.projectiles[index as usize].direction, world, world.projectiles[index as usize].speed, Entity::Projectile, Some(index as usize));
+                    world.projectiles[index as usize].pos = new_pos;
                     let mut new_positions = Vec::new();
                     const INITIAL_DELTA: usize = 1;
                     for i in (0..=INITIAL_DELTA) {
@@ -227,14 +228,19 @@ impl Projectile {
                     world.projectiles[index as usize].color = tile::FIRE_TERTIARY;
                     world.atmosphere_map[world_pos.y][world_pos.x].remove(&old_pos);
                     let (new_pos, new_world_pos) = World::new_position(old_pos, world.projectiles[index as usize].direction, world, world.projectiles[index as usize].speed, Entity::Projectile, Some(index as usize));
+                    world.projectiles[index as usize].pos = new_pos;
                     let mut new_positions = Vec::new();
                     const INITIAL_DELTA: usize = 2;
                     for i in (0..=INITIAL_DELTA) {
                         let (positive_new_pos, negative_new_pos) = match world.projectiles[index as usize].direction {
                                 Direction::South | Direction::North => {
+                                    world.atmosphere_map[world_pos.y][world_pos.x].remove(&Position::new(max(0, old_pos.x as i32 - i as i32) as usize, old_pos.y));
+                                    world.atmosphere_map[world_pos.y][world_pos.x].remove(&Position::new(old_pos.x + i, old_pos.y));
                                     (Position::new(new_pos.x + i, new_pos.y), Position::new(max(0, new_pos.x as i32 - i as i32) as usize, new_pos.y))
                                 }
                                 Direction::East | Direction::West => {
+                                    world.atmosphere_map[world_pos.y][world_pos.x].remove(&Position::new(old_pos.x, max(0, old_pos.y as i32 - i as i32) as usize));
+                                    world.atmosphere_map[world_pos.y][world_pos.x].remove(&Position::new(old_pos.x, old_pos.y + i));
                                     (Position::new(new_pos.x, new_pos.y + i), Position::new(new_pos.x, max(0, new_pos.y as i32 - i as i32) as usize))
                                 }
                         };
@@ -261,16 +267,20 @@ impl Projectile {
                     let world_pos = world.projectiles[index as usize].world_pos;
                     let old_pos = world.projectiles[index as usize].pos;
                     world.projectiles[index as usize].color = tile::FIRE_FINAL;
-                    world.atmosphere_map[world_pos.y][world_pos.x].remove(&old_pos);
                     let (new_pos, new_world_pos) = World::new_position(old_pos, world.projectiles[index as usize].direction, world, world.projectiles[index as usize].speed, Entity::Projectile, Some(index as usize));
+                    world.projectiles[index as usize].pos = new_pos;
                     let mut new_positions = Vec::new();
                     const INITIAL_DELTA: usize = 3;
                     for i in (0..=INITIAL_DELTA) {
                         let (positive_new_pos, negative_new_pos) = match world.projectiles[index as usize].direction {
                                 Direction::South | Direction::North => {
+                                    world.atmosphere_map[world_pos.y][world_pos.x].remove(&Position::new(max(0, old_pos.x as i32 - i as i32) as usize, old_pos.y));
+                                    world.atmosphere_map[world_pos.y][world_pos.x].remove(&Position::new(old_pos.x + i, old_pos.y));
                                     (Position::new(new_pos.x + i, new_pos.y), Position::new(max(0, new_pos.x as i32 - i as i32) as usize, new_pos.y))
                                 }
                                 Direction::East | Direction::West => {
+                                    world.atmosphere_map[world_pos.y][world_pos.x].remove(&Position::new(old_pos.x, max(0, old_pos.y as i32 - i as i32) as usize));
+                                    world.atmosphere_map[world_pos.y][world_pos.x].remove(&Position::new(old_pos.x, old_pos.y + i));
                                     (Position::new(new_pos.x, new_pos.y + i), Position::new(new_pos.x, max(0, new_pos.y as i32 - i as i32) as usize))
                                 }
                         };
@@ -294,6 +304,7 @@ impl Projectile {
                     }
                 }
                 tile::FIRE_FINAL => {
+                    // TODO: get this dissapearing the thing properly
                     let world_pos = world.projectiles[index as usize].world_pos;
                     let mut new_positions = Vec::new();
                     let new_pos = world.projectiles[index as usize].pos;
@@ -318,6 +329,7 @@ impl Projectile {
                         world.atmosphere_map[world_pos.y][world_pos.x].remove(position);
                     }
                     Projectile::kill(index as usize, world);
+                    index -= 1;
                 }
                 _ => {
                     if !World::travel(world, Entity::Projectile, Some(index as usize)) {
