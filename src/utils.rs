@@ -166,10 +166,10 @@ impl Boss {
         //     }
             
         // }
-        if world.bosses[index].rush_info.0 {
-            Self::draw_rush(world, index, world.bosses[index].rush_info.3, canvas);
-        }
-        Self::draw_stun_wells(world, canvas);
+        // if world.bosses[index].rush_info.0 {
+        //     Self::draw_rush(world, index, world.bosses[index].rush_info.3, canvas);
+        // }
+        // Self::draw_stun_wells(world, canvas);
 
     }
 
@@ -260,8 +260,8 @@ impl Boss {
         // }
 
         // Boss::generate_column_laser(world, index);
-        Boss::chase_player(world, index);
-        Boss::generate_stun_well(world, index);
+        // Boss::chase_player(world, index);
+        // Boss::generate_stun_well(world, index);
     }
 
 
@@ -467,6 +467,10 @@ impl Boss {
         }
     }
 
+    pub fn generate_safe_spot(world: &mut World, index: usize) {
+
+    }
+    
     pub fn chase_player(world: &mut World, index: usize) {
         let boss_pos = world.bosses[index].position;
         let boss_delta = (boss_pos.x as i32 - world.player.pos.x as i32, boss_pos.y as i32 - world.player.pos.y as i32);
