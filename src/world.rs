@@ -30,7 +30,7 @@ pub const BOSS_ROOMS: [Position; 5] = [
 pub const FINAL_BOSS_ROOM: Position = Position::new(3, 3);
 const LAKES_PER_WORLD: i16 = 3;
 const TOTAL_MOUNTAINS: i16 = 60;
-const ENEMY_COUNT: usize = 500;
+const ENEMY_COUNT: usize = 0;
 
 pub struct World {
     //Stores which world the player is in
@@ -76,6 +76,8 @@ pub struct World {
     pub boss_defeated: [[bool; 7]; 7],
     pub boss_lasers: Vec<(Position, [f32; 4], usize)>,
     pub boss_asteroids: Vec<(Position, [f32; 4], usize)>,
+    pub boss_column_laser: Option<(Position, Direction)>,
+    pub stun_wells: Vec<Position>,
     pub bomber_explosions: [[Vec<(Position, [f32; 4])>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
         (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     pub rng: ChaCha8Rng,
@@ -124,6 +126,8 @@ impl World {
             boss_defeated,
             boss_lasers: Vec::new(),
             boss_asteroids: Vec::new(),
+            stun_wells: Vec::new(),
+            boss_column_laser: None,
             bomber_explosions,
             rng,
         }
@@ -195,8 +199,8 @@ impl World {
     ) {
         for room_coord in BOSS_ROOMS {
             let world_map_terrain = &mut terrain_map[room_coord.y][room_coord.x];
-            let x = WORLD_SIZE.0 as usize / 2 - 3;
-            let y = WORLD_SIZE.1 as usize / 2 - 3;
+            let x = WORLD_SIZE.0 as usize / 2;
+            let y = WORLD_SIZE.1 as usize / 2;
             if room_coord == Position::new(3,3) {
                 bosses.push(Boss::new(
                     x as usize,
@@ -388,6 +392,13 @@ impl World {
                     ))
                     .color(*color),
             )
+        }
+        if BOSS_ROOMS.contains(&self.world_position) {
+            for index in 0..self.bosses.len() {
+                if self.bosses[index].world_position == self.world_position {
+                    Boss::draw_boss(self, canvas, index);
+                }
+            }
         }
     }
 

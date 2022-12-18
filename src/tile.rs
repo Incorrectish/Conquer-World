@@ -60,6 +60,7 @@ pub const BOSS_ASTEROID_STAGE_1: [f32; 4] = [0.99, 0.8, 0.7, 0.2];
 pub const BOSS_ASTEROID_STAGE_2: [f32; 4] = [0.98, 0.8, 0.5, 0.3];
 pub const BOSS_ASTEROID_STAGE_3: [f32; 4] = [1.0, 0.5, 0.15, 0.5];
 pub const BOSS_ASTEROID_REAL: [f32; 4] = [1.0, 0.5, 0.0, 1.0];
+pub const BOSS_VULNERABLE: [f32; 4] = [1.0, 0.98, 0.0, 1.0];
 
 
 
