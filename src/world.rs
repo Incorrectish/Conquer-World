@@ -30,7 +30,7 @@ pub const BOSS_ROOMS: [Position; 5] = [
 pub const FINAL_BOSS_ROOM: Position = Position::new(3, 3);
 const LAKES_PER_WORLD: i16 = 3;
 const TOTAL_MOUNTAINS: i16 = 60;
-const ENEMY_COUNT: usize = 500;
+const ENEMY_COUNT: usize = 3;
 
 pub struct World {
     //Stores which world the player is in
@@ -147,10 +147,10 @@ impl World {
                 // let y = random::rand_range(rng, 0, BOARD_SIZE.1); // random y coordinate
                 let x = random::rand_range(rng, 0, WORLD_SIZE.0); // random x coordinate
                 let y = random::rand_range(rng, 0, WORLD_SIZE.1); // random y coordinate
-                let world_x = random::rand_range(rng, 0, BOARD_SIZE.0 / WORLD_SIZE.0) as usize;
-                let world_y = random::rand_range(rng, 0, BOARD_SIZE.1 / WORLD_SIZE.1) as usize;
-                // let world_x = 0;
-                // let world_y = 0;
+                // let world_x = random::rand_range(rng, 0, BOARD_SIZE.0 / WORLD_SIZE.0) as usize;
+                // let world_y = random::rand_range(rng, 0, BOARD_SIZE.1 / WORLD_SIZE.1) as usize;
+                let world_x = 0;
+                let world_y = 0;
                 let random_loc = Position::new(x as usize, y as usize);
                 let world_map_entity = &mut entity_map[world_y][world_x];
                 let world_map_terrain = &mut terrain_map[world_y][world_x];
@@ -169,7 +169,7 @@ impl World {
                             y as usize,
                             Position::new(world_x, world_y),
                         ));
-                        
+                        break;            
                     } else {
                         world_map_entity.insert(random_loc, (tile::BOMBER_ENEMY, Entity::Enemy));
                         enemies.push(Enemy::bomber(
@@ -421,6 +421,21 @@ impl World {
             let tile_color = contents.0;
             let tile_type = contents.1.clone();
             curr_world.insert(new_position_info.0, (tile_color, tile_type)); //Insert same contents into new position
+            curr_world.remove(&prev_position); //Remove old position
+        }
+    }
+
+    //Takes in a previous location and new location Position object and updates that specific
+    //entity inside of the HashMap to move from the previous location to the new location
+    pub fn update_atmosphere_position(
+        world: &mut World,
+        prev_position: Position,
+        new_position_info: (Position, Position),
+    ) {
+        let curr_world = &mut world.atmosphere_map[new_position_info.1.y][new_position_info.1.x];
+        let info = &curr_world.get(&prev_position); //Access contents of what was at previous position
+        if let Some(contents) = info {
+            curr_world.insert(new_position_info.0, **contents); //Insert same contents into new position
             curr_world.remove(&prev_position); //Remove old position
         }
     }
