@@ -2,6 +2,8 @@ use ggez::{
     event,
     GameResult,
 };
+use std::path;
+use std::env;
 
 mod direction;
 mod enemy;
@@ -38,18 +40,26 @@ pub const SCREEN_SIZE: (f32, f32) = (
 );
 
 fn main() -> GameResult {
+    let resource_dir = if let Ok(manifest_dir) = env::var("CARGO_MANIFEST_DIR") {
+        let mut path = path::PathBuf::from(manifest_dir);
+        path.push("songs");
+        path
+    } else {
+        path::PathBuf::from("./songs")
+    };
     // Here we use a ContextBuilder to setup metadata about our game. First the title and author
-    let (ctx, events_loop) = ggez::ContextBuilder::new("Rust Game", "Ishan Kar")
+    let (mut ctx, events_loop) = ggez::ContextBuilder::new("Rust Game", "Ishan Kar")
         // Next we set up the window. This title will be displayed in the title bar of the window.
         .window_setup(ggez::conf::WindowSetup::default().title("RUST!!"))
         // Now we get to set the size of the window, which we use our SCREEN_SIZE constant from earlier to help with
         .window_mode(ggez::conf::WindowMode::default().dimensions(SCREEN_SIZE.0, SCREEN_SIZE.1))
         // And finally we attempt to build the context and create the window. If it fails, we panic with the message
         // "Failed to build ggez context"
+        .add_resource_path(resource_dir)
         .build()?;
 
     // Next we create a new instance of our GameState struct, which implements EventHandler
-    let state = State::new();
+    let state = State::new(&mut ctx)?;
 
     // And finally we actually run our game, passing in our context and state.
     event::run(ctx, events_loop, state)

@@ -4,6 +4,9 @@ use crate::player::Player;
 use crate::utils::Boss;
 use crate::utils::Position;
 use crate::UNIVERSAL_OFFSET;
+use ggez::audio;
+use ggez::audio::SoundSource;
+
 use crate::{
     projectile::Projectile,
     tile,
@@ -21,25 +24,35 @@ use ggez::{
 
 pub struct State {
     should_draw: bool,
-
+    sound: audio::Source,
+    is_playing: bool,
     // Abstraction for the world and what is contained within it
     world: World,
-    player_move_count: usize, 
+    player_move_count: usize,
+
 }
 
 impl State {
     // just returns the default values
-    pub fn new() -> Self {
-        Self {
+    pub fn new(ctx: &mut Context) -> GameResult<State> {
+        let sound = audio::Source::new(ctx, "/overworld.ogg")?;
+        let temp = State {
             should_draw: true,
+            sound,
+            is_playing: false,
             world: World::new(),
             player_move_count: 0,
-        }
+        };
+        Ok(temp)
     }
 }
 
 impl ggez::event::EventHandler<GameError> for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
+        if !self.is_playing {
+            let _ = self.sound.play_detached(ctx);
+            self.is_playing = true;
+        }
         Ok(())
     }
 
