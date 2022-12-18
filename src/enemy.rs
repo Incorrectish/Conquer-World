@@ -47,7 +47,7 @@ const MAJOR_ENEMY_ENERGY_RETURN: usize = 25;
 const MINOR_BOSS_ENERGY_RETURN: usize = 100;
 const MAJOR_BOSS_ENERGY_RETURN: usize = 100;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
 // This is basically the same as the enemy for now, but I am just testing an enemy system
 pub struct Enemy {
     // This is the position in the form (x, y)

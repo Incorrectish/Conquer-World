@@ -26,6 +26,8 @@ const ASTEROID_DAMAGE: usize = 10;
 const VULNERABLE_TIME_BASE: usize = 10;
 const BOSS_3_RUSH_COOLDOWN: usize = 20;
 const BOSS_3_MOVE_DELAY: usize = 2;
+
+#[derive(serde::Deserialize, serde::Serialize)]
 pub struct Boss {
     pub position: Position,
     pub color: [f32; 4],
@@ -664,7 +666,7 @@ impl Boss {
 }
 
 
-#[derive(Eq, Hash, PartialEq, Copy, Clone, Debug)]
+#[derive(Eq, Hash, PartialEq, Copy, Clone, Debug, serde::Deserialize, serde::Serialize)]
 
 pub struct Position {
     pub x: usize, 

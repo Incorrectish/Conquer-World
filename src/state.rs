@@ -22,6 +22,7 @@ use ggez::{
 
 // const MOVES_TILL_ENERGY_REGEN: usize = 5;
 
+// #[derive(serde::Deserialize, serde::Serialize)]
 pub struct State {
     should_draw: bool,
     sound: audio::Source,
