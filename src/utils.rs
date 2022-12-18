@@ -18,6 +18,8 @@ const BOSS_HEALTH: usize = 100;
 const LASER_LINGER_VALUE: usize = 3;
 const ASTEROID_LINGER_VALUE: usize = 5;
 const ASTEROID_COOLDOWN: usize = 20;
+const STUN_WELL_COOLDOWN: usize = 10;
+const STUN_WELL_LINGER_VALUE: usize = 50;
 const LASER_DAMAGE: usize = 5;
 const LASER_AMOUNT: usize = 7;
 const ASTEROID_DAMAGE: usize = 10;
@@ -29,6 +31,7 @@ pub struct Boss {
     pub color: [f32; 4],
     pub world_position: Position,
     pub health: usize,
+    pub stun_well_cooldown: usize,
     pub asteroid_cooldown: usize,
     pub is_major: bool,
     pub offset: usize,
@@ -51,7 +54,8 @@ impl Boss {
             color,
             world_position,
             health: BOSS_HEALTH,
-            asteroid_cooldown: 0,
+            asteroid_cooldown: ASTEROID_COOLDOWN,
+            stun_well_cooldown: STUN_WELL_COOLDOWN,
             is_major,
             offset,
             rush_info: (false, None, tile::BOSS_LASER_STAGE_1, 0),
@@ -74,53 +78,32 @@ impl Boss {
     }
 
     pub fn draw_boss(world: &mut World, canvas: &mut graphics::Canvas, index: usize) {
-        if world.bosses[index].world_position == Position::new(3,3) {
-            for i in -4..=4 {
-                for j in -4..=4 {
-                    let mut color = tile::MAJOR_BOSS;
-                    if i == -4 || j == -4 || i == 4 || j == 4 { 
-                        if world.bosses[index].vulnerable_time != 0 {
-                            color = tile::BOSS_VULNERABLE;
-                        } else {
-                            color = tile::BOSS_SURROUNDINGS;
-                        }
+        let boss_size = (world.bosses[index].offset - 1) as i32;
+        for i in -boss_size..=boss_size {
+            for j in -boss_size..=boss_size {
+                let mut color = world.bosses[index].color;
+                if i == -boss_size || j == -boss_size || i == boss_size || j == boss_size { 
+                    if world.bosses[index].vulnerable_time > 2 {
+                        color = tile::BOSS_VULNERABLE;
+                    } else if world.bosses[index].vulnerable_time == 2 {
+                        color = tile::BOSS_RECOVERY_ONE;
+                    } else if world.bosses[index].vulnerable_time == 1 {
+                        color = tile::BOSS_RECOVERY_TWO;
+                    } else {
+                        color = tile::BOSS_SURROUNDINGS;
                     }
-                    canvas.draw(
-                        &graphics::Quad,
-                        graphics::DrawParam::new()
-                            .dest_rect(graphics::Rect::new_i32(
-                                (world.bosses[index].position.x as i32 + i as i32) * TILE_SIZE.0 as i32,
-                                (world.bosses[index].position.y as i32 + j as i32 + UNIVERSAL_OFFSET as i32) * TILE_SIZE.1 as i32,
-                                TILE_SIZE.0 as i32,
-                                TILE_SIZE.1 as i32,
-                            ))
-                            .color(color),
-                    );
                 }
-            }
-        } else {
-            for i in -3..=3 {
-                for j in -3..=3 {
-                    let mut color = tile::MINOR_BOSS;
-                    if(i == -3 || j == -3 || i == 3 || j == 3) { 
-                        if world.bosses[index].vulnerable_time != 0 {
-                            color = tile::BOSS_VULNERABLE;
-                        } else {
-                            color = tile::BOSS_SURROUNDINGS;
-                        }
-                    }
-                    canvas.draw(
-                        &graphics::Quad,
-                        graphics::DrawParam::new()
-                            .dest_rect(graphics::Rect::new_i32(
-                                (world.bosses[index].position.x as i32 + i as i32) * TILE_SIZE.0 as i32,
-                                (world.bosses[index].position.y as i32 + j as i32 + UNIVERSAL_OFFSET as i32) * TILE_SIZE.1 as i32,
-                                TILE_SIZE.0 as i32,
-                                TILE_SIZE.1 as i32,
-                            ))
-                            .color(color),
-                        )
-                }
+                canvas.draw(
+                    &graphics::Quad,
+                    graphics::DrawParam::new()
+                        .dest_rect(graphics::Rect::new_i32(
+                            (world.bosses[index].position.x as i32 + i as i32) * TILE_SIZE.0 as i32,
+                            (world.bosses[index].position.y as i32 + j as i32 + UNIVERSAL_OFFSET as i32) * TILE_SIZE.1 as i32,
+                            TILE_SIZE.0 as i32,
+                            TILE_SIZE.1 as i32,
+                        ))
+                        .color(color),
+                );
             }
         }
     }
@@ -186,6 +169,7 @@ impl Boss {
         if world.bosses[index].rush_info.0 {
             Self::draw_rush(world, index, world.bosses[index].rush_info.3, canvas);
         }
+        Self::draw_stun_wells(world, canvas);
 
     }
 
@@ -245,9 +229,9 @@ impl Boss {
         
         // if world.bosses[index].color == tile::MAJOR_BOSS {
         //     if world.player.is_visible() && Boss::generate_asteroid(world, world.bosses[index].asteroid_cooldown) {
-        //         world.bosses[index].asteroid_cooldown = 0;
+        //         world.bosses[index].asteroid_cooldown = ASTEROID_COOLDOWN;
         //     } else {
-        //         world.bosses[index].asteroid_cooldown += 1;
+        //         world.bosses[index].asteroid_cooldown -= 1;
         //     }
         // }
 
@@ -277,6 +261,7 @@ impl Boss {
 
         // Boss::generate_column_laser(world, index);
         Boss::chase_player(world, index);
+        Boss::generate_stun_well(world, index);
     }
 
 
@@ -293,7 +278,7 @@ impl Boss {
     }
     
     pub fn generate_asteroid(world: &mut World, cooldown: usize) -> bool {
-        if cooldown == ASTEROID_COOLDOWN {
+        if cooldown == 0 {
             world.boss_asteroids.push((world.player.pos, tile::BOSS_ASTEROID_STAGE_1, ASTEROID_LINGER_VALUE));
             return true;
         }
@@ -432,12 +417,62 @@ impl Boss {
         }
     }   
     
+    pub fn generate_stun_well(world: &mut World, index: usize) {
+        if world.bosses[index].stun_well_cooldown == 0 { 
+            world.bosses[index].stun_well_cooldown = STUN_WELL_COOLDOWN;
+            let mut well_size = 3;
+            if Self::coin_flip(&mut world.rng) {
+                well_size = 5;
+            }
+            let x = random::rand_range(&mut world.rng, 5, WORLD_SIZE.0) as usize;
+            let y = random::rand_range(&mut world.rng, 5, WORLD_SIZE.1) as usize;
+            world.stun_wells.push((Position::new(x,y), tile::STUN_WELL_INDICATOR, well_size, STUN_WELL_LINGER_VALUE));
+        } else {
+            for index in (0..world.stun_wells.len()).rev() {
+                let well = world.stun_wells[index];
+                if well.1 == tile::STUN_WELL_INDICATOR {
+                    world.stun_wells[index].1 = tile::STUN_WELL_REAL;
+                } else {
+                    if well.3 == 0 {
+                        world.stun_wells.remove(index);
+                        
+                    } else {
+                        world.stun_wells[index].3 -= 1;
+                    }
+                }
+            }
+            world.bosses[index].stun_well_cooldown -= 1;
+        }
+    }
+    
+    pub fn draw_stun_wells(world: &mut World, canvas: &mut Canvas) {
+        for well in &world.stun_wells {
+            let len = well.2 as i32 - 1;
+            let pos = well.0;
+            for i in -len..=len {
+                for j in -len..=len {
+                    canvas.draw(
+                        &graphics::Quad,
+                        graphics::DrawParam::new()
+                            .dest_rect(graphics::Rect::new_i32(
+                                (pos.x as i32 + i) * TILE_SIZE.0 as i32,
+                                ((pos.y as i32 + j) + UNIVERSAL_OFFSET as i32) * TILE_SIZE.1 as i32,
+                                TILE_SIZE.0 as i32,
+                                TILE_SIZE.1 as i32,
+                            ))
+                            .color(well.1),
+                    )
+                }
+            }
+        }
+    }
+
     pub fn chase_player(world: &mut World, index: usize) {
         let boss_pos = world.bosses[index].position;
         let boss_delta = (boss_pos.x as i32 - world.player.pos.x as i32, boss_pos.y as i32 - world.player.pos.y as i32);
-        if world.bosses[index].rush_info.0 || 
-        ((boss_delta.0.abs() <= 3 || boss_delta.1.abs() <= 3)
-        && world.bosses[index].chase_rush_cooldown == 0) {
+        if (world.bosses[index].rush_info.0 || 
+        (boss_delta.0.abs() <= 3 || boss_delta.1.abs() <= 3))
+        && world.bosses[index].chase_rush_cooldown == 0 {
             Boss::rush_player(world, index, boss_delta.0, boss_delta.1);
         } else if world.bosses[index].boss_can_attack && world.bosses[index].speed_delay == 0 {
             if boss_delta.0.abs() > boss_delta.1.abs() {
@@ -529,7 +564,6 @@ impl Boss {
                         }   
                     }
                     world.bosses[index].chase_rush_cooldown = BOSS_3_RUSH_COOLDOWN;
-                    world.bosses[index].rush_info.0 = false;
                     world.bosses[index].rush_info.2 = tile::BOSS_LASER_STAGE_1;
                     world.bosses[index].vulnerable_time = VULNERABLE_TIME_BASE;
                     world.bosses[index].boss_can_attack = false;
@@ -540,32 +574,57 @@ impl Boss {
     
     pub fn draw_rush(world: &mut World, index: usize, distance: usize, canvas: &mut Canvas) {
         if let Some(direction) = world.bosses[index].rush_info.1 {
+            let mut rush_dist = distance;
+            let after_rush = !world.bosses[index].boss_can_attack;
             let mut width: i32 = -3;
+            let mut color = world.bosses[index].rush_info.2;
             if world.bosses[index].offset == 5 {
                 width = -3;
             }
-            for i in 0..distance as i32 {
+            if after_rush {
+                world.bosses[index].rush_info.0 = false;
+                // rush_dist = WORLD_SIZE.0 as usize - world.bosses[index].offset;
+                color = tile::FIRE_TERTIARY;
+            }
+            
+            for i in 0..rush_dist as i32 {
                 for j in width..=(-width) {
                     let mut x = world.bosses[index].position.x as i32;
                     let mut y = world.bosses[index].position.y as i32;
                     match direction {
                         Direction::North => {
                             x = x + j;
-                            y = y - i;
+                            if after_rush {
+                                y = y + i;
+                            } else {
+                                y = y - i;
+                            }
                         },
         
                         Direction::South => {
                             x = x + j;
-                            y = y + i;
+                            if after_rush {
+                                y = y - i;
+                            } else {
+                                y = y + i;
+                            }
                         },
         
                         Direction::West => {
-                            x = x - i;
+                            if after_rush {
+                                x = x + i;
+                            } else {
+                                x = x - i;
+                            }
                             y = y + j;
                         },
         
                         Direction::East => {
-                            x = x + i;
+                            if after_rush {
+                                x = x - i;
+                            } else {
+                                x = x + i;
+                            }
                             y = y + j;
                         }
                     } 
@@ -578,7 +637,7 @@ impl Boss {
                                 TILE_SIZE.0 as i32,
                                 TILE_SIZE.1 as i32,
                             ))
-                            .color(world.bosses[index].rush_info.2),
+                            .color(color),
                     )
                 }
             }

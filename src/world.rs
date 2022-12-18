@@ -74,10 +74,10 @@ pub struct World {
     pub atmosphere_map: [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
         (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     pub boss_defeated: [[bool; 7]; 7],
-    pub boss_lasers: Vec<(Position, [f32; 4], usize)>,
-    pub boss_asteroids: Vec<(Position, [f32; 4], usize)>,
+    pub boss_lasers: Vec<(Position, [f32; 4], usize)>, //Position, color, duration left
+    pub boss_asteroids: Vec<(Position, [f32; 4], usize)>, //Position, color, duration left
     pub boss_column_laser: Option<(Position, Direction)>,
-    pub stun_wells: Vec<Position>,
+    pub stun_wells: Vec<(Position, [f32; 4], usize, usize)>, //Position, color, size, duration left
     pub bomber_explosions: [[Vec<(Position, [f32; 4])>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
         (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     pub rng: ChaCha8Rng,
