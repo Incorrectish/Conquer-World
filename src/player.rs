@@ -63,7 +63,7 @@ const PROJECTILE_COOLDOWN: usize = 1;
 const INVISIBILITY_COOLDOWN: usize = 25 + INVISIBILITY_DURATION;
 const TRACKING_PROJECTILE_COOLDOWN: usize = 20;
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
 // This is with the covered tile model, but we could use the static/dynamic board paradighm or
 // something else entirely
 pub struct Player {

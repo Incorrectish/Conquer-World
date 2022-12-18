@@ -32,7 +32,7 @@ const LAKES_PER_WORLD: i16 = 3;
 const TOTAL_MOUNTAINS: i16 = 60;
 const ENEMY_COUNT: usize = 0;
 
-#[derive(serde::Serialize)]
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
 pub struct World {
     //Stores which world the player is in
     pub world_position: Position,
@@ -65,13 +65,14 @@ pub struct World {
     pub projectiles: Vec<Projectile>,
 
     // Hashmap of positions to colors
-    pub entity_positions: HashMap<Position, ([f32; 4], Entity)>,
-    pub terrain_positions: HashMap<Position, [f32; 4]>,
+    // #[serde(with = "vectorize")]
     pub entity_map: [[HashMap<Position, ([f32; 4], Entity)>;
         (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
         (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
+    // #[serde(with = "vectorize")]
     pub terrain_map: [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
         (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
+    // #[serde(with = "vectorize")]
     pub atmosphere_map: [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
         (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     pub boss_defeated: [[bool; 7]; 7],
@@ -81,14 +82,10 @@ pub struct World {
     pub stun_wells: Vec<(Position, [f32; 4], usize, usize)>, //Position, color, size, duration left
     pub bomber_explosions: [[Vec<(Position, [f32; 4])>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
         (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
-    pub rng: ChaCha8Rng,
 }
 
 impl World {
-    pub fn new() -> Self {
-        let mut rng = ChaCha8Rng::seed_from_u64(0);
-        let entity_positions = HashMap::new();
-        let terrain_positions = HashMap::new();
+    pub fn new(rng: &mut ChaCha8Rng) -> Self {
         let mut entity_map: [[HashMap<Position, ([f32; 4], Entity)>;
             (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
             (BOARD_SIZE.1 / WORLD_SIZE.1) as usize] = Default::default();
@@ -97,8 +94,8 @@ impl World {
         let mut boss_defeated = [[false; 7]; 7];
         World::gen_boss(&mut terrain_map);
         World::gen_outer_boss_walls(&mut terrain_map);
-        World::gen_mountain(&mut rng, &mut terrain_map);
-        World::gen_lake(&mut rng, &mut terrain_map);
+        World::gen_mountain(rng, &mut terrain_map);
+        World::gen_lake(rng, &mut terrain_map);
         // World::add_doors(&mut terrain_map);
         let player = Player::new();
         let starting_map = &mut entity_map[player.pos.y][player.pos.x];
@@ -108,7 +105,7 @@ impl World {
         let mut bomber_explosions: [[Vec<(Position, [f32; 4])>;
             (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
             (BOARD_SIZE.1 / WORLD_SIZE.1) as usize] = Default::default();
-        World::gen_enemies(&mut rng, &mut terrain_map, &mut entity_map, &mut enemies);
+        World::gen_enemies(rng, &mut terrain_map, &mut entity_map, &mut enemies);
         World::gen_bosses(&mut terrain_map, &mut entity_map, &mut bosses);
         World {
             world_position: Position::new(0, 0),
@@ -120,10 +117,8 @@ impl World {
             enemies,
             bosses,
             projectiles: Vec::new(),
-            entity_positions,
             entity_map,
             terrain_map,
-            terrain_positions,
             atmosphere_map: Default::default(),
             boss_defeated,
             boss_lasers: Vec::new(),
@@ -131,7 +126,6 @@ impl World {
             stun_wells: Vec::new(),
             boss_column_laser: None,
             bomber_explosions,
-            rng,
         }
     }
 
@@ -298,7 +292,7 @@ impl World {
     }
 
     //This function draws the whole entire world that is seen by the player
-    pub fn draw(&mut self, canvas: &mut graphics::Canvas) {
+    pub fn draw(&mut self, canvas: &mut graphics::Canvas, rng: &mut ChaCha8Rng) {
         //Draw lasers if in boss room
         if BOSS_ROOMS.contains(&self.world_position) {
             for index in 0..self.bosses.len() {
@@ -344,7 +338,7 @@ impl World {
                         TILE_SIZE.0 as i32,
                         TILE_SIZE.1 as i32,
                     ))
-                    .color(Self::related_color(&mut self.rng, *color)),
+                    .color(Self::related_color(rng, *color)),
             )
         }
 

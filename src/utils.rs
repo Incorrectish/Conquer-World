@@ -21,7 +21,7 @@ const VULNERABLE_TIME_BASE: usize = 10;
 const BOSS_3_RUSH_COOLDOWN: usize = 20;
 const BOSS_3_MOVE_DELAY: usize = 2;
 
-#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(serde::Deserialize, serde::Serialize, Debug)]
 pub struct Boss {
     pub position: Position,
     pub color: [f32; 4],
@@ -267,8 +267,7 @@ impl Boss {
         // Boss::generate_stun_well(world, index);
     }
 
-    pub fn generate_laser(world: &mut World, num_lasers: usize) {
-        let rng = &mut world.rng;
+    pub fn generate_laser(world: &mut World, num_lasers: usize, rng: &mut ChaCha8Rng) {
         for _ in 0..num_lasers {
             let coord: Position = if Boss::coin_flip(rng) {
                 Position::new(0, random::rand_range(rng, 0, BOARD_SIZE.1) as usize)
@@ -442,15 +441,15 @@ impl Boss {
         }
     }
 
-    pub fn generate_stun_well(world: &mut World, index: usize) {
+    pub fn generate_stun_well(world: &mut World, index: usize, rng: &mut ChaCha8Rng) {
         if world.bosses[index].stun_well_cooldown == 0 {
             world.bosses[index].stun_well_cooldown = STUN_WELL_COOLDOWN;
             let mut well_size = 3;
-            if Self::coin_flip(&mut world.rng) {
+            if Self::coin_flip(rng) {
                 well_size = 5;
             }
-            let x = random::rand_range(&mut world.rng, 5, WORLD_SIZE.0) as usize;
-            let y = random::rand_range(&mut world.rng, 5, WORLD_SIZE.1) as usize;
+            let x = random::rand_range(rng, 5, WORLD_SIZE.0) as usize;
+            let y = random::rand_range(rng, 5, WORLD_SIZE.1) as usize;
             world.stun_wells.push((
                 Position::new(x, y),
                 tile::STUN_WELL_INDICATOR,

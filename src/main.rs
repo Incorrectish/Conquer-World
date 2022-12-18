@@ -58,7 +58,7 @@ fn main() -> GameResult {
     //     State::from()
     // }
     // Next we create a new instance of our GameState struct, which implements EventHandler
-    let state = State::new(&mut ctx)?;
+    let state = State::new(&mut ctx, false)?;
 
     // And finally we actually run our game, passing in our context and state.
     event::run(ctx, events_loop, state)

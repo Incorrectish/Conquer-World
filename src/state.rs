@@ -6,19 +6,32 @@ use crate::utils::Position;
 use crate::UNIVERSAL_OFFSET;
 use ggez::audio;
 use ggez::audio::SoundSource;
+use rand_chacha::ChaChaRng;
+use serde::{Serialize, Deserialize};
 
 use crate::{
     projectile::Projectile,
     tile,
+    entity::Entity,
     world::{World, BOSS_ROOMS, FINAL_BOSS_ROOM},
-    SCREEN_SIZE, TILE_SIZE, WORLD_SIZE,
+    SCREEN_SIZE, TILE_SIZE, WORLD_SIZE, BOARD_SIZE
 };
+
+use rand::prelude::*;
+use rand::rngs::ThreadRng;
+use rand_chacha::ChaCha8Rng;
+
 use ggez::{
     event,
     graphics::{self, Canvas},
     input::keyboard::{KeyCode, KeyInput},
     Context, GameError, GameResult,
 };
+
+use::std::collections::HashMap;
+
+
+pub const RNG_SEED: u64 = 0;
 
 // const MOVES_TILL_ENERGY_REGEN: usize = 5;
 
@@ -31,19 +44,24 @@ pub struct State {
     // Abstraction for the world and what is contained within it
     world: World,
     player_move_count: usize,
+    title_screen: bool,
+    pub rng: ChaCha8Rng,
 }
 
 impl State {
     // just returns the default values
-    pub fn new(ctx: &mut Context) -> GameResult<State> {
+    pub fn new(ctx: &mut Context, title_screen: bool) -> GameResult<State> {
         let sound = audio::Source::new(ctx, "/overworld.ogg")?;
+        let mut rng = ChaCha8Rng::seed_from_u64(RNG_SEED);
         let temp = State {
             should_draw: true,
             command: false,
             sound,
             is_playing: false,
-            world: World::new(),
+            world: World::new(&mut rng),
             player_move_count: 0,
+            title_screen,
+            rng
         };
         Ok(temp)
     }
@@ -54,6 +72,8 @@ impl State {
         world: World,
         player_move_count: usize,
         ctx: &mut Context,
+        title_screen: bool,
+        rng: ChaCha8Rng
     ) -> GameResult<State> {
         let sound = audio::Source::new(ctx, "/overworld.ogg")?;
         let temp = State {
@@ -63,6 +83,8 @@ impl State {
             is_playing,
             world,
             player_move_count,
+            title_screen,
+            rng,
         };
         Ok(temp)
     }
@@ -121,7 +143,7 @@ impl ggez::event::EventHandler<GameError> for State {
                 //     }
                 // }
             }
-            self.world.draw(&mut canvas);
+            self.world.draw(&mut canvas, &mut self.rng);
 
             //For Text
             // let level_dest = bevy::math::Vec2::new(10.0, 10.0);
@@ -194,5 +216,10 @@ impl ggez::event::EventHandler<GameError> for State {
 }
 
 impl State {
-    fn save_state(state: &mut State) {}
+    fn save_state(state: &mut State) {
+        let serialized = serde_json::to_string(&state.world).unwrap();
+        println!("serialized = {serialized}");
+        let deserialized: ChaChaRng = serde_json::from_str(&serialized).unwrap();
+        println!("deserialized = {deserialized:?}");
+    }
 }
