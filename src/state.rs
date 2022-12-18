@@ -111,11 +111,11 @@ impl ggez::event::EventHandler<GameError> for State {
         Ok(())
     }
 
-    fn key_down_event(
+    fn key_up_event(
         &mut self,
         ctx: &mut Context,
         input: KeyInput,
-        _repeated: bool,
+        // _repeated: bool,
     ) -> Result<(), GameError> {
         // Just takes in the user input and makes an action based off of it
         if Player::use_input(input, &mut self.world) {
@@ -133,17 +133,7 @@ impl ggez::event::EventHandler<GameError> for State {
         }
         Ok(())
     }
-
-    fn mouse_motion_event(
-        &mut self,
-        _ctx: &mut Context,
-        _x: f32,
-        _y: f32,
-        _dx: f32,
-        _dy: f32,
-    ) -> Result<(), GameError> {
-        Ok(())
-    }
+    
 
     fn mouse_button_down_event(
         &mut self,

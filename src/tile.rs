@@ -33,7 +33,7 @@ pub const FIRE_TERTIARY: [f32; 4] = [226.0/255.0, 88.0/255.0, 34.0/255.0, 1.0];
 pub const FIRE_FINAL: [f32; 4] = [215.0/255.0, 53.0/255.0, 2.0/255.0, 1.0];
 
 
-pub const SMART_PROJECTILE: [f32; 4] = [4.0/255.0, 188.0/255.0, 253.0/255.0, 1.0];
+pub const TRACKING_PROJECTILE: [f32; 4] = [4.0/255.0, 188.0/255.0, 253.0/255.0, 1.0];
 
 pub const CHASING_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0]; //Regular enemy we have right now
 pub const BOMBER_ENEMY: [f32; 4] = [0.0, 0.8, 0.3, 1.0]; //Suicide bomber, can dodge projectiles, destroys structures (AOE), moves 2 tiles per turn
