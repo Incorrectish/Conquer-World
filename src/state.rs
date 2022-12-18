@@ -25,12 +25,12 @@ use ggez::{
 // #[derive(serde::Deserialize, serde::Serialize)]
 pub struct State {
     should_draw: bool,
+    command: bool,
     sound: audio::Source,
     is_playing: bool,
     // Abstraction for the world and what is contained within it
     world: World,
     player_move_count: usize,
-
 }
 
 impl State {
@@ -39,10 +39,30 @@ impl State {
         let sound = audio::Source::new(ctx, "/overworld.ogg")?;
         let temp = State {
             should_draw: true,
+            command: false,
             sound,
             is_playing: false,
             world: World::new(),
             player_move_count: 0,
+        };
+        Ok(temp)
+    }
+
+    pub fn from(
+        should_draw: bool,
+        is_playing: bool,
+        world: World,
+        player_move_count: usize,
+        ctx: &mut Context,
+    ) -> GameResult<State> {
+        let sound = audio::Source::new(ctx, "/overworld.ogg")?;
+        let temp = State {
+            should_draw,
+            command: false,
+            sound,
+            is_playing,
+            world,
+            player_move_count,
         };
         Ok(temp)
     }
@@ -100,8 +120,8 @@ impl ggez::event::EventHandler<GameError> for State {
                 //         )
                 //     }
                 // }
-        }
-        self.world.draw(&mut canvas);
+            }
+            self.world.draw(&mut canvas);
 
             //For Text
             // let level_dest = bevy::math::Vec2::new(10.0, 10.0);
@@ -132,6 +152,14 @@ impl ggez::event::EventHandler<GameError> for State {
         // _repeated: bool,
     ) -> Result<(), GameError> {
         // Just takes in the user input and makes an action based off of it
+        if let Some(key) = input.keycode {
+            if key == KeyCode::Colon {
+                self.command = true;
+            } else if key == KeyCode::Q {
+                Self::save_state(self);
+            }
+        }
+
         if Player::use_input(input, &mut self.world) {
             self.player_move_count += 1;
             // if self.player_move_count >= MOVES_TILL_ENERGY_REGEN {
@@ -147,7 +175,6 @@ impl ggez::event::EventHandler<GameError> for State {
         }
         Ok(())
     }
-    
 
     fn mouse_button_down_event(
         &mut self,
@@ -164,4 +191,8 @@ impl ggez::event::EventHandler<GameError> for State {
         }
         Ok(())
     }
+}
+
+impl State {
+    fn save_state(state: &mut State) {}
 }

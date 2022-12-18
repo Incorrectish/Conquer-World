@@ -1,9 +1,6 @@
-use ggez::{
-    event,
-    GameResult,
-};
-use std::path;
+use ggez::{event, GameResult};
 use std::env;
+use std::path;
 
 mod direction;
 mod enemy;
@@ -13,14 +10,13 @@ mod projectile;
 mod random;
 mod state;
 mod tile;
-mod world;
 mod utils;
+mod world;
 
 use crate::state::State;
 
 // Constants that determine tile size and world size, where the world is a 2 dimensional array of
 // tiles
-
 
 //Offset to leave extra space on top of screen for health/energy indicators
 pub const UNIVERSAL_OFFSET: i16 = 5;
@@ -32,7 +28,6 @@ pub const BOARD_SIZE: (i16, i16) = (350, 350);
 // define the size of each tile which a square of pixels, size: (x, y) pixels.
 pub const TILE_SIZE: (i16, i16) = (16, 16);
 // define screen size in pixels. Will be grid size * tile size
-
 
 pub const SCREEN_SIZE: (f32, f32) = (
     (WORLD_SIZE.0 as f32) * TILE_SIZE.0 as f32,
@@ -58,6 +53,10 @@ fn main() -> GameResult {
         .add_resource_path(resource_dir)
         .build()?;
 
+    // let state = if (save) {
+    //     let
+    //     State::from()
+    // }
     // Next we create a new instance of our GameState struct, which implements EventHandler
     let state = State::new(&mut ctx)?;
 

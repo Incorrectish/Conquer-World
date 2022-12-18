@@ -364,8 +364,8 @@ impl Enemy {
                         for _ in 0..world.projectiles.len() {
                             if world.projectiles[index_proj as usize].color
                                 == tile::PROJECTILE_PLAYER
-                                || world.projectiles[index_proj as usize].color ==
-                                tile::TRACKING_PROJECTILE
+                                || world.projectiles[index_proj as usize].color
+                                    == tile::TRACKING_PROJECTILE
                             {
                                 if new_pos == world.projectiles[index_proj as usize].pos
                                     && world.enemies[index].world_pos

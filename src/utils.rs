@@ -1,18 +1,12 @@
 use crate::{
-    enemy::Enemy, 
-    tile, 
-    direction::Direction, 
-    world::World,
-    BOARD_SIZE, TILE_SIZE, UNIVERSAL_OFFSET, WORLD_SIZE,
-    entity::Entity,
-    random,
-    world::BOSS_ROOMS,
+    direction::Direction, enemy::Enemy, entity::Entity, random, tile, world::World,
+    world::BOSS_ROOMS, BOARD_SIZE, TILE_SIZE, UNIVERSAL_OFFSET, WORLD_SIZE,
 };
-use std::{collections::HashMap, cmp::max};
-use rand::rngs::ThreadRng;
-use rand::rngs;
 use ggez::graphics::{self, Canvas};
+use rand::rngs;
+use rand::rngs::ThreadRng;
 use rand_chacha::ChaCha8Rng;
+use std::{cmp::max, collections::HashMap};
 
 const BOSS_HEALTH: usize = 100;
 const LASER_LINGER_VALUE: usize = 3;
@@ -45,12 +39,18 @@ pub struct Boss {
 }
 
 impl Boss {
-    pub fn new(x: usize, y: usize, color: [f32; 4], world_position: Position,
-    terrain_loc: &mut HashMap<Position, [f32; 4]>,
+    pub fn new(
+        x: usize,
+        y: usize,
+        color: [f32; 4],
+        world_position: Position,
+        terrain_loc: &mut HashMap<Position, [f32; 4]>,
     ) -> Self {
         let mut offset: usize = 4;
         let is_major: bool = color == tile::MAJOR_BOSS;
-        if is_major { offset = 5; }
+        if is_major {
+            offset = 5;
+        }
         Boss {
             position: Position::new(x, y),
             color,
@@ -64,10 +64,10 @@ impl Boss {
             boss_can_attack: true,
             vulnerable_time: 0,
             chase_rush_cooldown: BOSS_3_RUSH_COOLDOWN,
-            speed_delay: BOSS_3_MOVE_DELAY, 
+            speed_delay: BOSS_3_MOVE_DELAY,
         }
     }
-    
+
     pub fn update(world: &mut World) {
         for index in (0..world.bosses.len()).rev() {
             if world.bosses[index].world_position == world.world_position {
@@ -75,7 +75,7 @@ impl Boss {
             }
             if world.bosses[index].health <= 0 {
                 Boss::kill(world, index);
-            } 
+            }
         }
     }
 
@@ -84,7 +84,7 @@ impl Boss {
         for i in -boss_size..=boss_size {
             for j in -boss_size..=boss_size {
                 let mut color = world.bosses[index].color;
-                if i == -boss_size || j == -boss_size || i == boss_size || j == boss_size { 
+                if i == -boss_size || j == -boss_size || i == boss_size || j == boss_size {
                     if world.bosses[index].vulnerable_time > 2 {
                         color = tile::BOSS_VULNERABLE;
                     } else if world.bosses[index].vulnerable_time == 2 {
@@ -100,7 +100,10 @@ impl Boss {
                     graphics::DrawParam::new()
                         .dest_rect(graphics::Rect::new_i32(
                             (world.bosses[index].position.x as i32 + i as i32) * TILE_SIZE.0 as i32,
-                            (world.bosses[index].position.y as i32 + j as i32 + UNIVERSAL_OFFSET as i32) * TILE_SIZE.1 as i32,
+                            (world.bosses[index].position.y as i32
+                                + j as i32
+                                + UNIVERSAL_OFFSET as i32)
+                                * TILE_SIZE.1 as i32,
                             TILE_SIZE.0 as i32,
                             TILE_SIZE.1 as i32,
                         ))
@@ -148,7 +151,7 @@ impl Boss {
         //             )
         //         }
         //     }
-        // }   
+        // }
 
         // for asteroids in &mut world.boss_asteroids {
         //     for i in 0..=2 {
@@ -166,16 +169,14 @@ impl Boss {
         //             )
         //         }
         //     }
-            
+
         // }
         // if world.bosses[index].rush_info.0 {
         //     Self::draw_rush(world, index, world.bosses[index].rush_info.3, canvas);
         // }
         // Self::draw_stun_wells(world, canvas);
-
     }
 
-    
     pub fn coin_flip(rng: &mut ChaCha8Rng) -> bool {
         random::rand_range(rng, 0, 2) > 0
     }
@@ -226,9 +227,9 @@ impl Boss {
         //             }
         //         }
         //     }
-            
+
         //}
-        
+
         // if world.bosses[index].color == tile::MAJOR_BOSS {
         //     if world.player.is_visible() && Boss::generate_asteroid(world, world.bosses[index].asteroid_cooldown) {
         //         world.bosses[index].asteroid_cooldown = ASTEROID_COOLDOWN;
@@ -239,9 +240,9 @@ impl Boss {
 
         // if BOSS_ROOMS.contains(&world.world_position) {
         //     for laser in &world.boss_lasers {
-        //         if (world.player.pos.x == laser.0.x 
-        //         || world.player.pos.y == laser.0.y) 
-        //         && laser.1 == tile::BOSS_LASER_REAL 
+        //         if (world.player.pos.x == laser.0.x
+        //         || world.player.pos.y == laser.0.y)
+        //         && laser.1 == tile::BOSS_LASER_REAL
         //         && world.player.pos.y != 0
         //         && world.player.pos.x != 0
         //         && world.player.pos.y != WORLD_SIZE.1 as usize - 1
@@ -251,13 +252,13 @@ impl Boss {
         //     }
 
         //     for asteroid in &world.boss_asteroids {
-        //         if (world.player.pos.x <= asteroid.0.x + 1 
+        //         if (world.player.pos.x <= asteroid.0.x + 1
         //         && world.player.pos.x >= asteroid.0.x - 1
         //         && world.player.pos.y <= asteroid.0.y + 1
-        //         && world.player.pos.y >= asteroid.0.y - 1) 
+        //         && world.player.pos.y >= asteroid.0.y - 1)
         //         && asteroid.1 == tile::BOSS_ASTEROID_REAL {
         //             world.player.damage(ASTEROID_DAMAGE);
-        //         } 
+        //         }
         //     }
         // }
 
@@ -266,22 +267,27 @@ impl Boss {
         // Boss::generate_stun_well(world, index);
     }
 
-
     pub fn generate_laser(world: &mut World, num_lasers: usize) {
         let rng = &mut world.rng;
         for _ in 0..num_lasers {
             let coord: Position = if Boss::coin_flip(rng) {
-                Position::new(0,random::rand_range(rng, 0, BOARD_SIZE.1) as usize)
+                Position::new(0, random::rand_range(rng, 0, BOARD_SIZE.1) as usize)
             } else {
                 Position::new(random::rand_range(rng, 0, BOARD_SIZE.0) as usize, 0)
             };
-            world.boss_lasers.push((coord, tile::BOSS_LASER_STAGE_1, LASER_LINGER_VALUE));
+            world
+                .boss_lasers
+                .push((coord, tile::BOSS_LASER_STAGE_1, LASER_LINGER_VALUE));
         }
     }
-    
+
     pub fn generate_asteroid(world: &mut World, cooldown: usize) -> bool {
         if cooldown == 0 {
-            world.boss_asteroids.push((world.player.pos, tile::BOSS_ASTEROID_STAGE_1, ASTEROID_LINGER_VALUE));
+            world.boss_asteroids.push((
+                world.player.pos,
+                tile::BOSS_ASTEROID_STAGE_1,
+                ASTEROID_LINGER_VALUE,
+            ));
             return true;
         }
         return false;
@@ -290,7 +296,9 @@ impl Boss {
     pub fn draw_laser_column(world: &mut World, index: usize, canvas: &mut Canvas) {
         let boss_pos = world.bosses[index].position;
         let mut laser_width: i32 = -2;
-        if world.bosses[index].is_major { laser_width = -3; }
+        if world.bosses[index].is_major {
+            laser_width = -3;
+        }
         if let Some(laser_pos) = world.boss_column_laser {
             for j in laser_width..=laser_width.abs() {
                 for i in 0..WORLD_SIZE.1 / 2 {
@@ -314,8 +322,8 @@ impl Boss {
                         &graphics::Quad,
                         graphics::DrawParam::new()
                             .dest_rect(graphics::Rect::new_i32(
-                                x  * TILE_SIZE.0 as i32,
-                                (y  + UNIVERSAL_OFFSET as i32) * TILE_SIZE.1 as i32,
+                                x * TILE_SIZE.0 as i32,
+                                (y + UNIVERSAL_OFFSET as i32) * TILE_SIZE.1 as i32,
                                 TILE_SIZE.0 as i32,
                                 TILE_SIZE.1 as i32,
                             ))
@@ -324,7 +332,7 @@ impl Boss {
                 }
             }
         }
-    }   
+    }
 
     pub fn generate_column_laser(world: &mut World, index: usize) {
         let mut offset = world.bosses[index].offset;
@@ -338,45 +346,54 @@ impl Boss {
                         world.boss_column_laser = None;
                     } else {
                         world.bosses[index].position.y = boss_pos.y - 1;
-                        curr_pos.0.y = pos.y - 1;    
+                        curr_pos.0.y = pos.y - 1;
                     }
-                },
+                }
 
                 Direction::South => {
                     if boss_pos.y + offset == WORLD_SIZE.1 as usize - 1 {
                         world.boss_column_laser = None;
                     } else {
                         world.bosses[index].position.y = boss_pos.y + 1;
-                        curr_pos.0.y = pos.y + 1;    
+                        curr_pos.0.y = pos.y + 1;
                     }
-                },
+                }
 
                 Direction::East => {
                     if boss_pos.x + offset == WORLD_SIZE.0 as usize - 1 {
                         world.boss_column_laser = None;
                     } else {
                         world.bosses[index].position.x = boss_pos.x + 1;
-                        curr_pos.0.x = pos.x + 1;    
+                        curr_pos.0.x = pos.x + 1;
                     }
-                },
+                }
 
                 Direction::West => {
                     if boss_pos.x - offset == 0 {
                         world.boss_column_laser = None;
                     } else {
                         world.bosses[index].position.x = boss_pos.x - 1;
-                        curr_pos.0.x = pos.x - 1;    
+                        curr_pos.0.x = pos.x - 1;
                     }
-                },
+                }
             }
         } else if *can_attack {
-            let boss_delta = (boss_pos.x as i32 - world.player.pos.x as i32, boss_pos.y as i32 - world.player.pos.y as i32);
+            let boss_delta = (
+                boss_pos.x as i32 - world.player.pos.x as i32,
+                boss_pos.y as i32 - world.player.pos.y as i32,
+            );
             let mut new_position: (Position, Direction);
             if boss_delta.0.abs() > boss_delta.1.abs() {
                 if boss_delta.0 > 0 {
-                    new_position = (Position::new(boss_pos.x, boss_pos.y - offset), Direction::West);
+                    new_position = (
+                        Position::new(boss_pos.x, boss_pos.y - offset),
+                        Direction::West,
+                    );
                 } else {
-                    new_position = (Position::new(boss_pos.x, boss_pos.y - offset), Direction::East);
+                    new_position = (
+                        Position::new(boss_pos.x, boss_pos.y - offset),
+                        Direction::East,
+                    );
                 }
 
                 if boss_delta.1 < 0 {
@@ -384,9 +401,15 @@ impl Boss {
                 }
             } else {
                 if boss_delta.1 < 0 {
-                    new_position = (Position::new(boss_pos.x - offset, boss_pos.y), Direction::South);
+                    new_position = (
+                        Position::new(boss_pos.x - offset, boss_pos.y),
+                        Direction::South,
+                    );
                 } else {
-                    new_position = (Position::new(boss_pos.x - offset, boss_pos.y), Direction::North);
+                    new_position = (
+                        Position::new(boss_pos.x - offset, boss_pos.y),
+                        Direction::North,
+                    );
                 }
 
                 if boss_delta.0 < 0 {
@@ -402,7 +425,7 @@ impl Boss {
 
     pub fn return_boss_to_center(world: &mut World, index: usize) {
         let boss_pos = world.bosses[index].position;
-        if boss_pos.x < WORLD_SIZE.0 as usize / 2  {
+        if boss_pos.x < WORLD_SIZE.0 as usize / 2 {
             world.bosses[index].position.x += 1;
         } else if boss_pos.x > WORLD_SIZE.0 as usize / 2 {
             world.bosses[index].position.x -= 1;
@@ -417,10 +440,10 @@ impl Boss {
                 world.bosses[index].vulnerable_time -= 1;
             }
         }
-    }   
-    
+    }
+
     pub fn generate_stun_well(world: &mut World, index: usize) {
-        if world.bosses[index].stun_well_cooldown == 0 { 
+        if world.bosses[index].stun_well_cooldown == 0 {
             world.bosses[index].stun_well_cooldown = STUN_WELL_COOLDOWN;
             let mut well_size = 3;
             if Self::coin_flip(&mut world.rng) {
@@ -428,7 +451,12 @@ impl Boss {
             }
             let x = random::rand_range(&mut world.rng, 5, WORLD_SIZE.0) as usize;
             let y = random::rand_range(&mut world.rng, 5, WORLD_SIZE.1) as usize;
-            world.stun_wells.push((Position::new(x,y), tile::STUN_WELL_INDICATOR, well_size, STUN_WELL_LINGER_VALUE));
+            world.stun_wells.push((
+                Position::new(x, y),
+                tile::STUN_WELL_INDICATOR,
+                well_size,
+                STUN_WELL_LINGER_VALUE,
+            ));
         } else {
             for index in (0..world.stun_wells.len()).rev() {
                 let well = world.stun_wells[index];
@@ -437,7 +465,6 @@ impl Boss {
                 } else {
                     if well.3 == 0 {
                         world.stun_wells.remove(index);
-                        
                     } else {
                         world.stun_wells[index].3 -= 1;
                     }
@@ -446,7 +473,7 @@ impl Boss {
             world.bosses[index].stun_well_cooldown -= 1;
         }
     }
-    
+
     pub fn draw_stun_wells(world: &mut World, canvas: &mut Canvas) {
         for well in &world.stun_wells {
             let len = well.2 as i32 - 1;
@@ -469,16 +496,17 @@ impl Boss {
         }
     }
 
-    pub fn generate_safe_spot(world: &mut World, index: usize) {
+    pub fn generate_safe_spot(world: &mut World, index: usize) {}
 
-    }
-    
     pub fn chase_player(world: &mut World, index: usize) {
         let boss_pos = world.bosses[index].position;
-        let boss_delta = (boss_pos.x as i32 - world.player.pos.x as i32, boss_pos.y as i32 - world.player.pos.y as i32);
-        if (world.bosses[index].rush_info.0 || 
-        (boss_delta.0.abs() <= 3 || boss_delta.1.abs() <= 3))
-        && world.bosses[index].chase_rush_cooldown == 0 {
+        let boss_delta = (
+            boss_pos.x as i32 - world.player.pos.x as i32,
+            boss_pos.y as i32 - world.player.pos.y as i32,
+        );
+        if (world.bosses[index].rush_info.0 || (boss_delta.0.abs() <= 3 || boss_delta.1.abs() <= 3))
+            && world.bosses[index].chase_rush_cooldown == 0
+        {
             Boss::rush_player(world, index, boss_delta.0, boss_delta.1);
         } else if world.bosses[index].boss_can_attack && world.bosses[index].speed_delay == 0 {
             if boss_delta.0.abs() > boss_delta.1.abs() {
@@ -487,18 +515,17 @@ impl Boss {
                 } else {
                     world.bosses[index].position.x -= 1;
                 }
-
             } else {
                 if boss_delta.1 < 0 {
                     world.bosses[index].position.y += 1;
                 } else {
                     world.bosses[index].position.y -= 1;
-
                 }
             }
-            world.bosses[index].speed_delay = BOSS_3_MOVE_DELAY;        
-            if (world.bosses[index].chase_rush_cooldown != 0) {world.bosses[index].chase_rush_cooldown -= 1;}
-    
+            world.bosses[index].speed_delay = BOSS_3_MOVE_DELAY;
+            if (world.bosses[index].chase_rush_cooldown != 0) {
+                world.bosses[index].chase_rush_cooldown -= 1;
+            }
         } else {
             if world.bosses[index].vulnerable_time != 0 {
                 world.bosses[index].vulnerable_time -= 1;
@@ -507,7 +534,9 @@ impl Boss {
                 }
             } else {
                 world.bosses[index].speed_delay -= 1;
-                if (world.bosses[index].chase_rush_cooldown != 0) {world.bosses[index].chase_rush_cooldown -= 1;}
+                if (world.bosses[index].chase_rush_cooldown != 0) {
+                    world.bosses[index].chase_rush_cooldown -= 1;
+                }
             }
         }
     }
@@ -517,22 +546,21 @@ impl Boss {
             if x_delta.abs() > y_delta.abs() {
                 if x_delta < 0 {
                     world.bosses[index].rush_info.1 = Some(Direction::East);
-                    world.bosses[index].rush_info.3 = WORLD_SIZE.0 as usize - 1 - world.bosses[index].position.x;
+                    world.bosses[index].rush_info.3 =
+                        WORLD_SIZE.0 as usize - 1 - world.bosses[index].position.x;
                 } else {
                     world.bosses[index].rush_info.1 = Some(Direction::West);
-                    world.bosses[index].rush_info.3 =  world.bosses[index].position.x;
-
+                    world.bosses[index].rush_info.3 = world.bosses[index].position.x;
                 }
             } else {
                 if y_delta < 0 {
                     world.bosses[index].rush_info.1 = Some(Direction::South);
-                    world.bosses[index].rush_info.3 = WORLD_SIZE.1 as usize - 1 - world.bosses[index].position.y;
-
+                    world.bosses[index].rush_info.3 =
+                        WORLD_SIZE.1 as usize - 1 - world.bosses[index].position.y;
                 } else {
                     world.bosses[index].rush_info.1 = Some(Direction::North);
                     world.bosses[index].rush_info.3 = world.bosses[index].position.y;
                 }
-
             }
             world.bosses[index].rush_info.0 = true;
         } else {
@@ -542,32 +570,31 @@ impl Boss {
             match stage {
                 tile::BOSS_LASER_STAGE_1 => {
                     world.bosses[index].rush_info.2 = tile::BOSS_LASER_STAGE_2;
-                },
+                }
 
                 tile::BOSS_LASER_STAGE_2 => {
                     world.bosses[index].rush_info.2 = tile::BOSS_LASER_REAL;
-                },
+                }
 
                 _ => {
                     if let Some(direction) = world.bosses[index].rush_info.1 {
                         match direction {
                             Direction::North => {
                                 world.bosses[index].position.y = 0 + offset;
-                            },
+                            }
 
                             Direction::South => {
                                 world.bosses[index].position.y = WORLD_SIZE.1 as usize - offset - 1;
-
-                            },
+                            }
 
                             Direction::West => {
                                 world.bosses[index].position.x = 0 + offset;
-                            },
+                            }
 
                             Direction::East => {
                                 world.bosses[index].position.x = WORLD_SIZE.0 as usize - 1 - offset;
                             }
-                        }   
+                        }
                     }
                     world.bosses[index].chase_rush_cooldown = BOSS_3_RUSH_COOLDOWN;
                     world.bosses[index].rush_info.2 = tile::BOSS_LASER_STAGE_1;
@@ -577,7 +604,7 @@ impl Boss {
             }
         }
     }
-    
+
     pub fn draw_rush(world: &mut World, index: usize, distance: usize, canvas: &mut Canvas) {
         if let Some(direction) = world.bosses[index].rush_info.1 {
             let mut rush_dist = distance;
@@ -592,7 +619,7 @@ impl Boss {
                 // rush_dist = WORLD_SIZE.0 as usize - world.bosses[index].offset;
                 color = tile::FIRE_TERTIARY;
             }
-            
+
             for i in 0..rush_dist as i32 {
                 for j in width..=(-width) {
                     let mut x = world.bosses[index].position.x as i32;
@@ -605,8 +632,8 @@ impl Boss {
                             } else {
                                 y = y - i;
                             }
-                        },
-        
+                        }
+
                         Direction::South => {
                             x = x + j;
                             if after_rush {
@@ -614,8 +641,8 @@ impl Boss {
                             } else {
                                 y = y + i;
                             }
-                        },
-        
+                        }
+
                         Direction::West => {
                             if after_rush {
                                 x = x + i;
@@ -623,8 +650,8 @@ impl Boss {
                                 x = x - i;
                             }
                             y = y + j;
-                        },
-        
+                        }
+
                         Direction::East => {
                             if after_rush {
                                 x = x - i;
@@ -633,7 +660,7 @@ impl Boss {
                             }
                             y = y + j;
                         }
-                    } 
+                    }
                     canvas.draw(
                         &graphics::Quad,
                         graphics::DrawParam::new()
@@ -647,7 +674,6 @@ impl Boss {
                     )
                 }
             }
-              
         }
     }
 
@@ -664,24 +690,23 @@ impl Boss {
         world.bosses.remove(index);
         // when kill is implemented this should reopen doors
         world.boss_defeated[world.world_position.y][world.world_position.x] = true;
-        World::toggle_doors(&mut world.terrain_map, world.world_position,
-            world.player.pos, world.boss_defeated);
+        World::toggle_doors(
+            &mut world.terrain_map,
+            world.world_position,
+            world.player.pos,
+            world.boss_defeated,
+        );
     }
 }
-
 
 #[derive(Eq, Hash, PartialEq, Copy, Clone, Debug, serde::Deserialize, serde::Serialize)]
 
 pub struct Position {
-    pub x: usize, 
+    pub x: usize,
     pub y: usize,
 }
 impl Position {
     pub const fn new(x: usize, y: usize) -> Self {
-        Position {
-            x,
-            y,
-        }
+        Position { x, y }
     }
 }
-
