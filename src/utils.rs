@@ -8,6 +8,7 @@ use rand::rngs;
 use rand::rngs::ThreadRng;
 use rand_chacha::ChaCha8Rng;
 use std::{cmp::max, collections::HashMap};
+use ggez::glam::*;
 
 const BOSS_HEALTH: usize = 100;
 const LASER_LINGER_VALUE: usize = 3;
