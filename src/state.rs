@@ -185,7 +185,7 @@ impl ggez::event::EventHandler<GameError> for State {
             canvas.finish(ctx)?;
         } else if !self.world.as_mut().unwrap().player.is_alive() {
             let canvas =
-                graphics::Canvas::from_frame(ctx, graphics::Color::from(tile::TITLE_SCREEN_FLOOR));
+                graphics::Canvas::from_frame(ctx, graphics::Color::from(tile::BLACK));
             canvas.finish(ctx)?;
         } else {
             if self.should_draw {
