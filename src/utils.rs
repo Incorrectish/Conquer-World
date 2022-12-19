@@ -21,7 +21,7 @@ const VULNERABLE_TIME_BASE: usize = 10;
 const BOSS_3_RUSH_COOLDOWN: usize = 20;
 const BOSS_3_MOVE_DELAY: usize = 2;
 
-#[derive(serde::Deserialize, serde::Serialize, Debug)]
+#[derive(serde::Deserialize, serde::Serialize, Debug, PartialEq)]
 pub struct Boss {
     pub position: Position,
     pub color: [f32; 4],
@@ -698,12 +698,12 @@ impl Boss {
     }
 }
 
-#[derive(Eq, Hash, PartialEq, Copy, Clone, Debug, serde::Deserialize, serde::Serialize)]
-
+#[derive(Eq, Hash, PartialEq, Copy, Clone, Debug, serde::Deserialize, serde::Serialize, Ord, PartialOrd)]
 pub struct Position {
     pub x: usize,
     pub y: usize,
 }
+
 impl Position {
     pub const fn new(x: usize, y: usize) -> Self {
         Position { x, y }

@@ -32,7 +32,7 @@ const LAKES_PER_WORLD: i16 = 3;
 const TOTAL_MOUNTAINS: i16 = 60;
 const ENEMY_COUNT: usize = 10;
 
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Debug, PartialEq)]
 pub struct World {
     //Stores which world the player is in
     pub world_position: Position,

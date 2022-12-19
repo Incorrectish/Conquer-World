@@ -9,6 +9,7 @@ use ggez::audio::SoundSource;
 use rand_chacha::ChaChaRng;
 use serde::{Deserialize, Serialize};
 use std::fs::{self, OpenOptions};
+use std::io::Write;
 
 use crate::{
     entity::Entity,
@@ -29,7 +30,6 @@ use ggez::{
     Context, GameError, GameResult,
 };
 
-use ::std::collections::HashMap;
 
 pub const SOUND_PATH: &'static str = "/overworld.ogg";
 
@@ -190,6 +190,7 @@ impl ggez::event::EventHandler<GameError> for State {
                     *self = Self::new(ctx, false)?;
                 } else if key == KeyCode::L {
                     // load game
+                    *self = Self::load_save(ctx).unwrap();
                 }
             }
         } else {
@@ -239,25 +240,22 @@ impl ggez::event::EventHandler<GameError> for State {
 
 impl State {
     fn save_state(&self) {
-        let serialized = ron::to_string(&self.world).unwrap();
-        println!("serialized = {serialized}\n\n\n");
-        let deserialized: World = ron::from_str(&serialized).unwrap();
-        println!("deserialized = {deserialized:?}\n\n\n");
-        let serialized = serde_json::to_string(&self.rng).unwrap();
-        println!("serialized = {serialized}\n\n\n");
-        let deserialized: ChaChaRng = serde_json::from_str(&serialized).unwrap();
-        println!("deserialized = {deserialized:?}\n\n\n");
+        let serialized_world = ron::to_string(self.world.as_ref().unwrap()).unwrap();
+        fs::write("./serialization/world", serialized_world.as_bytes());
+        let serialized_rng = serde_json::to_string(self.rng.as_ref().unwrap()).unwrap();
+        fs::write("./serialization/rng", serialized_rng.as_bytes());
+        fs::write("./serialization/is_serialized", b"1");
     }
-    fn load_save() {
+    fn load_save(ctx: &mut Context) -> Option<State> {
         /* Here is how serialization works:
-         * In the directory serialization, there are a couple files
-         * is_serialized:
-         *      Contains either "0" or "1", where one is that there is a game serialized while zero
-         *      means there is none
-         * world:
-         *      Contains the actual world object, written to in RON
-         * rng:
-         *      Contains the rng object, in JSON
+         * serialization
+         *      is_serialized:
+         *          Contains either "0" or "1", where one is that there is a game serialized
+         *          while zero means there is none
+         *      world:
+         *          Contains the actual world object, written to in RON
+         *      rng:
+         *          Contains the rng object, in JSON
          *
          */
 
@@ -265,16 +263,24 @@ impl State {
             .expect("Should have been able to read the file")
             .to_string();
         // pops the newline character
-        serialized_game_str.pop();
+        if serialized_game_str.len() > 1 {
+            serialized_game_str.pop();
+        }
 
         let serialized_game = serialized_game_str
             .parse::<u8>()
             .expect("Save data corrupted");
-        if serialized_game == 0 {
-            println!("There are no saved games");
+        return if serialized_game == 0 {
+            println!("No serialized game");
+            None
         } else if serialized_game == 1 {
+            let world_str = fs::read_to_string("./serialization/world").expect("Couldn't read world file");
+            let world: World = ron::from_str(&world_str).unwrap();
+            let rng_str = fs::read_to_string("./serialization/rng").expect("Couldn't read rng file");
+            let rng: ChaCha8Rng = serde_json::from_str(&rng_str).unwrap();
+            return Some(State::from(world, ctx, rng).expect("couldn't do audio for some reason"));
         } else {
-            println!("Save data corrupted")
+            panic!("Save data corrupted")
         }
     }
 }

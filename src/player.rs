@@ -16,7 +16,6 @@ use std::cmp::{max, min};
 use ggez::graphics::{self, Canvas};
 use ggez::input::keyboard::{KeyCode, KeyInput};
 use ggez::winit::event::VirtualKeyCode;
-use std::collections::HashMap;
 
 // Can change easily
 const MAX_PLAYER_HEALTH: usize = 100;
@@ -63,7 +62,7 @@ const PROJECTILE_COOLDOWN: usize = 1;
 const INVISIBILITY_COOLDOWN: usize = 25 + INVISIBILITY_DURATION;
 const TRACKING_PROJECTILE_COOLDOWN: usize = 20;
 
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Debug, PartialEq)]
 // This is with the covered tile model, but we could use the static/dynamic board paradighm or
 // something else entirely
 pub struct Player {
