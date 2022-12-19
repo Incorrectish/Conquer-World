@@ -47,11 +47,11 @@ const MAJOR_ENEMY_ENERGY_RETURN: usize = 25;
 const MINOR_BOSS_ENERGY_RETURN: usize = 100;
 const MAJOR_BOSS_ENERGY_RETURN: usize = 100;
 
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, PartialEq)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
 // This is basically the same as the enemy for now, but I am just testing an enemy system
 pub struct Enemy {
     // This is the position in the form (x, y)
-    pub pos: Position,
+    pub pos: Vec<Position>,
 
     // The direction that the enemy is facing at the moment
     // It isn't needed for movement, and the way I wrote movement is a bit convoluted to allow this
@@ -85,8 +85,7 @@ pub struct Enemy {
 
 impl Enemy {
     fn new(
-        x: usize,
-        y: usize,
+        pos: Vec<Position>,
         speed: usize,
         color: [f32; 4],
         world_pos: Position,
@@ -95,7 +94,7 @@ impl Enemy {
         boss: bool,
     ) -> Self {
         let temp = Self {
-            pos: Position::new(x, y),
+            pos,
             direction: Direction::North,
             speed: 1,
             color,
@@ -111,9 +110,10 @@ impl Enemy {
     }
 
     pub fn bomber(x: usize, y: usize, world_pos: Position) -> Self {
+        let mut pos = Vec::new();
+        pos.push(Position::new(x, y));
         Enemy::new(
-            x,
-            y,
+            pos,
             BOMBER_ENEMY_SPEED,
             tile::BOMBER_ENEMY,
             world_pos,
@@ -124,9 +124,10 @@ impl Enemy {
     }
 
     pub fn chasing(x: usize, y: usize, world_pos: Position) -> Self {
+        let mut pos = Vec::new();
+        pos.push(Position::new(x, y));
         Enemy::new(
-            x,
-            y,
+            pos,
             CHASING_ENEMY_SPEED,
             tile::CHASING_ENEMY,
             world_pos,
@@ -137,9 +138,14 @@ impl Enemy {
     }
 
     pub fn major_enemy(x: usize, y: usize, world_pos: Position) -> Self {
+        let mut pos = Vec::new();
+        for i in 0..3 {
+            for j in 0..3 {
+                pos.push(Position::new(x+i, y+j));
+            }
+        }
         Enemy::new(
-            x,
-            y,
+            pos,
             MAJOR_ENEMY_SPEED,
             tile::MAJOR_ENEMY,
             world_pos,
@@ -150,9 +156,10 @@ impl Enemy {
     }
 
     pub fn shooting_enemy(x: usize, y: usize, world_pos: Position) -> Self {
+        let mut pos = Vec::new();
+        pos.push(Position::new(x, y));
         Enemy::new(
-            x,
-            y,
+            pos,
             SHOOTER_ENEMY_SPEED,
             tile::SHOOTER_ENEMY,
             world_pos,
@@ -163,9 +170,10 @@ impl Enemy {
     }
 
     pub fn knight(x: usize, y: usize, world_pos: Position) -> Self {
+        let mut pos = Vec::new();
+        pos.push(Position::new(x, y));
         Enemy::new(
-            x,
-            y,
+            pos,
             KNIGHT_ENEMY_SPEED,
             tile::KNIGHT_ENEMY,
             world_pos,
@@ -176,9 +184,10 @@ impl Enemy {
     }
 
     pub fn major_boss(x: usize, y: usize, world_pos: Position) -> Self {
+        let mut pos = Vec::new();
+        pos.push(Position::new(x, y));
         Enemy::new(
-            x,
-            y,
+            pos,
             MAJOR_BOSS_SPEED,
             tile::MAJOR_BOSS,
             world_pos,
@@ -189,9 +198,10 @@ impl Enemy {
     }
 
     pub fn minor_boss(x: usize, y: usize, world_pos: Position) -> Self {
+        let mut pos = Vec::new();
+        pos.push(Position::new(x, y));
         Enemy::new(
-            x,
-            y,
+            pos,
             MINOR_BOSS_SPEED,
             tile::MINOR_BOSS,
             world_pos,
@@ -245,20 +255,18 @@ impl Enemy {
                 _ => unreachable!("Cannot be anything other than the enemy tiles"),
             } as i32;
         world.player.change_energy(delta);
-        let pos = world.enemies_map[world.world_position.y][world.world_position.x][index].pos;
-        world.entity_map[world.enemies_map[world.world_position.y][world.world_position.x][index]
-            .world_pos
-            .y][world.enemies_map[world.world_position.y][world.world_position.x][index]
-            .world_pos
-            .x]
-            .remove(&pos);
+        let enemy = &mut world.enemies_map[world.world_position.y][world.world_position.x][index]; 
+        let pos = &mut enemy.pos;
+        for tile in pos {
+            world.entity_map[enemy.world_pos.y][enemy.world_pos.x].remove(&tile);
+        }
         world.enemies_map[world.world_position.y][world.world_position.x].remove(index);
     }
 
     pub fn move_enemy_with_deltas(index: usize, world: &mut World) {
         let (delta_x, delta_y) = (
-            world.enemies_map[world.world_position.y][world.world_position.x][index].pos.x as i32 - world.player.pos.x as i32,
-            world.enemies_map[world.world_position.y][world.world_position.x][index].pos.y as i32 - world.player.pos.y as i32,
+            world.enemies_map[world.world_position.y][world.world_position.x][index].pos[0].x as i32 - world.player.pos.x as i32,
+            world.enemies_map[world.world_position.y][world.world_position.x][index].pos[0].y as i32 - world.player.pos.y as i32,
         );
         let direction = if delta_x.abs() > delta_y.abs() {
             // delta x will never be 0
@@ -280,51 +288,59 @@ impl Enemy {
             }
         };
 
-        let (new_pos, _) = World::new_position(
-            world.enemies_map[world.world_position.y][world.world_position.x][index].pos,
-            direction,
-            world,
-            world.enemies_map[world.world_position.y][world.world_position.x][index].speed,
-            Entity::Enemy,
-            Some(index),
-        );
+        let mut new_pos = Vec::new();
+        for i in 0..world.enemies_map[world.world_position.y][world.world_position.x][index].pos.len() {
+            let (a_new_pos, _) = World::new_position(
+                world.enemies_map[world.world_position.y][world.world_position.x][index].pos[i],
+                direction,
+                world,
+                world.enemies_map[world.world_position.y][world.world_position.x][index].speed,
+                Entity::Enemy,
+                Some(index),
+            );
+            new_pos.push(a_new_pos);
+        }
+
         let world_pos = world.enemies_map[world.world_position.y][world.world_position.x][index].world_pos;
         // TODO
-        if (world.terrain_map[world_pos.y][world_pos.x].contains_key(&new_pos)) {
-            if (!PERMISSIBLE_TILES.contains(
-                world.terrain_map[world_pos.y][world_pos.x]
-                    .get(&new_pos)
-                    .unwrap(),
-            )) {
-                return;
+        
+        for tile in &new_pos {
+            if (world.terrain_map[world_pos.y][world_pos.x].contains_key(&tile)) {
+                if (!PERMISSIBLE_TILES.contains(
+                    world.terrain_map[world_pos.y][world_pos.x]
+                        .get(&tile)
+                        .unwrap(),
+                )) {
+                    return;
+                }
             }
-        }
-        if (world.atmosphere_map[world_pos.y][world_pos.x].contains_key(&new_pos)) {
-            if (!PERMISSIBLE_TILES.contains(
-                world.atmosphere_map[world_pos.y][world_pos.x]
-                    .get(&new_pos)
-                    .unwrap(),
-            )) {
-                return;
+            if (world.atmosphere_map[world_pos.y][world_pos.x].contains_key(&tile)) {
+                if (!PERMISSIBLE_TILES.contains(
+                    world.atmosphere_map[world_pos.y][world_pos.x]
+                        .get(&tile)
+                        .unwrap(),
+                )) {
+                    return;
+                }
             }
-        }
-        if (world.entity_map[world_pos.y][world_pos.x].contains_key(&new_pos)) {
-            if (!PERMISSIBLE_TILES.contains(
-                &world.entity_map[world_pos.y][world_pos.x]
-                    .get(&new_pos)
-                    .unwrap()
+            if (world.entity_map[world_pos.y][world_pos.x].contains_key(&tile)) {
+                if (!PERMISSIBLE_TILES.contains(
+                    &world.entity_map[world_pos.y][world_pos.x]
+                        .get(&tile)
+                        .unwrap()
                     .0,
-            )) {
-                return;
+                )) {
+                    return;
+                }
             }
         }
-        if new_pos == world.player.pos {
+        if new_pos.contains(&world.player.pos) {
             world.player.damage(world.enemies_map[world.world_position.y][world.world_position.x][index].attack_damage);
         } else {
             let mut index_proj: i32 = 0;
             for _ in 0..world.projectiles.len() {
                 if world.projectiles[index_proj as usize].color == tile::PROJECTILE_PLAYER {
-                    if new_pos == world.projectiles[index_proj as usize].pos
+                    if new_pos.contains(&world.projectiles[index_proj as usize].pos)
                         && world.enemies_map[world.world_position.y][world.world_position.x][index].world_pos
                             == world.projectiles[index_proj as usize].world_pos
                     {
@@ -336,12 +352,14 @@ impl Enemy {
                 }
             }
             // simply updates the render queue
-            World::update_position(
-                world,
-                world.enemies_map[world.world_position.y][world.world_position.x][index].pos,
-                (new_pos, world.world_position),
-            );
-            world.enemies_map[world.world_position.y][world.world_position.x][index].pos = new_pos;
+            for i in 0..new_pos.len() {
+                World::update_position(
+                    world,
+                    world.enemies_map[world.world_position.y][world.world_position.x][index].pos[i],
+                    (new_pos[i].clone(), world.world_position),
+                    );
+                world.enemies_map[world.world_position.y][world.world_position.x][index].pos = new_pos.clone();
+            }
         }
     }
 
@@ -355,7 +373,7 @@ impl Enemy {
         };
         let mut travel_path = Self::get_best_path(index, world, can_dodge_projectiles);
         let enemy = &world.enemies_map[world.world_position.y][world.world_position.x][index];
-        let mut cur_pos = enemy.pos;
+        let mut cur_pos = enemy.pos[0];
         for _ in 0..enemy.speed {
             if let Some(new_pos) = travel_path.pop_front() {
                 if Self::match_color(&world.enemies_map[world.world_position.y][world.world_position.x][index].color, &tile::CHASING_ENEMY) {
@@ -387,7 +405,7 @@ impl Enemy {
                         }
                         // simply updates the render queue
                         World::update_position(world, cur_pos, (new_pos, world.world_position));
-                        world.enemies_map[world.world_position.y][world.world_position.x][index].pos = new_pos;
+                        world.enemies_map[world.world_position.y][world.world_position.x][index].pos[0] = new_pos;
                         cur_pos = new_pos;
                     }
                 } else if Self::match_color(&world.enemies_map[world.world_position.y][world.world_position.x][index].color, &tile::BOMBER_ENEMY) {
@@ -427,7 +445,7 @@ impl Enemy {
                         }
                         // simply updates the render queue
                         World::update_position(world, cur_pos, (new_pos, world.world_position));
-                        world.enemies_map[world.world_position.y][world.world_position.x][index].pos = new_pos;
+                        world.enemies_map[world.world_position.y][world.world_position.x][index].pos[0] = new_pos;
                         cur_pos = new_pos;
                     }
                 } else if Self::match_color(
@@ -441,16 +459,99 @@ impl Enemy {
                     if Self::player_within_spaces(&cur_pos, &world, 2) {
                         world.player.damage(world.enemies_map[world.world_position.y][world.world_position.x][index].attack_damage);
                     }
-                    Self::create_bomber_explosion(&cur_pos, world);
+                    Self::create_bomber_explosion(index, world);
                 } else if Self::match_color(
                     &world.enemies_map[world.world_position.y][world.world_position.x][index].color,
                     &tile::BOMBER_ENEMY_DEACTIVATED,
                 ) {
-                    let pos = world.enemies_map[world.world_position.y][world.world_position.x][index].pos;
+                    let pos = &world.enemies_map[world.world_position.y][world.world_position.x][index].pos;
                     world.entity_map[world.enemies_map[world.world_position.y][world.world_position.x][index].world_pos.y]
                         [world.enemies_map[world.world_position.y][world.world_position.x][index].world_pos.x]
-                        .remove(&pos);
+                        .remove(&pos[0]);
                     world.enemies_map[world.world_position.y][world.world_position.x].remove(index);
+                    let pos = &world.enemies_map[world.world_position.y][world.world_position.x][index].pos;
+                    world.entity_map[world.enemies_map[world.world_position.y][world.world_position.x][index].world_pos.y]
+                        [world.enemies_map[world.world_position.y][world.world_position.x][index].world_pos.x]
+                        .remove(&pos[0]);
+                    world.enemies_map[world.world_position.y][world.world_position.x].remove(index);
+                } else if Self::match_color(
+                    &world.enemies_map[world.world_position.y][world.world_position.x][index].color,
+                    &tile::MAJOR_ENEMY
+                ) {
+                    let del_x = world.enemies_map[world.world_position.y][world.world_position.x][index].pos[4].x as i16 - world.player.pos.x as i16;
+                    let del_y = world.enemies_map[world.world_position.y][world.world_position.x][index].pos[4].y as i16 - world.player.pos.y as i16;
+
+                    let (move_x, move_y): (i16, i16) = {
+                        if del_x.abs() > del_y.abs() {
+                            if del_x > 0 {
+                                (-1, 0)
+                            } else {
+                                (1, 0)
+                            }
+                        } else {
+                            if del_y > 0 {
+                                (0, -1)
+                            } else {
+                                (0, 1)
+                            }
+                        }
+                    };
+
+                    let positions = world.enemies_map[world.world_position.y][world.world_position.x][index].pos.clone();
+                    for tile in &positions {
+                        let new_x = tile.x as i16 + move_x;
+                        let new_y = tile.y as i16 + move_y;
+                        let new_pos = Position::new(new_x as usize, new_y as usize);
+                        if new_x < 0 || new_x >= WORLD_SIZE.0
+                            || new_y < 0 || new_y >= WORLD_SIZE.1 {
+                            return;
+                        } else if new_pos == world.player.pos {
+                            world.player.damage(world.enemies_map[world.world_position.y][world.world_position.x][index].attack_damage);
+                            return;
+                        }
+
+                        let mut index_proj: i32 = 0;
+                        for _ in 0..world.projectiles.len() {
+                            if world.projectiles[index_proj as usize].color
+                                == tile::PROJECTILE_PLAYER
+                            {
+                                if new_pos == world.projectiles[index_proj as usize].pos
+                                    && world.enemies_map[world.world_position.y][world.world_position.x][index].world_pos
+                                        == world.projectiles[index_proj as usize].world_pos
+                                {
+                                    world.enemies_map[world.world_position.y][world.world_position.x][index]
+                                        .damage(world.projectiles[index_proj as usize].damage);
+                                    Projectile::kill(index_proj as usize, world);
+                                    index_proj -= 1;
+                                }
+                                index_proj += 1
+                            }
+                        }
+
+                        for i in 0..world.enemies_map[world.world_position.y][world.world_position.x].len() {
+                            if i != index && world.enemies_map[world.world_position.y][world.world_position.x][i].pos.contains(&new_pos) {
+                                return;
+                            }
+                        }
+                    }
+
+                    if move_x == -1 || move_y == -1 {
+                        for i in 0..positions.len() {
+                            let new_x = world.enemies_map[world.world_position.y][world.world_position.x][index].pos[i].x as i16 + move_x;
+                            let new_y = world.enemies_map[world.world_position.y][world.world_position.x][index].pos[i].y as i16 + move_y;
+                            let new_pos = Position::new(new_x as usize, new_y as usize);
+                            World::update_position(world, world.enemies_map[world.world_position.y][world.world_position.x][index].pos[i], (new_pos, world.world_position));
+                            world.enemies_map[world.world_position.y][world.world_position.x][index].pos[i] = new_pos;
+                        }
+                    } else {
+                        for i in 0..positions.len() {
+                            let new_x = world.enemies_map[world.world_position.y][world.world_position.x][index].pos[positions.len()-i-1].x as i16 + move_x;
+                            let new_y = world.enemies_map[world.world_position.y][world.world_position.x][index].pos[positions.len()-i-1].y as i16 + move_y;
+                            let new_pos = Position::new(new_x as usize, new_y as usize);
+                            World::update_position(world, world.enemies_map[world.world_position.y][world.world_position.x][index].pos[positions.len()-i-1], (new_pos, world.world_position));
+                            world.enemies_map[world.world_position.y][world.world_position.x][index].pos[positions.len()-i-1] = new_pos;
+                        }
+                    }
                 } else {
                     break;
                 }
@@ -474,9 +575,9 @@ impl Enemy {
         let mut previous = [[Position::new(WORLD_SIZE.0 as usize + 1, WORLD_SIZE.1 as usize + 1);
             WORLD_SIZE.0 as usize]; WORLD_SIZE.1 as usize];
         let mut queue = LinkedList::new();
-        queue.push_back(enemy.pos);
+        queue.push_back(enemy.pos[0]);
 
-        visited[enemy.pos.y][enemy.pos.x] = true;
+        visited[enemy.pos[0].y][enemy.pos[0].x] = true;
         // visited[enemy.pos.y - (world.world_position.y * WORLD_SIZE.1 as usize)][enemy.pos.x - (world.world_position.x * WORLD_SIZE.0 as usize)] = true;
         while !queue.is_empty() {
             if let Some(node) = queue.pop_front() {
@@ -504,7 +605,7 @@ impl Enemy {
         // This uses the previous 2 dimensional array to reconstruct the best path
         let mut path = LinkedList::new();
         let mut position = world.player.pos;
-        let enemy_pos = world.enemies_map[world.world_position.y][world.world_position.x][index].pos;
+        let enemy_pos = world.enemies_map[world.world_position.y][world.world_position.x][index].pos[0];
         while position != enemy_pos {
             path.push_front(position);
 
@@ -545,7 +646,7 @@ impl Enemy {
             );
             // if the new position is valid(correct tiles & within bounds) add it to the potential
             // neighbors
-            if new_pos != world.enemies_map[world.world_position.y][world.world_position.x][index].pos
+            if new_pos != world.enemies_map[world.world_position.y][world.world_position.x][index].pos[0]
                 && Self::can_travel_to(
                     (new_pos, world.enemies_map[world.world_position.y][world.world_position.x][index].world_pos),
                     &world.entity_map,
@@ -664,7 +765,8 @@ impl Enemy {
         world.bomber_explosions[world.world_position.y][world.world_position.x].clear();
     }
 
-    pub fn create_bomber_explosion(pos: &Position, world: &mut World) {
+    pub fn create_bomber_explosion(index: usize, world: &mut World) {
+        let pos = world.enemies_map[world.world_position.y][world.world_position.x][index].pos[0];
         for i in -2..=2_i16 {
             for j in -(2 - i.abs())..=(2 - i.abs()) {
                 let x = pos.x as i16 + i;

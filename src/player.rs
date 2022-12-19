@@ -740,7 +740,7 @@ impl Player {
                         (world.player.pos.x as i16 + delta_x) as usize,
                         (world.player.pos.y as i16 + delta_y) as usize,
                     );
-                    if enemy.pos == position {
+                    if enemy.pos.contains(&position) {
                         enemy.damage(PLAYER_SLAM_DAMAGE);
                     }
                 }
@@ -829,7 +829,7 @@ impl Player {
         if let Some(entity) = world.entity_map[world_pos.y][world_pos.x].get(&attacking_position) {
             if entity.1 == Entity::Enemy {
                 for enemy in &mut world.enemies_map[world.world_position.y][world.world_position.x] {
-                    if attacking_position == enemy.pos {
+                    if enemy.pos.contains(&attacking_position) {
                         enemy.damage(PLAYER_MELEE_DAMAGE);
                         world.player.change_energy(2);
                     }
@@ -867,7 +867,7 @@ impl Player {
             );
             for index in 0..world.enemies_map[world.world_position.y][world.world_position.x].len() {
                 //Check if it's spawning on enemy, if so damage the enenmy and not spawn a projectile
-                if projectile_spawn_pos.0 == world.enemies_map[world.world_position.y][world.world_position.x][index].pos
+                if world.enemies_map[world.world_position.y][world.world_position.x][index].pos.contains(&projectile_spawn_pos.0)
                     && projectile_spawn_pos.1 == world.enemies_map[world.world_position.y][world.world_position.x][index].world_pos
                 {
                     world.enemies_map[world.world_position.y][world.world_position.x][index].damage(projectile.damage);
