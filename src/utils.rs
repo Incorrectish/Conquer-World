@@ -200,7 +200,7 @@ impl Boss {
             if curr_entity_map.is_empty() && world.bosses[index].enemy_spawn_cooldown == 0 {
                 for i in 0..33 {
                     let mut pos = world.bosses[index].position;
-                    let size = world.bosses[index].offset - 1;
+                    let size = world.bosses[index].offset - 2;
                         while Self::pos_inside_boss(world, Position::new(pos.x + size, pos.y), world.world_position) ||
                             Self::pos_inside_boss(world, Position::new(pos.x - size, pos.y), world.world_position) ||
                             Self::pos_inside_boss(world, Position::new(pos.x, pos.y + size), world.world_position) ||
@@ -312,7 +312,10 @@ impl Boss {
         } else if world.world_position == BOSS_ROOMS[4] {
             Self::draw_safe_spot(world, canvas);
         } else if world.world_position == BOSS_ROOMS[2] {
-            
+            Self::draw_stun_wells(world, canvas);
+            Self::draw_laser_column(world, index, canvas);
+            Self::draw_asteroids(world, index, canvas);
+            Self::draw_lasers(world, canvas, rng);
         }  
     }
 
@@ -343,6 +346,14 @@ impl Boss {
             Self::spawn_enemies(world, rng, index);
         } else if world.world_position == BOSS_ROOMS[2] {
             Self::spawn_enemies(world, rng, index);
+            Self::generate_asteroid(world, index);
+            Self::check_asteroid_damage(world);
+            Self::generate_lasers(world, world.bosses[index].laser_amount, index, rng);
+            Self::check_laser_damage(world);
+            Self::generate_column_laser(world, index);
+            Self::check_laser_column_damage(world, index);
+            Self::generate_stun_well(world, index, rng);
+            Self::check_stun_well_stun(world);
         }  
     }
 
