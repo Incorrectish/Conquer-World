@@ -210,7 +210,7 @@ impl ggez::event::EventHandler<GameError> for State {
             canvas.finish(ctx)?;
         } else if !self.world.as_mut().unwrap().player.is_alive() {
             let mut canvas = graphics::Canvas::from_frame(ctx, graphics::Color::from(tile::BLACK));
-            let pos = Position::new(10, 10);
+            let pos = Position::new(7, 15);
             let text_spot = Vec2::new((pos.x as f32 + 0.25) * TILE_SIZE.0 as f32,  (pos.y as f32 + UNIVERSAL_OFFSET as f32) * TILE_SIZE.1 as f32);
             let duration_left = "You died :(";
                 canvas.draw(
