@@ -156,12 +156,18 @@ impl World {
                 let y = random::rand_range(rng, 0, WORLD_SIZE.1); // random y coordinate
                                                                   // let world_x = random::rand_range(rng, 0, BOARD_SIZE.0 / WORLD_SIZE.0) as usize;
                                                                   // let world_y = random::rand_range(rng, 0, BOARD_SIZE.1 / WORLD_SIZE.1) as usize;
-                let world_x = random::rand_range(rng, 0, BOARD_SIZE.0/WORLD_SIZE.0); // random x coordinate
-                let world_y = random::rand_range(rng, 0, BOARD_SIZE.1/WORLD_SIZE.1); // random y coordinate
+                let mut random_world_loc = Position::new(1,1);
+                let mut world_x = 0;
+                let mut world_y = 0;
+                while BOSS_ROOMS.contains(&random_world_loc) {
+                    world_x = random::rand_range(rng, 0, BOARD_SIZE.0/WORLD_SIZE.0); // random x coordinate
+                    world_y = random::rand_range(rng, 0, BOARD_SIZE.1/WORLD_SIZE.1); // random y coordinate
+                    random_world_loc = Position::new(world_x as usize, world_y as usize);
+                }
                 let random_loc = Position::new(x as usize, y as usize);
+
                 let world_map_entity = &mut entity_map[world_y as usize][world_x as usize];
                 let world_map_terrain = &mut terrain_map[world_y as usize][world_x as usize];
-
                 // if the random position is blank, then create an enemy there
                 if !world_map_terrain.contains_key(&random_loc)
                     && !world_map_entity.contains_key(&random_loc)
@@ -363,7 +369,6 @@ impl World {
 
         //Draw every pixel that is contained in the entity HashMap
         let curr_world_entity_map = &self.entity_map[self.world_position.y][self.world_position.x];
-
         for (loc, color) in curr_world_entity_map {
             let mut color = color.0;
             if color == tile::PLAYER {

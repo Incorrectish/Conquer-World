@@ -45,7 +45,6 @@ pub struct Boss {
     pub shield_health: usize,
     pub chase_rush_cooldown: usize,
     pub speed_delay: usize,
-    
 }
 
 impl Boss {
@@ -159,7 +158,6 @@ impl Boss {
         if world.world_position == BOSS_ROOMS[0] {
             Self::generate_lasers(world, world.bosses[index].laser_amount, index, rng);
             Self::check_laser_damage(world);
-
         } else if world.world_position == BOSS_ROOMS[1] {
             Self::generate_asteroid(world, index);
             Self::check_asteroid_damage(world);
@@ -1061,6 +1059,12 @@ impl Boss {
         world.bosses.remove(index);
         // when kill is implemented this should reopen doors
         world.boss_defeated[world.world_position.y][world.world_position.x] = true;
+        world.boss_safe_spot = None;
+        world.boss_vulnerable_spot = None;
+        world.boss_column_laser = None;
+        world.boss_lasers.clear();
+        world.stun_wells.clear();
+        world.boss_asteroids.clear();
         World::toggle_doors(
             &mut world.terrain_map,
             world.world_position,
