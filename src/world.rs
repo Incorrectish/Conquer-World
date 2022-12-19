@@ -79,7 +79,7 @@ pub struct World {
     pub boss_asteroids: Vec<(Position, [f32; 4], usize)>, //Position, color, duration left
     pub boss_column_laser: Option<(Position, Direction)>, //Position and direction laser will move
     pub boss_safe_spot: Option<(Position, usize, usize)>, //Center position, size of safe spot, safe spot time
-    pub boss_vulnerablee_spot: Option<Position>,
+    pub boss_vulnerable_spot: Option<Position>,
     pub in_blackout: bool,
     pub stun_wells: Vec<(Position, [f32; 4], usize, usize, bool)>, //Position, color, size, duration left, currently in a well
     pub bomber_explosions: [[Vec<(Position, [f32; 4])>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
