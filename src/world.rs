@@ -9,6 +9,7 @@ use crate::{
     utils::Boss,
     utils::Position,
     BOARD_SIZE, TILE_SIZE, UNIVERSAL_OFFSET, WORLD_SIZE,
+    player::PLAYER_PROJECTILE_DAMAGE,
 };
 use serde::ser::{Serialize, SerializeStruct, Serializer};
 
@@ -78,8 +79,11 @@ pub struct World {
     pub boss_defeated: [[bool; 7]; 7],
     pub boss_lasers: Vec<(Position, [f32; 4], usize)>, //Position, color, duration left
     pub boss_asteroids: Vec<(Position, [f32; 4], usize)>, //Position, color, duration left
-    pub boss_column_laser: Option<(Position, Direction)>,
-    pub stun_wells: Vec<(Position, [f32; 4], usize, usize)>, //Position, color, size, duration left
+    pub boss_column_laser: Option<(Position, Direction)>, //Position and direction laser will move
+    pub boss_safe_spot: Option<(Position, usize, usize)>, //Center position, size of safe spot, safe spot time
+    pub boss_vulnerable_spot: Option<Position>,
+    pub in_blackout: bool,
+    pub stun_wells: Vec<(Position, [f32; 4], usize, usize, bool)>, //Position, color, size, duration left, currently in a well
     pub bomber_explosions: [[Vec<(Position, [f32; 4])>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
         (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
 }
@@ -125,6 +129,9 @@ impl World {
             boss_asteroids: Vec::new(),
             stun_wells: Vec::new(),
             boss_column_laser: None,
+            boss_safe_spot: None,
+            boss_vulnerable_spot: None,
+            in_blackout: false,
             bomber_explosions,
         }
     }
@@ -309,7 +316,7 @@ impl World {
         if BOSS_ROOMS.contains(&self.world_position) {
             for index in 0..self.bosses.len() {
                 if self.bosses[index].world_position == self.world_position {
-                    Boss::draw_boss_stuff(self, canvas, index);
+                    Boss::draw_boss_stuff(self, canvas, index, rng);
                 }
             }
         }
@@ -360,28 +367,32 @@ impl World {
         for (loc, color) in curr_world_entity_map {
             let mut color = color.0;
             if color == tile::PLAYER {
-                color = if self.player.is_visible() {
+                color = if self.player.stun_timer > 0 {
+                    tile::PLAYER_STUNNED
+                } else if self.player.is_visible() {
                     tile::PLAYER
                 } else {
                     tile::PLAYER_INVISIBLE
                 }
             }
-            canvas.draw(
-                &graphics::Quad,
-                graphics::DrawParam::new()
-                    .dest_rect(graphics::Rect::new_i32(
-                        (loc.x as i32 * TILE_SIZE.0 as i32) as i32,
-                        ((loc.y + UNIVERSAL_OFFSET as usize) as i32) * TILE_SIZE.1 as i32,
-                        // (loc.x - (self.world_position.x * WORLD_SIZE.0 as usize)) as i32
-                        //     * TILE_SIZE.0 as i32,
-                        // (loc.y - (self.world_position.y * WORLD_SIZE.1 as usize)
-                        //     + UNIVERSAL_OFFSET as usize) as i32
-                        //     * TILE_SIZE.1 as i32,
-                        TILE_SIZE.0 as i32,
-                        TILE_SIZE.1 as i32,
-                    ))
-                    .color(color),
-            )
+            if !self.in_blackout || color == tile::PLAYER || color == tile::PLAYER_INVISIBLE {
+                canvas.draw(
+                    &graphics::Quad,
+                    graphics::DrawParam::new()
+                        .dest_rect(graphics::Rect::new_i32(
+                            (loc.x as i32 * TILE_SIZE.0 as i32) as i32,
+                            ((loc.y + UNIVERSAL_OFFSET as usize) as i32) * TILE_SIZE.1 as i32,
+                            // (loc.x - (self.world_position.x * WORLD_SIZE.0 as usize)) as i32
+                            //     * TILE_SIZE.0 as i32,
+                            // (loc.y - (self.world_position.y * WORLD_SIZE.1 as usize)
+                            //     + UNIVERSAL_OFFSET as usize) as i32
+                            //     * TILE_SIZE.1 as i32,
+                            TILE_SIZE.0 as i32,
+                            TILE_SIZE.1 as i32,
+                        ))
+                        .color(color),
+                )
+            }
         }
 
         //Draw every pixel that is contained in the terrain HashMap
@@ -592,6 +603,15 @@ impl World {
                         {
                             world.enemies_map[world.world_position.y][world.world_position.x][index].damage(world.projectiles[i].damage);
                             return false; //Will delete the projectile that hits the enemy
+                        }
+                    }
+                    if BOSS_ROOMS.contains(&new_position.1) {
+                        let hit_info = Boss::can_hit_boss(world, new_position.0, new_position.1);
+                        if hit_info.0 && hit_info.1 {
+                            Boss::damage(world, PLAYER_PROJECTILE_DAMAGE, new_position.1);
+                            return false;
+                        } else if hit_info.1 {
+                            return false;
                         }
                     }
                     Self::update_position(world, world.projectiles[i].pos, new_position); //Update projectile position to new position it is moving to

@@ -30,9 +30,6 @@ use ggez::{
     Context, GameError, GameResult,
 };
 
-
-pub const SOUND_PATH: &'static str = "/overworld.ogg";
-
 pub const RNG_SEED: u64 = 0;
 
 // const MOVES_TILL_ENERGY_REGEN: usize = 5;
@@ -41,55 +38,77 @@ pub const RNG_SEED: u64 = 0;
 pub struct State {
     should_draw: bool,
     command: bool,
-    sound: audio::Source,
+    songs: [audio::Source; 6],
     is_playing: bool,
     // Abstraction for the world and what is contained within it
     world: Option<World>,
     title_screen: bool,
     pub rng: Option<ChaCha8Rng>,
+    player_curr_world_position: Position,
 }
 
 impl State {
     // just returns the default values
     pub fn new(ctx: &mut Context, title_screen: bool) -> GameResult<State> {
-        let sound = audio::Source::new(ctx, SOUND_PATH)?;
+        let songs = [
+            audio::Source::new(ctx, "/overworld.ogg")?,
+            audio::Source::new(ctx, "/final_boss.ogg")?,
+            audio::Source::new(ctx, "/blackout_boss.ogg")?,
+            audio::Source::new(ctx, "/column_laser_boss.ogg")?,
+            audio::Source::new(ctx, "/chasing_boss.ogg")?,
+            audio::Source::new(ctx, "/laser_boss.ogg")?];
         let mut rng = ChaCha8Rng::seed_from_u64(RNG_SEED);
         let temp = State {
             should_draw: true,
             command: false,
-            sound,
+            songs,
             is_playing: false,
             world: Some(World::new(&mut rng)),
             title_screen,
             rng: Some(rng),
+            player_curr_world_position: Position::new(0,0),
         };
         Ok(temp)
     }
 
     pub fn title_screen(ctx: &mut Context) -> GameResult<State> {
         // TODO make this the title screen music
-        let sound = audio::Source::new(ctx, SOUND_PATH)?;
+        let songs = [
+            audio::Source::new(ctx, "/overworld.ogg")?,
+            audio::Source::new(ctx, "/final_boss.ogg")?,
+            audio::Source::new(ctx, "/blackout_boss.ogg")?,
+            audio::Source::new(ctx, "/column_laser_boss.ogg")?,
+            audio::Source::new(ctx, "/chasing_boss.ogg")?,
+            audio::Source::new(ctx, "/laser_boss.ogg")?];
         Ok(State {
             should_draw: true,
             command: false,
-            sound,
+            songs,
             is_playing: false,
             world: None,
             title_screen: true,
             rng: None,
+            player_curr_world_position: Position::new(0,0),
         })
     }
 
     pub fn from(world: World, ctx: &mut Context, rng: ChaCha8Rng) -> GameResult<State> {
-        let sound = audio::Source::new(ctx, SOUND_PATH)?;
+        let songs = [
+            audio::Source::new(ctx, "/overworld.ogg")?,
+            audio::Source::new(ctx, "/final_boss.ogg")?,
+            audio::Source::new(ctx, "/blackout_boss.ogg")?,
+            audio::Source::new(ctx, "/column_laser_boss.ogg")?,
+            audio::Source::new(ctx, "/chasing_boss.ogg")?,
+            audio::Source::new(ctx, "/laser_boss.ogg")?];
         let temp = State {
             should_draw: true,
             command: false,
-            sound,
+            songs,
             is_playing: false,
             world: Some(world),
             title_screen: false,
             rng: Some(rng),
+            player_curr_world_position: Position::new(0,0),
         };
         Ok(temp)
     }
@@ -97,9 +116,56 @@ impl State {
 
 impl ggez::event::EventHandler<GameError> for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
-        if !self.is_playing {
-            let _ = self.sound.play_detached(ctx);
-            self.is_playing = true;
+        let world_pos = self.world.as_mut().unwrap().world_position;
+        let boss_rooms = BOSS_ROOMS;
+        if world_pos == boss_rooms[0] {
+            if !self.songs[5].playing() {
+                for song in &mut self.songs {
+                    song.stop(ctx);
+                }
+                let _ = self.songs[5].set_repeat(true);
+                let _ = self.songs[5].play(ctx);
+            }
+        } else if world_pos == boss_rooms[1] {
+            if !self.songs[3].playing() {
+                for song in &mut self.songs {
+                    song.stop(ctx);
+                }
+                let _ = self.songs[3].set_repeat(true);
+                let _ = self.songs[3].play(ctx);
+            }
+        } else if world_pos == boss_rooms[3] {
+            if !self.songs[4].playing() {
+                for song in &mut self.songs {
+                    song.stop(ctx);
+                }
+                let _ = self.songs[4].set_repeat(true);
+                let _ = self.songs[4].play(ctx);
+            }
+        } else if world_pos == boss_rooms[4] {
+            if !self.songs[2].playing() {
+                for song in &mut self.songs {
+                    song.stop(ctx);
+                }
+                let _ = self.songs[2].set_repeat(true);
+                let _ = self.songs[2].play(ctx);
+            }
+        } else if world_pos == boss_rooms[2] {
+            if !self.songs[1].playing() {
+                for song in &mut self.songs {
+                    song.stop(ctx);
+                }
+                let _ = self.songs[1].set_repeat(true);
+                let _ = self.songs[1].play(ctx);
+            }
+        } else {
+            if !self.songs[0].playing() {
+                for song in &mut self.songs {
+                    song.stop(ctx);
+                }
+                let _ = self.songs[0].set_repeat(true);
+                let _ = self.songs[0].play(ctx);
+            }
         }
         Ok(())
     }
@@ -204,7 +270,7 @@ impl ggez::event::EventHandler<GameError> for State {
 
             let world = self.world.as_mut().unwrap();
 
-            if Player::use_input(input, world) {
+            if Player::use_input(input, world, self.rng.as_mut().unwrap()) {
                 // self.player_move_count += 1;
                 // if self.player_move_count >= MOVES_TILL_ENERGY_REGEN {
                 //     self.world.player.change_energy(1);
