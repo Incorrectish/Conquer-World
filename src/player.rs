@@ -897,7 +897,6 @@ impl Player {
                 let hit_info = Boss::can_hit_boss(world, projectile_spawn_pos.0, world.world_position);
                 if hit_info.0 && hit_info.0 {
                     Boss::damage(world, PLAYER_MELEE_DAMAGE, world.world_position);
-                    return;
                 }
             }
 

@@ -35,7 +35,7 @@ const PERMISSIBLE_TILES: [[f32; 4]; 10] = [
     tile::MAJOR_BOSS,
 ];
 
-#[derive(Debug, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, serde::Deserialize, serde::Serialize, PartialEq)]
 pub struct Projectile {
     pub pos: Position,
     pub speed: usize,
@@ -155,8 +155,8 @@ impl Projectile {
                                     );
                                     world.atmosphere_map[world_pos.y][world_pos.x]
                                         .insert(new_position, tile::LIGHTNING_FINAL);
-                                    for enemy in &mut world.enemies {
-                                        if enemy.pos == new_position {
+                                    for enemy in &mut world.enemies_map[world.world_position.y][world.world_position.x] {
+                                        if enemy.pos.contains(&new_position) {
                                             enemy.damage(LIGHTNING_DAMAGE);
                                         }
                                     }
@@ -170,6 +170,7 @@ impl Projectile {
                     let pos = world.projectiles[index as usize].pos;
                     let world_pos = world.projectiles[index as usize].world_pos;
                     world.projectiles.remove(index as usize);
+                    index -= 1;
                     // basically checks the 8 around and including the projectile and turns
                     // them to their original state
                     for i in 1..=LIGHTNING_SIZE {
@@ -196,8 +197,8 @@ impl Projectile {
                     let world_pos = world.projectiles[index as usize].world_pos;
                     world.projectiles[index as usize].color = tile::FIRE_INITIAL;
                     world.atmosphere_map[world_pos.y][world_pos.x].insert(pos, tile::FIRE_INITIAL);
-                    for enemy in &mut world.enemies {
-                        if enemy.pos == pos {
+                    for enemy in &mut world.enemies_map[world.world_position.y][world.world_position.x] {
+                        if enemy.pos.contains(&pos) {
                             enemy.damage(FIRE_DAMAGE_INITIAL);
                         }
                     }
@@ -243,9 +244,9 @@ impl Projectile {
                             new_positions.push(positive_new_pos);
                         }
                     }
-                    for enemy in &mut world.enemies {
+                    for enemy in &mut world.enemies_map[world.world_position.y][world.world_position.x] {
                         for new_pos in &new_positions {
-                            if enemy.pos == *new_pos {
+                            if enemy.pos.contains(&new_pos) {
                                 enemy.damage(FIRE_DAMAGE_SECONDARY);
                             }
                         }
@@ -317,9 +318,9 @@ impl Projectile {
                             new_positions.push(positive_new_pos);
                         }
                     }
-                    for enemy in &mut world.enemies {
+                    for enemy in &mut world.enemies_map[world.world_position.y][world.world_position.x] {
                         for new_pos in &new_positions {
-                            if enemy.pos == *new_pos {
+                            if enemy.pos.contains(&*new_pos) {
                                 enemy.damage(FIRE_DAMAGE_TERTIARY);
                             }
                         }
@@ -389,9 +390,9 @@ impl Projectile {
                             new_positions.push(positive_new_pos);
                         }
                     }
-                    for enemy in &mut world.enemies {
+                    for enemy in &mut world.enemies_map[world.world_position.y][world.world_position.x] {
                         for new_pos in &new_positions {
-                            if enemy.pos == *new_pos {
+                            if enemy.pos.contains(&new_pos) {
                                 enemy.damage(FIRE_DAMAGE_FINAL);
                             }
                         }
@@ -479,9 +480,9 @@ impl Projectile {
                     return (false, false);
                 } else {
                     let mut index_enemy: i32 = 0;
-                    for _ in 0..world.enemies.len() {
-                        if (world.enemies[index_enemy as usize].pos == new_pos) {
-                            world.enemies[index_enemy as usize].damage(TRACKING_PROJECTILE_DAMAGE);
+                    for _ in 0..world.enemies_map[world.world_position.y][world.world_position.x].len() {
+                        if (world.enemies_map[world.world_position.y][world.world_position.x][index_enemy as usize].pos.contains(&new_pos)) {
+                            world.enemies_map[world.world_position.y][world.world_position.x][index_enemy as usize].damage(TRACKING_PROJECTILE_DAMAGE);
                             return (true, true);
                         }
                         index_enemy += 1;

@@ -542,7 +542,7 @@ impl Enemy {
             // neighbors
             if new_pos != world.enemies[index].pos
                 && Self::can_travel_to(
-                    world, 
+                    world,
                     (new_pos, world.enemies[index].world_pos),
                     &world.entity_map,
                     &world.terrain_map,
