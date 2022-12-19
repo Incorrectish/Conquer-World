@@ -25,6 +25,7 @@ use rand_chacha::ChaCha8Rng;
 
 use ggez::{
     event,
+    glam::*,
     graphics::{self, Canvas},
     input::keyboard::{KeyCode, KeyInput},
     Context, GameError, GameResult,
@@ -43,6 +44,7 @@ pub struct State {
     title_screen: bool,
     pub rng: Option<ChaCha8Rng>,
     player_curr_world_position: Position,
+    death_font_size: f32,
 }
 
 impl State {
@@ -67,6 +69,7 @@ impl State {
             title_screen,
             rng: Some(rng),
             player_curr_world_position: Position::new(0, 0),
+            death_font_size: 0.
         };
         Ok(temp)
     }
@@ -91,6 +94,7 @@ impl State {
             title_screen: true,
             rng: None,
             player_curr_world_position: Position::new(0, 0),
+            death_font_size: 0.
         })
     }
 
@@ -113,6 +117,7 @@ impl State {
             title_screen: false,
             rng: Some(rng),
             player_curr_world_position: Position::new(0, 0),
+            death_font_size: 0.
         };
         Ok(temp)
     }
@@ -201,11 +206,28 @@ impl ggez::event::EventHandler<GameError> for State {
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         if self.title_screen {
-            let canvas =
+            let mut canvas =
                 graphics::Canvas::from_frame(ctx, graphics::Color::from(tile::TITLE_SCREEN_FLOOR));
+            let pos = Position::new(10, 10);
+            let text_spot = Vec2::new((pos.x as f32 + 0.25) * TILE_SIZE.0 as f32,  (pos.y as f32 + UNIVERSAL_OFFSET as f32) * TILE_SIZE.1 as f32);
+            let duration_left = format!("{}", "hello");
+                canvas.draw(
+                    &*(graphics::Text::new(duration_left).set_scale(48.)),//.set_scale(48.),
+                    graphics::DrawParam::from(text_spot).color(graphics::Color::WHITE),
+                );
             canvas.finish(ctx)?;
         } else if !self.world.as_mut().unwrap().player.is_alive() {
-            let canvas = graphics::Canvas::from_frame(ctx, graphics::Color::from(tile::BLACK));
+            let mut canvas = graphics::Canvas::from_frame(ctx, graphics::Color::from(tile::BLACK));
+            let pos = Position::new(10, 10);
+            let text_spot = Vec2::new((pos.x as f32 + 0.25) * TILE_SIZE.0 as f32,  (pos.y as f32 + UNIVERSAL_OFFSET as f32) * TILE_SIZE.1 as f32);
+            let duration_left = "You died :(";
+                canvas.draw(
+                    &*(graphics::Text::new(duration_left).set_scale(self.death_font_size)),//.set_scale(48.),
+                    graphics::DrawParam::from(text_spot).color(graphics::Color::RED),
+                );
+                if self.death_font_size < 100.0 {
+                    self.death_font_size += 0.1;
+                }
             canvas.finish(ctx)?;
         } else {
             if self.should_draw {
