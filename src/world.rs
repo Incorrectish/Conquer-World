@@ -231,10 +231,18 @@ impl World {
                     world_map_terrain,
                 ));
             } else {
+                let mut boss_tile = tile::LASER_BOSS;
+                if room_coord == BOSS_ROOMS[1] {
+                    boss_tile = tile::COLUMN_BOSS;
+                } else if room_coord == BOSS_ROOMS[3] {
+                    boss_tile = tile::CHASING_BOSS;
+                } else if room_coord == BOSS_ROOMS[4] {
+                    boss_tile = tile::BLACK_OUT_BOSS;
+                } 
                 bosses.push(Boss::new(
                     x as usize,
                     y as usize,
-                    tile::MINOR_BOSS,
+                    boss_tile,
                     room_coord,
                     world_map_terrain,
                 ));

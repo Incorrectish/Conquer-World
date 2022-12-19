@@ -928,6 +928,10 @@ impl Player {
         let curr_terrain_map = &terrain_map[position_info.1.y][position_info.1.x];
         let curr_entity_map = &entity_map[position_info.1.y][position_info.1.x];
         let curr_atmosphere_map = &atmosphere_map[position_info.1.y][position_info.1.x];
+        if world.player.stun_timer != 0 {
+            world.player.stun_timer -= 1;
+            return false;
+        }
         if curr_entity_map.contains_key(&position_info.0)
             || curr_terrain_map.contains_key(&position_info.0)
             || curr_atmosphere_map.contains_key(&position_info.0)
