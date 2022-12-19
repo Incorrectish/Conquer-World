@@ -30,7 +30,7 @@ pub const BOSS_ROOMS: [Position; 5] = [
 pub const FINAL_BOSS_ROOM: Position = Position::new(3, 3);
 const LAKES_PER_WORLD: i16 = 3;
 const TOTAL_MOUNTAINS: i16 = 60;
-const ENEMY_COUNT: usize = 0;
+const ENEMY_COUNT: usize = 10;
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
 pub struct World {
@@ -162,7 +162,7 @@ impl World {
                         // y positions are greater than 5
                     && ((world_x, world_y) != (0, 0) || ((x > 5) && y > 5))
                 {
-                    if Boss::coin_flip(rng) {
+                    if random::bernoulli(rng, 0.4) {
                         world_map_entity.insert(random_loc, (tile::CHASING_ENEMY, Entity::Enemy));
                         enemies.push(Enemy::chasing(
                             x as usize,
@@ -170,7 +170,7 @@ impl World {
                             Position::new(world_x, world_y),
                         ));
                         break;
-                    } else {
+                    } else if random::bernoulli(rng, 0.5){
                         world_map_entity.insert(random_loc, (tile::BOMBER_ENEMY, Entity::Enemy));
                         enemies.push(Enemy::bomber(
                             x as usize,
@@ -178,7 +178,19 @@ impl World {
                             Position::new(world_x, world_y),
                         ));
                         break;
-                    }
+                    } else if x < WORLD_SIZE.0 - 2 && y < WORLD_SIZE.0 - 2 {
+                        for i in 0..3 {
+                            for j in 0..3 {
+                                world_map_entity.insert(Position::new(x as usize + i, y as usize + j), (tile::MAJOR_ENEMY, Entity::Enemy));
+                            }
+                        }
+                        enemies.push(Enemy::major_enemy(
+                            x as usize,
+                            y as usize,
+                            Position::new(world_x, world_y),
+                        ));
+                        break;
+                    } 
                 }
             }
         }
@@ -460,7 +472,7 @@ impl World {
             Entity::Enemy => {
                 let i = index.unwrap();
                 (
-                    world.enemies[i].pos,
+                    world.enemies[i].pos[0],
                     world.enemies[i].direction.clone(),
                     world.enemies[i].speed,
                     Some(i),
@@ -575,7 +587,7 @@ impl World {
                     let i = index.unwrap();
                     for index in 0..world.enemies.len() {
                         //Check if the projectile will hit an enemy, if so damage the enemy
-                        if new_position.0 == world.enemies[index].pos
+                        if world.enemies[index].pos.contains(&new_position.0)
                             && new_position.1 == world.enemies[index].world_pos
                         {
                             world.enemies[index].damage(world.projectiles[i].damage);
@@ -623,7 +635,7 @@ impl World {
                     match entity_type {
                         Entity::Enemy => {
                             let i = index.unwrap();
-                            return (world.enemies[i].pos, world.enemies[i].world_pos);
+                            return (world.enemies[i].pos[0], world.enemies[i].world_pos);
                         }
                         Entity::Projectile => {
                             let i = index.unwrap();
@@ -650,7 +662,7 @@ impl World {
                     match entity_type {
                         Entity::Enemy => {
                             let i = index.unwrap();
-                            return (world.enemies[i].pos, world.enemies[i].world_pos);
+                            return (world.enemies[i].pos[0], world.enemies[i].world_pos);
                         }
                         Entity::Projectile => {
                             let i = index.unwrap();
@@ -674,7 +686,7 @@ impl World {
                     match entity_type {
                         Entity::Enemy => {
                             let i = index.unwrap();
-                            return (world.enemies[i].pos, world.enemies[i].world_pos);
+                            return (world.enemies[i].pos[0], world.enemies[i].world_pos);
                         }
                         Entity::Projectile => {
                             let i = index.unwrap();
@@ -698,7 +710,7 @@ impl World {
                     match entity_type {
                         Entity::Enemy => {
                             let i = index.unwrap();
-                            return (world.enemies[i].pos, world.enemies[i].world_pos);
+                            return (world.enemies[i].pos[0], world.enemies[i].world_pos);
                         }
                         Entity::Projectile => {
                             let i = index.unwrap();
@@ -721,7 +733,7 @@ impl World {
 
     pub fn get_enemy(position: Position, world: &mut World) -> Option<usize> {
         for i in 0..world.enemies.len() {
-            if world.enemies[i].pos == position {
+            if world.enemies[i].pos.contains(&position) {
                 return Some(i);
             }
         }

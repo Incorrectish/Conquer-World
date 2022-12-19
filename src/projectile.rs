@@ -156,7 +156,7 @@ impl Projectile {
                                     world.atmosphere_map[world_pos.y][world_pos.x]
                                         .insert(new_position, tile::LIGHTNING_FINAL);
                                     for enemy in &mut world.enemies {
-                                        if enemy.pos == new_position {
+                                        if enemy.pos.contains(&new_position) {
                                             enemy.damage(LIGHTNING_DAMAGE);
                                         }
                                     }
@@ -197,7 +197,7 @@ impl Projectile {
                     world.projectiles[index as usize].color = tile::FIRE_INITIAL;
                     world.atmosphere_map[world_pos.y][world_pos.x].insert(pos, tile::FIRE_INITIAL);
                     for enemy in &mut world.enemies {
-                        if enemy.pos == pos {
+                        if enemy.pos.contains(&pos) {
                             enemy.damage(FIRE_DAMAGE_INITIAL);
                         }
                     }
@@ -245,7 +245,7 @@ impl Projectile {
                     }
                     for enemy in &mut world.enemies {
                         for new_pos in &new_positions {
-                            if enemy.pos == *new_pos {
+                            if enemy.pos.contains(&new_pos) {
                                 enemy.damage(FIRE_DAMAGE_SECONDARY);
                             }
                         }
@@ -319,7 +319,7 @@ impl Projectile {
                     }
                     for enemy in &mut world.enemies {
                         for new_pos in &new_positions {
-                            if enemy.pos == *new_pos {
+                            if enemy.pos.contains(&*new_pos) {
                                 enemy.damage(FIRE_DAMAGE_TERTIARY);
                             }
                         }
@@ -391,7 +391,7 @@ impl Projectile {
                     }
                     for enemy in &mut world.enemies {
                         for new_pos in &new_positions {
-                            if enemy.pos == *new_pos {
+                            if enemy.pos.contains(&new_pos) {
                                 enemy.damage(FIRE_DAMAGE_FINAL);
                             }
                         }
@@ -480,7 +480,7 @@ impl Projectile {
                 } else {
                     let mut index_enemy: i32 = 0;
                     for _ in 0..world.enemies.len() {
-                        if (world.enemies[index_enemy as usize].pos == new_pos) {
+                        if (world.enemies[index_enemy as usize].pos.contains(&new_pos)) {
                             world.enemies[index_enemy as usize].damage(TRACKING_PROJECTILE_DAMAGE);
                             return (true, true);
                         }

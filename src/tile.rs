@@ -46,7 +46,7 @@ pub const BOMBER_EXPLOSION: [[f32; 4]; 3] = [
 ]; //Suicide bomber, can dodge projectiles, destroys structures (AOE), moves 2 tiles per turn
 pub const SHOOTER_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0]; //shoots projectiels lower helath, cant move when shooting projectile
 pub const KNIGHT_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0]; //Tanky regular enemy, 2 tile range of attack
-pub const MAJOR_ENEMY: [f32; 4] = [0.8, 0.3, 0.3, 1.0]; //3x3 higher health than knight, lower damage, can shoot projectiles maybe
+pub const MAJOR_ENEMY: [f32; 4] = [0.6, 0.2, 0.2, 1.0]; //3x3 higher health than knight, lower damage, can shoot projectiles maybe
 
 pub const MINOR_BOSS: [f32; 4] = [0.2, 0.8, 0.2, 1.0]; //5x5 boss in the 4 dungeons
 pub const MAJOR_BOSS: [f32; 4] = [0.8, 0.3, 0.3, 1.0]; //7x7 boss in thd middle room
