@@ -139,15 +139,15 @@ impl Boss {
         } else if world.world_position == BOSS_ROOMS[1] {
             Self::draw_laser_column(world, index, canvas);
             Self::draw_asteroids(world, index, canvas);
-        } else if world.world_position == BOSS_ROOMS[2] {
+        } else if world.world_position == BOSS_ROOMS[3] {
             if world.bosses[index].rush_info.0 {
                 Self::draw_rush(world, index, world.bosses[index].rush_info.3, canvas);
             }
             Self::draw_stun_wells(world, canvas);
 
-        } else if world.world_position == BOSS_ROOMS[3] {
-            Self::draw_safe_spot(world, canvas);
         } else if world.world_position == BOSS_ROOMS[4] {
+            Self::draw_safe_spot(world, canvas);
+        } else if world.world_position == BOSS_ROOMS[2] {
             
         }  
        
@@ -171,15 +171,15 @@ impl Boss {
             Self::check_asteroid_damage(world);
             Self::generate_column_laser(world, index);
             Self::check_laser_column_damage(world, index);
-        } else if world.world_position == BOSS_ROOMS[2] {
+        } else if world.world_position == BOSS_ROOMS[3] {
             Self::chase_player(world, index);
             Self::generate_stun_well(world, index);
             Self::check_stun_well_stun(world);
-        } else if world.world_position == BOSS_ROOMS[3] {
+        } else if world.world_position == BOSS_ROOMS[4] {
             Self::generate_safe_spot(world, index);
             Self::check_survive_black_out(world);
             Self::generate_vulnerable_spot(world, index);
-        } else if world.world_position == BOSS_ROOMS[4] {
+        } else if world.world_position == BOSS_ROOMS[2] {
             
         }  
     }
