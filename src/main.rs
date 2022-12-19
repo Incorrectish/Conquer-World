@@ -1,6 +1,7 @@
 use ggez::{event, GameResult};
 use std::env;
 use std::path;
+use std::fs::{OpenOptions, self};
 
 mod direction;
 mod enemy;
@@ -28,6 +29,8 @@ pub const BOARD_SIZE: (i16, i16) = (350, 350);
 // define the size of each tile which a square of pixels, size: (x, y) pixels.
 pub const TILE_SIZE: (i16, i16) = (16, 16);
 // define screen size in pixels. Will be grid size * tile size
+
+pub const SAVE_PATH: &'static str = "./serialization/";
 
 pub const SCREEN_SIZE: (f32, f32) = (
     (WORLD_SIZE.0 as f32) * TILE_SIZE.0 as f32,
@@ -58,7 +61,7 @@ fn main() -> GameResult {
     //     State::from()
     // }
     // Next we create a new instance of our GameState struct, which implements EventHandler
-    let state = State::new(&mut ctx, false)?;
+    let state = State::title_screen(&mut ctx)?;
 
     // And finally we actually run our game, passing in our context and state.
     event::run(ctx, events_loop, state)
