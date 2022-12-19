@@ -9,6 +9,7 @@ use ggez::audio::SoundSource;
 use rand_chacha::ChaChaRng;
 use serde::{Deserialize, Serialize};
 use std::fs::{self, OpenOptions};
+use std::io::Write;
 
 use crate::{
     entity::Entity,
@@ -29,7 +30,6 @@ use ggez::{
     Context, GameError, GameResult,
 };
 
-use ::std::collections::HashMap;
 
 pub const SOUND_PATH: &'static str = "/overworld.ogg";
 
@@ -190,6 +190,7 @@ impl ggez::event::EventHandler<GameError> for State {
                     *self = Self::new(ctx, false)?;
                 } else if key == KeyCode::L {
                     // load game
+                    *self = Self::load_save(ctx).unwrap();
                 }
             }
         } else {
@@ -239,25 +240,31 @@ impl ggez::event::EventHandler<GameError> for State {
 
 impl State {
     fn save_state(&self) {
-        let serialized = ron::to_string(&self.world).unwrap();
-        println!("serialized = {serialized}\n\n\n");
-        let deserialized: World = ron::from_str(&serialized).unwrap();
-        println!("deserialized = {deserialized:?}\n\n\n");
-        let serialized = serde_json::to_string(&self.rng).unwrap();
-        println!("serialized = {serialized}\n\n\n");
-        let deserialized: ChaChaRng = serde_json::from_str(&serialized).unwrap();
-        println!("deserialized = {deserialized:?}\n\n\n");
+        let serialized_world = ron::to_string(self.world.as_ref().unwrap()).unwrap();
+        let mut world_file = OpenOptions::new().write(true).open("./serialization/world").expect("Could not read world file");
+        let _ = world_file.write_all(serialized_world.as_bytes()); // this is not an error
+        let world_str = fs::read_to_string("./serialization/world").expect("Couldn't read world file");
+        
+        println!("{}", world_str == serialized_world);
+
+
+        let new_world: World = ron::from_str(&serialized_world).unwrap();
+        let serialized_rng = serde_json::to_string(self.rng.as_ref().unwrap()).unwrap();
+        let mut rng_file = OpenOptions::new().write(true).open("./serialization/rng").expect("Could not read rng file");
+        let _ = rng_file.write_all(serialized_rng.as_bytes());
+        let mut is_serialized_file = OpenOptions::new().write(true).open("./serialization/is_serialized").expect("Could not read is_serialized file");
+        let _ = is_serialized_file.write_all(b"1"); 
     }
-    fn load_save() {
+    fn load_save(ctx: &mut Context) -> Option<State> {
         /* Here is how serialization works:
-         * In the directory serialization, there are a couple files
-         * is_serialized:
-         *      Contains either "0" or "1", where one is that there is a game serialized while zero
-         *      means there is none
-         * world:
-         *      Contains the actual world object, written to in RON
-         * rng:
-         *      Contains the rng object, in JSON
+         * serialization
+         *      is_serialized:
+         *          Contains either "0" or "1", where one is that there is a game serialized
+         *          while zero means there is none
+         *      world:
+         *          Contains the actual world object, written to in RON
+         *      rng:
+         *          Contains the rng object, in JSON
          *
          */
 
@@ -270,11 +277,17 @@ impl State {
         let serialized_game = serialized_game_str
             .parse::<u8>()
             .expect("Save data corrupted");
-        if serialized_game == 0 {
-            println!("There are no saved games");
+        return if serialized_game == 0 {
+            println!("No serialized game");
+            None
         } else if serialized_game == 1 {
+            let world_str = fs::read_to_string("./serialization/world").expect("Couldn't read world file");
+            let world: World = ron::from_str(&world_str).unwrap();
+            let rng_str = fs::read_to_string("./serialization/rng").expect("Couldn't read rng file");
+            let rng: ChaCha8Rng = serde_json::from_str(&rng_str).unwrap();
+            return Some(State::from(world, ctx, rng).expect("couldn't do audio for some reason"));
         } else {
-            println!("Save data corrupted")
+            panic!("Save data corrupted")
         }
     }
 }

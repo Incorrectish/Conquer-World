@@ -35,7 +35,7 @@ const PERMISSIBLE_TILES: [[f32; 4]; 10] = [
     tile::MAJOR_BOSS,
 ];
 
-#[derive(Debug, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, serde::Deserialize, serde::Serialize, PartialEq)]
 pub struct Projectile {
     pub pos: Position,
     pub speed: usize,

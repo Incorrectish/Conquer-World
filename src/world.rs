@@ -18,7 +18,7 @@ use rand::rngs::ThreadRng;
 use rand_chacha::ChaCha8Rng;
 
 use std::cmp::min;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 pub const BOSS_ROOMS: [Position; 5] = [
     Position::new(1, 1),
@@ -32,7 +32,7 @@ const LAKES_PER_WORLD: i16 = 3;
 const TOTAL_MOUNTAINS: i16 = 60;
 const ENEMY_COUNT: usize = 0;
 
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Debug, PartialEq)]
 pub struct World {
     //Stores which world the player is in
     pub world_position: Position,
@@ -66,14 +66,14 @@ pub struct World {
 
     // Hashmap of positions to colors
     // #[serde(with = "vectorize")]
-    pub entity_map: [[HashMap<Position, ([f32; 4], Entity)>;
+    pub entity_map: [[BTreeMap<Position, ([f32; 4], Entity)>;
         (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
         (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     // #[serde(with = "vectorize")]
-    pub terrain_map: [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
+    pub terrain_map: [[BTreeMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
         (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     // #[serde(with = "vectorize")]
-    pub atmosphere_map: [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
+    pub atmosphere_map: [[BTreeMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
         (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     pub boss_defeated: [[bool; 7]; 7],
     pub boss_lasers: Vec<(Position, [f32; 4], usize)>, //Position, color, duration left
@@ -86,10 +86,10 @@ pub struct World {
 
 impl World {
     pub fn new(rng: &mut ChaCha8Rng) -> Self {
-        let mut entity_map: [[HashMap<Position, ([f32; 4], Entity)>;
+        let mut entity_map: [[BTreeMap<Position, ([f32; 4], Entity)>;
             (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
             (BOARD_SIZE.1 / WORLD_SIZE.1) as usize] = Default::default();
-        let mut terrain_map: [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
+        let mut terrain_map: [[BTreeMap<Position, [f32; 4]>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
             (BOARD_SIZE.1 / WORLD_SIZE.1) as usize] = Default::default();
         let mut boss_defeated = [[false; 7]; 7];
         World::gen_boss(&mut terrain_map);
@@ -131,10 +131,10 @@ impl World {
 
     pub fn gen_enemies(
         rng: &mut ChaCha8Rng,
-        terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
+        terrain_map: &mut [[BTreeMap<Position, [f32; 4]>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
                  (BOARD_SIZE.1 / WORLD_SIZE.1) as usize],
 
-        entity_map: &mut [[HashMap<Position, ([f32; 4], Entity)>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
+        entity_map: &mut [[BTreeMap<Position, ([f32; 4], Entity)>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
                  (BOARD_SIZE.1 / WORLD_SIZE.1) as usize],
 
         enemies: &mut Vec<Enemy>,
@@ -185,10 +185,10 @@ impl World {
     }
 
     pub fn gen_bosses(
-        terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
+        terrain_map: &mut [[BTreeMap<Position, [f32; 4]>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
                  (BOARD_SIZE.1 / WORLD_SIZE.1) as usize],
 
-        entity_map: &mut [[HashMap<Position, ([f32; 4], Entity)>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
+        entity_map: &mut [[BTreeMap<Position, ([f32; 4], Entity)>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
                  (BOARD_SIZE.1 / WORLD_SIZE.1) as usize],
 
         bosses: &mut Vec<Boss>,
@@ -325,7 +325,7 @@ impl World {
         self.player.draw_energy(canvas);
         self.draw_world_map(canvas);
 
-        //Draw every pixel that is contained in the terrain HashMap
+        //Draw every pixel that is contained in the terrain BTreeMap
         let curr_world_terrain_map =
             &self.terrain_map[self.world_position.y][self.world_position.x];
         for (loc, color) in curr_world_terrain_map {
@@ -342,7 +342,7 @@ impl World {
             )
         }
 
-        //Draw every pixel that is contained in the entity HashMap
+        //Draw every pixel that is contained in the entity BTreeMap
         let curr_world_entity_map = &self.entity_map[self.world_position.y][self.world_position.x];
 
         for (loc, color) in curr_world_entity_map {
@@ -372,7 +372,7 @@ impl World {
             )
         }
 
-        //Draw every pixel that is contained in the terrain HashMap
+        //Draw every pixel that is contained in the terrain BTreeMap
         let curr_world_atmosphere_map =
             &self.atmosphere_map[self.world_position.y][self.world_position.x];
         for (loc, color) in curr_world_atmosphere_map {
@@ -415,7 +415,7 @@ impl World {
     }
 
     //Takes in a previous location and new location Position object and updates that specific
-    //entity inside of the HashMap to move from the previous location to the new location
+    //entity inside of the BTreeMap to move from the previous location to the new location
     pub fn update_position(
         world: &mut World,
         prev_position: Position,
@@ -432,7 +432,7 @@ impl World {
     }
 
     //Takes in a previous location and new location Position object and updates that specific
-    //entity inside of the HashMap to move from the previous location to the new location
+    //entity inside of the BTreeMap to move from the previous location to the new location
     pub fn update_atmosphere_position(
         world: &mut World,
         prev_position: Position,
@@ -730,7 +730,7 @@ impl World {
 
     // generates the center boss room for map
     pub fn gen_boss(
-        terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
+        terrain_map: &mut [[BTreeMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
                  (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     ) {
         // x and y of center of map
@@ -759,7 +759,7 @@ impl World {
     // generates water tiles around the map
     pub fn gen_lake(
         rng: &mut ChaCha8Rng,
-        terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
+        terrain_map: &mut [[BTreeMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
                  (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     ) {
         for i in 0..7 {
@@ -769,7 +769,7 @@ impl World {
                     let x = random::rand_range(rng, 5, WORLD_SIZE.0); // random x coordinate
                     let y = random::rand_range(rng, 5, WORLD_SIZE.1); // random y coordinate
 
-                    let mut lake: HashMap<Position, [f32; 4]> = HashMap::new();
+                    let mut lake: BTreeMap<Position, [f32; 4]> = BTreeMap::new();
                     Self::gen_lake_helper(
                         rng,
                         i * WORLD_SIZE.0 + x,
@@ -795,9 +795,9 @@ impl World {
         x: i16,
         y: i16,
         dist: i16,
-        terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
+        terrain_map: &mut [[BTreeMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
                  (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
-        lake: &mut HashMap<Position, [f32; 4]>,
+        lake: &mut BTreeMap<Position, [f32; 4]>,
     ) {
         let pos = Position::new(x as usize, y as usize);
         if !Self::has_adjacent_terrain(x as usize, y as usize, &terrain_map) {
@@ -872,7 +872,7 @@ impl World {
 
     //TODO: make faster, makes the game really slow rn
     fn gen_outer_boss_walls(
-        terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
+        terrain_map: &mut [[BTreeMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
                  (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     ) {
         // the upper left corner of each mini boss room
@@ -943,7 +943,7 @@ impl World {
 
     pub fn gen_mountain(
         rng: &mut ChaCha8Rng,
-        terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
+        terrain_map: &mut [[BTreeMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
                  (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
     ) {
         let mut mountains_added = 0;
@@ -957,7 +957,7 @@ impl World {
                 continue;
             }
 
-            let mut mountain: HashMap<Position, [f32; 4]> = HashMap::new();
+            let mut mountain: BTreeMap<Position, [f32; 4]> = BTreeMap::new();
             Self::gen_mountain_helper(rng, x, y, 0, terrain_map, &mut mountain); // new lake centered at (x, y)
             if mountain.len() > 0 {
                 Self::combine_into_terrain(terrain_map, &mountain);
@@ -974,9 +974,9 @@ impl World {
         x: i16,
         y: i16,
         dist: i16,
-        terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
+        terrain_map: &mut [[BTreeMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
                  (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
-        mountain: &mut HashMap<Position, [f32; 4]>,
+        mountain: &mut BTreeMap<Position, [f32; 4]>,
     ) {
         let pos = Position::new(x as usize, y as usize);
         if !Self::has_adjacent_terrain(x as usize, y as usize, &terrain_map) {
@@ -1011,7 +1011,7 @@ impl World {
     }
 
     pub fn toggle_doors(
-        terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
+        terrain_map: &mut [[BTreeMap<Position, [f32; 4]>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
                  (BOARD_SIZE.1 / WORLD_SIZE.1) as usize],
         world_loc: Position,
         loc: Position,
@@ -1096,7 +1096,7 @@ impl World {
     fn has_adjacent_terrain(
         x: usize,
         y: usize,
-        terrain_map: &[[HashMap<Position, [f32; 4]>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
+        terrain_map: &[[BTreeMap<Position, [f32; 4]>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
              (BOARD_SIZE.1 / WORLD_SIZE.1) as usize],
     ) -> bool {
         if x == 0 || x == BOARD_SIZE.0 as usize - 1 || y == 0 || y == BOARD_SIZE.1 as usize - 1 {
@@ -1138,9 +1138,9 @@ impl World {
     }
 
     fn combine_into_terrain(
-        terrain_map: &mut [[HashMap<Position, [f32; 4]>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
+        terrain_map: &mut [[BTreeMap<Position, [f32; 4]>; (BOARD_SIZE.0 / WORLD_SIZE.0) as usize];
                  (BOARD_SIZE.1 / WORLD_SIZE.1) as usize],
-        other: &HashMap<Position, [f32; 4]>,
+        other: &BTreeMap<Position, [f32; 4]>,
     ) {
         for (pos, tile) in other {
             let world_loc = Position::new(

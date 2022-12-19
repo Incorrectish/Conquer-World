@@ -6,7 +6,7 @@ use ggez::graphics::{self, Canvas};
 use rand::rngs;
 use rand::rngs::ThreadRng;
 use rand_chacha::ChaCha8Rng;
-use std::{cmp::max, collections::HashMap};
+use std::{cmp::max, collections::BTreeMap};
 
 const BOSS_HEALTH: usize = 100;
 const LASER_LINGER_VALUE: usize = 3;
@@ -21,7 +21,7 @@ const VULNERABLE_TIME_BASE: usize = 10;
 const BOSS_3_RUSH_COOLDOWN: usize = 20;
 const BOSS_3_MOVE_DELAY: usize = 2;
 
-#[derive(serde::Deserialize, serde::Serialize, Debug)]
+#[derive(serde::Deserialize, serde::Serialize, Debug, PartialEq)]
 pub struct Boss {
     pub position: Position,
     pub color: [f32; 4],
@@ -44,7 +44,7 @@ impl Boss {
         y: usize,
         color: [f32; 4],
         world_position: Position,
-        terrain_loc: &mut HashMap<Position, [f32; 4]>,
+        terrain_loc: &mut BTreeMap<Position, [f32; 4]>,
     ) -> Self {
         let mut offset: usize = 4;
         let is_major: bool = color == tile::MAJOR_BOSS;
@@ -698,12 +698,12 @@ impl Boss {
     }
 }
 
-#[derive(Eq, Hash, PartialEq, Copy, Clone, Debug, serde::Deserialize, serde::Serialize)]
-
+#[derive(Eq, Hash, PartialEq, Copy, Clone, Debug, serde::Deserialize, serde::Serialize, Ord, PartialOrd)]
 pub struct Position {
     pub x: usize,
     pub y: usize,
 }
+
 impl Position {
     pub const fn new(x: usize, y: usize) -> Self {
         Position { x, y }
