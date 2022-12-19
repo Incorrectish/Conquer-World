@@ -104,16 +104,22 @@ pub struct Player {
     invisiblity_cooldown: i16,
     tracking_projectile_cooldown: i16,
     pub stun_timer: usize,
+    is_alive: bool,
 }
 
 impl Player {
+    pub fn is_alive(&self) -> bool {
+        self.is_alive
+    }
+
     pub fn health(&self) -> usize {
         self.health
     }
 
     pub fn damage(&mut self, damage: usize) {
         if (self.health as i32 - damage as i32 <= 0) {
-            panic!("You lose");
+            self.is_alive = false;
+            return;
         }
         self.health -= damage;
     }
@@ -140,6 +146,7 @@ impl Player {
             invisiblity_cooldown: 0,
             tracking_projectile_cooldown: 0,
             stun_timer: 0,
+            is_alive: true,
         };
         temp
     }
