@@ -31,15 +31,13 @@ use ggez::{
 };
 
 pub const RNG_SEED: u64 = 0;
-
 // const MOVES_TILL_ENERGY_REGEN: usize = 5;
 
 // #[derive(serde::Deserialize, serde::Serialize)]
 pub struct State {
     should_draw: bool,
     command: bool,
-    songs: [audio::Source; 6],
-    is_playing: bool,
+    songs: [audio::Source; 7],
     // Abstraction for the world and what is contained within it
     world: Option<World>,
     title_screen: bool,
@@ -56,13 +54,13 @@ impl State {
             audio::Source::new(ctx, "/blackout_boss.ogg")?,
             audio::Source::new(ctx, "/column_laser_boss.ogg")?,
             audio::Source::new(ctx, "/chasing_boss.ogg")?,
-            audio::Source::new(ctx, "/laser_boss.ogg")?];
+            audio::Source::new(ctx, "/laser_boss.ogg")?,
+            audio::Source::new(ctx, "/title_music.ogg")?];
         let mut rng = ChaCha8Rng::seed_from_u64(RNG_SEED);
         let temp = State {
             should_draw: true,
             command: false,
             songs,
-            is_playing: false,
             world: Some(World::new(&mut rng)),
             title_screen,
             rng: Some(rng),
@@ -79,12 +77,12 @@ impl State {
             audio::Source::new(ctx, "/blackout_boss.ogg")?,
             audio::Source::new(ctx, "/column_laser_boss.ogg")?,
             audio::Source::new(ctx, "/chasing_boss.ogg")?,
-            audio::Source::new(ctx, "/laser_boss.ogg")?];
+            audio::Source::new(ctx, "/laser_boss.ogg")?,
+            audio::Source::new(ctx, "/title_music.ogg")?];
         Ok(State {
             should_draw: true,
             command: false,
             songs,
-            is_playing: false,
             world: None,
             title_screen: true,
             rng: None,
@@ -99,12 +97,12 @@ impl State {
             audio::Source::new(ctx, "/blackout_boss.ogg")?,
             audio::Source::new(ctx, "/column_laser_boss.ogg")?,
             audio::Source::new(ctx, "/chasing_boss.ogg")?,
-            audio::Source::new(ctx, "/laser_boss.ogg")?];
+            audio::Source::new(ctx, "/laser_boss.ogg")?,
+            audio::Source::new(ctx, "/title_music.ogg")?];
         let temp = State {
             should_draw: true,
             command: false,
             songs,
-            is_playing: false,
             world: Some(world),
             title_screen: false,
             rng: Some(rng),
@@ -116,55 +114,62 @@ impl State {
 
 impl ggez::event::EventHandler<GameError> for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
-        let world_pos = self.world.as_mut().unwrap().world_position;
-        let boss_rooms = BOSS_ROOMS;
-        if world_pos == boss_rooms[0] {
-            if !self.songs[5].playing() {
-                for song in &mut self.songs {
-                    song.stop(ctx);
+        if !self.title_screen {
+            let world_pos = self.world.as_mut().unwrap().world_position;
+            let boss_rooms = BOSS_ROOMS;
+            if world_pos == boss_rooms[0] {
+                if !self.songs[5].playing() {
+                    for song in &mut self.songs {
+                        song.stop(ctx);
+                    }
+                    let _ = self.songs[5].set_repeat(true);
+                    let _ = self.songs[5].play(ctx);
                 }
-                let _ = self.songs[5].set_repeat(true);
-                let _ = self.songs[5].play(ctx);
-            }
-        } else if world_pos == boss_rooms[1] {
-            if !self.songs[3].playing() {
-                for song in &mut self.songs {
-                    song.stop(ctx);
+            } else if world_pos == boss_rooms[1] {
+                if !self.songs[3].playing() {
+                    for song in &mut self.songs {
+                        song.stop(ctx);
+                    }
+                    let _ = self.songs[3].set_repeat(true);
+                    let _ = self.songs[3].play(ctx);
                 }
-                let _ = self.songs[3].set_repeat(true);
-                let _ = self.songs[3].play(ctx);
-            }
-        } else if world_pos == boss_rooms[3] {
-            if !self.songs[4].playing() {
-                for song in &mut self.songs {
-                    song.stop(ctx);
+            } else if world_pos == boss_rooms[3] {
+                if !self.songs[4].playing() {
+                    for song in &mut self.songs {
+                        song.stop(ctx);
+                    }
+                    let _ = self.songs[4].set_repeat(true);
+                    let _ = self.songs[4].play(ctx);
                 }
-                let _ = self.songs[4].set_repeat(true);
-                let _ = self.songs[4].play(ctx);
-            }
-        } else if world_pos == boss_rooms[4] {
-            if !self.songs[2].playing() {
-                for song in &mut self.songs {
-                    song.stop(ctx);
+            } else if world_pos == boss_rooms[4] {
+                if !self.songs[2].playing() {
+                    for song in &mut self.songs {
+                        song.stop(ctx);
+                    }
+                    let _ = self.songs[2].set_repeat(true);
+                    let _ = self.songs[2].play(ctx);
                 }
-                let _ = self.songs[2].set_repeat(true);
-                let _ = self.songs[2].play(ctx);
-            }
-        } else if world_pos == boss_rooms[2] {
-            if !self.songs[1].playing() {
-                for song in &mut self.songs {
-                    song.stop(ctx);
+            } else if world_pos == boss_rooms[2] {
+                if !self.songs[1].playing() {
+                    for song in &mut self.songs {
+                        song.stop(ctx);
+                    }
+                    let _ = self.songs[1].set_repeat(true);
+                    let _ = self.songs[1].play(ctx);
                 }
-                let _ = self.songs[1].set_repeat(true);
-                let _ = self.songs[1].play(ctx);
+            } else {
+                if !self.songs[0].playing() {
+                    for song in &mut self.songs {
+                        song.stop(ctx);
+                    }
+                    let _ = self.songs[0].set_repeat(true);
+                    let _ = self.songs[0].play(ctx);
+                }
             }
         } else {
-            if !self.songs[0].playing() {
-                for song in &mut self.songs {
-                    song.stop(ctx);
-                }
-                let _ = self.songs[0].set_repeat(true);
-                let _ = self.songs[0].play(ctx);
+            if !self.songs[6].playing() {
+                let _ = self.songs[6].set_repeat(true);
+                let _ = self.songs[6].play(ctx);
             }
         }
         Ok(())
