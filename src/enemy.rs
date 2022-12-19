@@ -33,7 +33,7 @@ const PERMISSIBLE_TILES_DODGING: [[f32; 4]; 3] = [
 const PERMISSIBLE_TILES_BOSS: [[f32; 4]; 0] = [];
 
 const CHASING_ENEMY_SPEED: usize = 1;
-const BOMBER_ENEMY_SPEED: usize = 1;
+const BOMBER_ENEMY_SPEED: usize = 2;
 const KNIGHT_ENEMY_SPEED: usize = 1;
 const SHOOTER_ENEMY_SPEED: usize = 1;
 const MAJOR_ENEMY_SPEED: usize = 1;
