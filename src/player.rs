@@ -23,14 +23,14 @@ pub const MAX_PLAYER_HEALTH: usize = 100;
 const MAX_PLAYER_ENERGY: usize = 100;
 const PLAYER_MELEE_DAMAGE: usize = 30;
 const PLAYER_SLAM_DAMAGE: usize = 50;
-const TELEPORTATION_COST: usize = 5;
+const TELEPORTATION_COST: usize = 50;
 const HEAL_COST: usize = 20;
 const FIRE_COST: usize = 30;
 const SLAM_COST: usize = 10;
 const HEAL_ABILITY_RETURN: usize = 10;
-const LIGHTNING_COST: usize = 20;
-const INVISIBILITY_COST: usize = 50;
-const TRACKING_PROJECTILE_COST: usize = 50;
+const LIGHTNING_COST: usize = 25;
+const INVISIBILITY_COST: usize = 30;
+const TRACKING_PROJECTILE_COST: usize = 75;
 
 const INVISIBILITY_DURATION: usize = 10;
 
@@ -56,7 +56,7 @@ const PLAYER_INITIAL_SPEED: usize = 1;
 const PLAYER_INITIAL_ENERGY: usize = 100;
 const PERMISSIBLE_TILES: [[f32; 4]; 1] = [tile::GRASS];
 const LIGHTNING_COOLDOWN: usize = 5;
-const TELEPORT_COOLDOWN: usize = 1;
+const TELEPORT_COOLDOWN: usize = 15;
 const FIRE_COOLDOWN: usize = 10;
 const SLAM_COOLDOWN: usize = 10;
 const PROJECTILE_COOLDOWN: usize = 1;
