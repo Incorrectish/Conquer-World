@@ -215,28 +215,28 @@ impl ggez::event::EventHandler<GameError> for State {
                     &*(graphics::Text::new(duration_left).set_scale(72.)),//.set_scale(48.),
                     graphics::DrawParam::from(text_spot).color(graphics::Color::from_rgb(217, 234, 211)),
                 );
-            let pos = Position::new(15, 8);
+            let pos = Position::new(14, 9);
             let text_spot = Vec2::new((pos.x as f32 + 0.25) * TILE_SIZE.0 as f32,  (pos.y as f32 + UNIVERSAL_OFFSET as f32) * TILE_SIZE.1 as f32);
             let duration_left = "\"Features, not bugs\"";
                 canvas.draw(
                     &*(graphics::Text::new(duration_left).set_scale(32.)),//.set_scale(48.),
                     graphics::DrawParam::from(text_spot).color(graphics::Color::from_rgb(164, 194, 244)),
                 );
-            let pos = Position::new(14, 12);
+            let pos = Position::new(13, 14);
             let text_spot = Vec2::new((pos.x as f32 + 0.25) * TILE_SIZE.0 as f32,  (pos.y as f32 + UNIVERSAL_OFFSET as f32) * TILE_SIZE.1 as f32);
-            let duration_left = "New Game [N]";
+            let duration_left = " New Game [N]";
                 canvas.draw(
                     &*(graphics::Text::new(duration_left).set_scale(52.)),//.set_scale(48.),
                     graphics::DrawParam::from(text_spot).color(graphics::Color::from_rgb(164, 194, 244)),
                 );
-            let pos = Position::new(13, 18);
+            let pos = Position::new(12, 20);
             let text_spot = Vec2::new((pos.x as f32 + 0.25) * TILE_SIZE.0 as f32,  (pos.y as f32 + UNIVERSAL_OFFSET as f32) * TILE_SIZE.1 as f32);
             let duration_left = " Load Save [L]";
                 canvas.draw(
                     &*(graphics::Text::new(duration_left).set_scale(52.)),//.set_scale(48.),
                     graphics::DrawParam::from(text_spot).color(graphics::Color::from_rgb(164, 194, 244)),
                 );
-            let pos = Position::new(14, 35);
+            let pos = Position::new(12, 35);
             let text_spot = Vec2::new((pos.x as f32 + 0.25) * TILE_SIZE.0 as f32,  (pos.y as f32 + UNIVERSAL_OFFSET as f32) * TILE_SIZE.1 as f32);
             let duration_left = "By: Ishan, Michael, and Aiden";
                 canvas.draw(
