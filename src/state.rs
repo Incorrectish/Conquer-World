@@ -208,12 +208,40 @@ impl ggez::event::EventHandler<GameError> for State {
         if self.title_screen {
             let mut canvas =
                 graphics::Canvas::from_frame(ctx, graphics::Color::from(tile::TITLE_SCREEN_FLOOR));
-            let pos = Position::new(10, 10);
+            let pos = Position::new(8, 2);
             let text_spot = Vec2::new((pos.x as f32 + 0.25) * TILE_SIZE.0 as f32,  (pos.y as f32 + UNIVERSAL_OFFSET as f32) * TILE_SIZE.1 as f32);
-            let duration_left = format!("{}", "hello");
+            let duration_left = "Very Good Game";
                 canvas.draw(
-                    &*(graphics::Text::new(duration_left).set_scale(48.)),//.set_scale(48.),
-                    graphics::DrawParam::from(text_spot).color(graphics::Color::WHITE),
+                    &*(graphics::Text::new(duration_left).set_scale(72.)),//.set_scale(48.),
+                    graphics::DrawParam::from(text_spot).color(graphics::Color::from_rgb(217, 234, 211)),
+                );
+            let pos = Position::new(15, 8);
+            let text_spot = Vec2::new((pos.x as f32 + 0.25) * TILE_SIZE.0 as f32,  (pos.y as f32 + UNIVERSAL_OFFSET as f32) * TILE_SIZE.1 as f32);
+            let duration_left = "\"Features, not bugs\"";
+                canvas.draw(
+                    &*(graphics::Text::new(duration_left).set_scale(32.)),//.set_scale(48.),
+                    graphics::DrawParam::from(text_spot).color(graphics::Color::from_rgb(164, 194, 244)),
+                );
+            let pos = Position::new(14, 12);
+            let text_spot = Vec2::new((pos.x as f32 + 0.25) * TILE_SIZE.0 as f32,  (pos.y as f32 + UNIVERSAL_OFFSET as f32) * TILE_SIZE.1 as f32);
+            let duration_left = "New Game [N]";
+                canvas.draw(
+                    &*(graphics::Text::new(duration_left).set_scale(52.)),//.set_scale(48.),
+                    graphics::DrawParam::from(text_spot).color(graphics::Color::from_rgb(164, 194, 244)),
+                );
+            let pos = Position::new(13, 18);
+            let text_spot = Vec2::new((pos.x as f32 + 0.25) * TILE_SIZE.0 as f32,  (pos.y as f32 + UNIVERSAL_OFFSET as f32) * TILE_SIZE.1 as f32);
+            let duration_left = " Load Save [L]";
+                canvas.draw(
+                    &*(graphics::Text::new(duration_left).set_scale(52.)),//.set_scale(48.),
+                    graphics::DrawParam::from(text_spot).color(graphics::Color::from_rgb(164, 194, 244)),
+                );
+            let pos = Position::new(14, 35);
+            let text_spot = Vec2::new((pos.x as f32 + 0.25) * TILE_SIZE.0 as f32,  (pos.y as f32 + UNIVERSAL_OFFSET as f32) * TILE_SIZE.1 as f32);
+            let duration_left = "By: Ishan, Michael, and Aiden";
+                canvas.draw(
+                    &*(graphics::Text::new(duration_left).set_scale(26.)),//.set_scale(48.),
+                    graphics::DrawParam::from(text_spot).color(graphics::Color::from_rgb(164, 194, 244)),
                 );
             canvas.finish(ctx)?;
         } else if !self.world.as_mut().unwrap().player.is_alive() {
