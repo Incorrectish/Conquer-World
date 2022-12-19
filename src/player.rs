@@ -19,7 +19,7 @@ use ggez::winit::event::VirtualKeyCode;
 use std::collections::HashMap;
 
 // Can change easily
-const MAX_PLAYER_HEALTH: usize = 100;
+pub const MAX_PLAYER_HEALTH: usize = 100;
 const MAX_PLAYER_ENERGY: usize = 100;
 const PLAYER_MELEE_DAMAGE: usize = 30;
 const PLAYER_SLAM_DAMAGE: usize = 50;
@@ -51,7 +51,7 @@ const BUILD_KEYCODE: VirtualKeyCode = KeyCode::B;
 const TRACKING_MISSILE_KEYCODE: VirtualKeyCode = KeyCode::X;
 const PROJECTILE_ATTACK_KEYCODE: VirtualKeyCode = KeyCode::Space;
 const PLAYER_PROJECTILE_SPEED: usize = 1;
-const PLAYER_PROJECTILE_DAMAGE: usize = 10;
+pub const PLAYER_PROJECTILE_DAMAGE: usize = 10;
 const PLAYER_INITIAL_SPEED: usize = 1;
 const PLAYER_INITIAL_ENERGY: usize = 100;
 const PERMISSIBLE_TILES: [[f32; 4]; 1] = [tile::GRASS];
@@ -103,6 +103,7 @@ pub struct Player {
     teleport_cooldown: i16,
     invisiblity_cooldown: i16,
     tracking_projectile_cooldown: i16,
+    pub stun_timer: usize,
 }
 
 impl Player {
@@ -138,6 +139,7 @@ impl Player {
             teleport_cooldown: 0,
             invisiblity_cooldown: 0,
             tracking_projectile_cooldown: 0,
+            stun_timer: 0,
         };
         temp
     }
@@ -747,6 +749,22 @@ impl Player {
                 }
             }
         }
+
+        if BOSS_ROOMS.contains(&world.world_position) {
+            for delta_x in deltas {
+                for delta_y in deltas {
+                    let position = Position::new(
+                        (world.player.pos.x as i16 + delta_x) as usize,
+                        (world.player.pos.y as i16 + delta_y) as usize,
+                    );
+                    let hit_info = Boss::can_hit_boss(world, position, world.world_position);
+                    if hit_info.0 && hit_info.1 {
+                        Boss::damage(world, PLAYER_SLAM_DAMAGE, world.world_position);
+                        return;
+                    }
+                }
+            }
+        }
     }
 
     pub fn lightning(world: &mut World) {
@@ -837,10 +855,9 @@ impl Player {
                 }
             }
         }
-
-        if let Some(terrain) = world.terrain_map[world_pos.y][world_pos.x].get(&attacking_position)
-        {
-            if terrain == &tile::BOSS_SURROUNDINGS {
+        if BOSS_ROOMS.contains(&world_pos) {
+            let hit_info = Boss::can_hit_boss(world, attacking_position, world_pos);
+            if hit_info.0 && hit_info.1 {
                 Boss::damage(world, PLAYER_MELEE_DAMAGE, world_pos);
             }
         }
@@ -875,6 +892,15 @@ impl Player {
                     return;
                 }
             }
+
+            if BOSS_ROOMS.contains(&world.world_position) {
+                let hit_info = Boss::can_hit_boss(world, projectile_spawn_pos.0, world.world_position);
+                if hit_info.0 && hit_info.0 {
+                    Boss::damage(world, PLAYER_MELEE_DAMAGE, world.world_position);
+                    return;
+                }
+            }
+
             world.entity_map[world.world_position.y][world.world_position.x].insert(
                 projectile.pos,
                 (tile::PROJECTILE_PLAYER, Entity::Projectile),
@@ -894,6 +920,10 @@ impl Player {
         let curr_terrain_map = &terrain_map[position_info.1.y][position_info.1.x];
         let curr_entity_map = &entity_map[position_info.1.y][position_info.1.x];
         let curr_atmosphere_map = &atmosphere_map[position_info.1.y][position_info.1.x];
+        if world.player.stun_timer != 0 {
+            world.player.stun_timer -= 1;
+            return false;
+        }
         if curr_entity_map.contains_key(&position_info.0)
             || curr_terrain_map.contains_key(&position_info.0)
             || curr_atmosphere_map.contains_key(&position_info.0)
@@ -908,6 +938,10 @@ impl Player {
                     return true;
                 }
             }
+            return false;
+        }
+
+        if Boss::pos_inside_boss(world, position_info.0, position_info.1) {
             return false;
         }
         true

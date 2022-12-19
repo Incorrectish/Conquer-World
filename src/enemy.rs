@@ -4,6 +4,7 @@ use crate::{
     projectile::Projectile,
     tile::{self, PROJECTILE_PLAYER},
     utils::Position,
+    utils::Boss,
     world::World,
     BOARD_SIZE, TILE_SIZE, UNIVERSAL_OFFSET, WORLD_SIZE,
 };
@@ -541,6 +542,7 @@ impl Enemy {
             // neighbors
             if new_pos != world.enemies[index].pos
                 && Self::can_travel_to(
+                    world, 
                     (new_pos, world.enemies[index].world_pos),
                     &world.entity_map,
                     &world.terrain_map,
@@ -557,6 +559,7 @@ impl Enemy {
 
     pub fn can_travel_to(
         // this is the (position_in_world, position_of_world)
+        world: &World,
         position_info: (Position, Position),
         entity_map: &[[HashMap<Position, ([f32; 4], Entity)>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
              (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
@@ -613,6 +616,11 @@ impl Enemy {
             }
             return false;
         }
+
+        if Boss::pos_inside_boss(world, position_info.0, position_info.1) {
+            return false;
+        }
+
         true
     }
 

@@ -62,6 +62,7 @@ pub const BOSS_RECOVERY_TWO: [f32; 4] = [0.01, 0.9, 1.0, 1.0];
 
 pub const STUN_WELL_REAL: [f32; 4] = [0.99, 0.9, 0.1, 0.4];
 pub const STUN_WELL_INDICATOR: [f32; 4] = [1.0, 0.95, 0.7, 0.5];
+pub const SAFE_SPOT_INDICATOR: [f32; 4] = [0.05, 0.45, 0.15, 1.0];
 
 // pub const ENEMIES: [[f32; 4]; 7] = [
 //     // basic
@@ -84,3 +85,4 @@ pub const PLAYER: [f32; 4] = [0.5, 0.5, 0.5, 1.0];
 
 const INVIS_TRANSPARENCY: f32 = 0.3;
 pub const PLAYER_INVISIBLE: [f32; 4] = [0.5, 0.5, 0.5, INVIS_TRANSPARENCY];
+pub const PLAYER_STUNNED: [f32; 4] = [1.0, 0.9, 0.3, 1.0];
