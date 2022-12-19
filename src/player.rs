@@ -732,7 +732,7 @@ impl Player {
         const deltas: [i16; 3] = [0, -1, 1];
 
         // check all the enemies
-        for enemy in &mut world.enemies {
+        for enemy in &mut world.enemies_map[world.world_position.y][world.world_position.x] {
             // it's fine if the position is out of bounds, because we aren't indexing anything
             for delta_x in deltas {
                 for delta_y in deltas {
@@ -828,7 +828,7 @@ impl Player {
         let world_pos = world.world_position;
         if let Some(entity) = world.entity_map[world_pos.y][world_pos.x].get(&attacking_position) {
             if entity.1 == Entity::Enemy {
-                for enemy in &mut world.enemies {
+                for enemy in &mut world.enemies_map[world.world_position.y][world.world_position.x] {
                     if attacking_position == enemy.pos {
                         enemy.damage(PLAYER_MELEE_DAMAGE);
                         world.player.change_energy(2);
@@ -865,12 +865,12 @@ impl Player {
                 world.player.direction.clone(),
                 world.world_position,
             );
-            for index in 0..world.enemies.len() {
+            for index in 0..world.enemies_map[world.world_position.y][world.world_position.x].len() {
                 //Check if it's spawning on enemy, if so damage the enenmy and not spawn a projectile
-                if projectile_spawn_pos.0 == world.enemies[index].pos
-                    && projectile_spawn_pos.1 == world.enemies[index].world_pos
+                if projectile_spawn_pos.0 == world.enemies_map[world.world_position.y][world.world_position.x][index].pos
+                    && projectile_spawn_pos.1 == world.enemies_map[world.world_position.y][world.world_position.x][index].world_pos
                 {
-                    world.enemies[index].damage(projectile.damage);
+                    world.enemies_map[world.world_position.y][world.world_position.x][index].damage(projectile.damage);
                     return;
                 }
             }
