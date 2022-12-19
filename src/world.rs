@@ -1111,34 +1111,34 @@ impl World {
                     terrain_map[world_y][world_x].remove(&wall_pos);
                 }
             }
-            //        } else if boss_defeated[1][1] && boss_defeated[1][5] && boss_defeated[5][1] && boss_defeated[5][5] {
-            //            for pos in positions {
-            //                let x = pos[2] as usize;
-            //                let y = pos[3] as usize;
-            //                let world_x = (3 + pos[0]) as usize;
-            //                let world_y = (3 + pos[1]) as usize;
-            //                let wall_pos = Position::new(y, x);
-            //                if terrain_map[3][3].contains_key(&wall_pos) {
-            //                    terrain_map[3][3].remove(&wall_pos);
-            //                }
-            //                if terrain_map[world_x][world_y].contains_key(&wall_pos) {
-            //                    terrain_map[world_x][world_y].remove(&wall_pos);
-            //                }
-            //            }
-            //        } else {
-            //            for pos in positions {
-            //                let x = pos[2] as usize;
-            //                let y = pos[3] as usize;
-            //                let world_x = (3 + pos[0]) as usize;
-            //                let world_y = (3 + pos[1]) as usize;
-            //                let wall_pos = Position::new(y, x);
-            //                if !terrain_map[3][3].contains_key(&wall_pos) {
-            //                    terrain_map[3][3].insert(wall_pos, tile::WALL);
-            //                }
-            //                if !terrain_map[world_x][world_y].contains_key(&wall_pos) {
-            //                    terrain_map[world_x][world_y].insert(wall_pos, tile::WALL);
-            //                }
-            //            }
+                   } else if boss_defeated[1][1] && boss_defeated[1][5] && boss_defeated[5][1] && boss_defeated[5][5] {
+                       for pos in positions {
+                           let x = pos[2] as usize;
+                           let y = pos[3] as usize;
+                           let world_x = (3 + pos[0]) as usize;
+                           let world_y = (3 + pos[1]) as usize;
+                           let wall_pos = Position::new(y, x);
+                           if terrain_map[3][3].contains_key(&wall_pos) {
+                               terrain_map[3][3].remove(&wall_pos);
+                           }
+                           if terrain_map[world_x][world_y].contains_key(&wall_pos) {
+                               terrain_map[world_x][world_y].remove(&wall_pos);
+                           }
+                       }
+                   } else {
+                       for pos in positions {
+                           let x = pos[2] as usize;
+                           let y = pos[3] as usize;
+                           let world_x = (3 + pos[0]) as usize;
+                           let world_y = (3 + pos[1]) as usize;
+                           let wall_pos = Position::new(y, x);
+                           if !terrain_map[3][3].contains_key(&wall_pos) {
+                               terrain_map[3][3].insert(wall_pos, tile::WALL);
+                           }
+                           if !terrain_map[world_x][world_y].contains_key(&wall_pos) {
+                               terrain_map[world_x][world_y].insert(wall_pos, tile::WALL);
+                           }
+                       }
         }
     }
 
