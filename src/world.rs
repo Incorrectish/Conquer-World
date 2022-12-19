@@ -351,20 +351,22 @@ impl World {
         self.draw_world_map(canvas);
 
         //Draw every pixel that is contained in the terrain HashMap
-        let curr_world_terrain_map =
-            &self.terrain_map[self.world_position.y][self.world_position.x];
-        for (loc, color) in curr_world_terrain_map {
-            canvas.draw(
-                &graphics::Quad,
-                graphics::DrawParam::new()
-                    .dest_rect(graphics::Rect::new_i32(
-                        loc.x as i32 * TILE_SIZE.0 as i32,
-                        (loc.y as i32 + UNIVERSAL_OFFSET as i32) * TILE_SIZE.1 as i32,
-                        TILE_SIZE.0 as i32,
-                        TILE_SIZE.1 as i32,
-                    ))
-                    .color(Self::related_color(rng, *color)),
-            )
+        if !self.in_blackout {
+            let curr_world_terrain_map =
+                &self.terrain_map[self.world_position.y][self.world_position.x];
+            for (loc, color) in curr_world_terrain_map {
+                canvas.draw(
+                    &graphics::Quad,
+                    graphics::DrawParam::new()
+                        .dest_rect(graphics::Rect::new_i32(
+                            loc.x as i32 * TILE_SIZE.0 as i32,
+                            (loc.y as i32 + UNIVERSAL_OFFSET as i32) * TILE_SIZE.1 as i32,
+                            TILE_SIZE.0 as i32,
+                            TILE_SIZE.1 as i32,
+                        ))
+                        .color(Self::related_color(rng, *color)),
+                )
+            }
         }
 
         //Draw every pixel that is contained in the entity HashMap
@@ -401,28 +403,30 @@ impl World {
         }
 
         //Draw every pixel that is contained in the terrain HashMap
-        let curr_world_atmosphere_map =
-            &self.atmosphere_map[self.world_position.y][self.world_position.x];
-        for (loc, color) in curr_world_atmosphere_map {
-            canvas.draw(
-                &graphics::Quad,
-                graphics::DrawParam::new()
-                    .dest_rect(graphics::Rect::new_i32(
-                        loc.x as i32 * TILE_SIZE.0 as i32,
-                        (loc.y as i32 + UNIVERSAL_OFFSET as i32) * TILE_SIZE.1 as i32,
-                        TILE_SIZE.0 as i32,
-                        TILE_SIZE.1 as i32,
-                    ))
-                    .color(*color),
-            )
-        }
-        if BOSS_ROOMS.contains(&self.world_position) {
-            for index in 0..self.bosses.len() {
-                if self.bosses[index].world_position == self.world_position {
-                    Boss::draw_boss(self, canvas, index);
+        if !self.in_blackout {
+            let curr_world_atmosphere_map =
+                &self.atmosphere_map[self.world_position.y][self.world_position.x];
+            for (loc, color) in curr_world_atmosphere_map {
+                canvas.draw(
+                    &graphics::Quad,
+                    graphics::DrawParam::new()
+                        .dest_rect(graphics::Rect::new_i32(
+                            loc.x as i32 * TILE_SIZE.0 as i32,
+                            (loc.y as i32 + UNIVERSAL_OFFSET as i32) * TILE_SIZE.1 as i32,
+                            TILE_SIZE.0 as i32,
+                            TILE_SIZE.1 as i32,
+                        ))
+                        .color(*color),
+                )
+            }
+            if BOSS_ROOMS.contains(&self.world_position) {
+                for index in 0..self.bosses.len() {
+                    if self.bosses[index].world_position == self.world_position {
+                        Boss::draw_boss(self, canvas, index);
+                    }
                 }
             }
-        }
+        }  
     }
 
     // this function just returns whether a set of coordinates are within the bounds of the dynamic

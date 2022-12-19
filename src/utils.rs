@@ -8,6 +8,7 @@ use rand::rngs;
 use rand::rngs::ThreadRng;
 use rand_chacha::ChaCha8Rng;
 use std::{cmp::max, collections::HashMap};
+use ggez::glam::*;
 
 const BOSS_HEALTH: usize = 100;
 const LASER_LINGER_VALUE: usize = 3;
@@ -624,7 +625,7 @@ impl Boss {
             let size = spot.1 as i32;
             let pos = spot.0;
             let text_spot = 
-            bevy::math::Vec2::new((pos.x as f32 + 0.25) * TILE_SIZE.0 as f32, 
+            Vec2::new((pos.x as f32 + 0.25) * TILE_SIZE.0 as f32, 
             (pos.y as f32 + UNIVERSAL_OFFSET as f32) * TILE_SIZE.1 as f32);
             let duration_left = format!("{}", spot.2);
 
