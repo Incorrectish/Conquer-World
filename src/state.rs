@@ -131,8 +131,9 @@ impl ggez::event::EventHandler<GameError> for State {
                     for song in &mut self.songs {
                         song.stop(ctx);
                     }
-                    let _ = self.songs[7].set_repeat(true);
-                    let _ = self.songs[7].play(ctx);
+                    self.songs[7].set_volume(0.5);
+                    self.songs[7].set_repeat(true);
+                    self.songs[7].play(ctx);
                 }
             } else {
                 let world_pos = self.world.as_mut().unwrap().world_position;
@@ -142,55 +143,62 @@ impl ggez::event::EventHandler<GameError> for State {
                         for song in &mut self.songs {
                             song.stop(ctx);
                         }
-                        let _ = self.songs[5].set_repeat(true);
-                        let _ = self.songs[5].play(ctx);
+                        self.songs[5].set_volume(0.5);
+                        self.songs[5].set_repeat(true);
+                        self.songs[5].play(ctx);
                     }
                 } else if world_pos == boss_rooms[1] {
                     if !self.songs[3].playing() {
                         for song in &mut self.songs {
                             song.stop(ctx);
                         }
-                        let _ = self.songs[3].set_repeat(true);
-                        let _ = self.songs[3].play(ctx);
+                        self.songs[3].set_volume(0.5);
+                        self.songs[3].set_repeat(true);
+                        self.songs[3].play(ctx);
                     }
                 } else if world_pos == boss_rooms[3] {
                     if !self.songs[4].playing() {
                         for song in &mut self.songs {
                             song.stop(ctx);
                         }
-                        let _ = self.songs[4].set_repeat(true);
-                        let _ = self.songs[4].play(ctx);
+                        self.songs[4].set_volume(0.5);
+                        self.songs[4].set_repeat(true);
+                        self.songs[4].play(ctx);
                     }
                 } else if world_pos == boss_rooms[4] {
                     if !self.songs[2].playing() {
                         for song in &mut self.songs {
                             song.stop(ctx);
                         }
-                        let _ = self.songs[2].set_repeat(true);
-                        let _ = self.songs[2].play(ctx);
+                        self.songs[2].set_volume(0.5);
+                        self.songs[2].set_repeat(true);
+                        self.songs[2].play(ctx);
                     }
                 } else if world_pos == boss_rooms[2] {
                     if !self.songs[1].playing() {
                         for song in &mut self.songs {
                             song.stop(ctx);
                         }
-                        let _ = self.songs[1].set_repeat(true);
-                        let _ = self.songs[1].play(ctx);
+                        self.songs[1].set_volume(0.5);
+                        self.songs[1].set_repeat(true);
+                        self.songs[1].play(ctx);
                     }
                 } else {
                     if !self.songs[0].playing() {
                         for song in &mut self.songs {
                             song.stop(ctx);
                         }
-                        let _ = self.songs[0].set_repeat(true);
-                        let _ = self.songs[0].play(ctx);
+                        self.songs[0].set_volume(0.5);
+                        self.songs[0].set_repeat(true);
+                        self.songs[0].play(ctx);
                     }
                 }
             }
         } else {
             if !self.songs[6].playing() {
-                let _ = self.songs[6].set_repeat(true);
-                let _ = self.songs[6].play(ctx);
+                self.songs[6].set_volume(0.5);
+                self.songs[6].set_repeat(true);
+                self.songs[6].play(ctx);
             }
         }
         Ok(())

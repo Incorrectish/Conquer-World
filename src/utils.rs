@@ -28,6 +28,8 @@ const SAFE_SPOT_TIME: usize = 10;
 const BOSS_COLLISION_DAMAGE: usize = 10;
 const STUN_WELL_STUN_TIME: usize = 2;
 const SHIELD_HITS_NEEDED: usize = 3;
+const ENEMY_SPAWN_COOLDOWN: usize = 10;
+
 #[derive(serde::Deserialize, serde::Serialize, Debug, PartialEq)]
 pub struct Boss {
     pub position: Position,
@@ -38,6 +40,7 @@ pub struct Boss {
     pub stun_well_cooldown: usize,
     pub asteroid_cooldown: usize,
     pub safe_spot_cooldown: usize,
+    pub enemy_spawn_cooldown: usize,
     pub is_major: bool,
     pub offset: usize,
     pub boss_can_attack: bool,
@@ -46,6 +49,7 @@ pub struct Boss {
     pub shield_health: usize,
     pub chase_rush_cooldown: usize,
     pub speed_delay: usize,
+    pub first_enter: bool,
 }
 
 impl Boss {
@@ -70,8 +74,10 @@ impl Boss {
             safe_spot_cooldown: SAFE_SPOT_ATTACK_COOLDOWN,
             asteroid_cooldown: ASTEROID_COOLDOWN,
             stun_well_cooldown: STUN_WELL_COOLDOWN,
+            enemy_spawn_cooldown: 0,
             is_major,
             offset,
+            first_enter: true,
             rush_info: (false, None, tile::BOSS_LASER_STAGE_1, 0),
             boss_can_attack: true,
             vulnerable_time: 0,
@@ -79,6 +85,165 @@ impl Boss {
             chase_rush_cooldown: BOSS_3_RUSH_COOLDOWN,
             speed_delay: BOSS_3_MOVE_DELAY,
         }
+    }
+
+    pub fn spawn_enemies(world: &mut World, rng: &mut ChaCha8Rng, index: usize) {
+        let curr_entity_map = &world.enemies_map[world.world_position.y as usize][world.world_position.x as usize]; 
+        if world.world_position == BOSS_ROOMS[0] {
+            if curr_entity_map.is_empty() {
+                if world.bosses[index].vulnerable_time == 0 && world.bosses[index].boss_can_attack && !world.bosses[index].first_enter{
+                    world.bosses[index].vulnerable_time = VULNERABLE_TIME_BASE;
+                    world.bosses[index].boss_can_attack = false;
+                } else if world.bosses[index].vulnerable_time != 0 {
+                    world.bosses[index].vulnerable_time -= 1;
+                } else {
+                    world.bosses[index].first_enter = false;
+                    world.bosses[index].boss_can_attack = true;
+                    for i in 0..13 {
+                        let mut pos = world.bosses[index].position;
+                        let size = world.bosses[index].offset - 1;
+                        while Self::pos_inside_boss(world, Position::new(pos.x + size, pos.y), world.world_position) ||
+                            Self::pos_inside_boss(world, Position::new(pos.x - size, pos.y), world.world_position) ||
+                            Self::pos_inside_boss(world, Position::new(pos.x, pos.y + size), world.world_position) ||
+                            Self::pos_inside_boss(world, Position::new(pos.x, pos.y - size), world.world_position) {
+                                let x = random::rand_range(rng, 3, WORLD_SIZE.0 - 5) as usize;
+                                let y = random::rand_range(rng, 3, WORLD_SIZE.1-  5) as usize;
+                                pos = Position::new(x,y);
+                        }
+                        if i <= 3 {
+                            world.enemies_map[world.world_position.y as usize][world.world_position.x as usize].push(Enemy::major_enemy(
+                                pos.x as usize,
+                                pos.y as usize,
+                                world.world_position),);
+                            for h in 0..3 {
+                                for j in 0..3 {
+                                    world.entity_map[world.world_position.y][world.world_position.x].insert(
+                                        Position::new(pos.x as usize + h, pos.y as usize + j), (tile::MAJOR_ENEMY, Entity::Enemy));
+                                }
+                            }
+
+                        } else {
+                            world.enemies_map[world.world_position.y as usize][world.world_position.x as usize].push(Enemy::bomber(
+                                pos.x as usize,
+                                pos.y as usize,
+                                world.world_position),);
+                            world.entity_map[world.world_position.y][world.world_position.x].insert(pos, (tile::BOMBER_ENEMY, Entity::Enemy));
+                        }
+                    }
+                }
+            } 
+        } else if world.world_position == BOSS_ROOMS[1] {
+            if curr_entity_map.is_empty() && world.bosses[index].enemy_spawn_cooldown == 0 {
+                for i in 0..9 {
+                    let mut pos = world.bosses[index].position;
+                    let size = world.bosses[index].offset - 1;
+                        while Self::pos_inside_boss(world, Position::new(pos.x + size, pos.y), world.world_position) ||
+                            Self::pos_inside_boss(world, Position::new(pos.x - size, pos.y), world.world_position) ||
+                            Self::pos_inside_boss(world, Position::new(pos.x, pos.y + size), world.world_position) ||
+                            Self::pos_inside_boss(world, Position::new(pos.x, pos.y - size), world.world_position) {
+                            let x = random::rand_range(rng, 3, WORLD_SIZE.0 - 5) as usize;
+                            let y = random::rand_range(rng, 3, WORLD_SIZE.1 - 5) as usize;
+                            pos = Position::new(x,y);
+                        }
+                    if i <= 2 {
+                        world.enemies_map[world.world_position.y as usize][world.world_position.x as usize].push(Enemy::major_enemy(
+                            pos.x as usize,
+                            pos.y as usize,
+                            world.world_position),);
+                        for h in 0..3 {
+                            for j in 0..3 {
+                                world.entity_map[world.world_position.y][world.world_position.x].insert(
+                                    Position::new(pos.x as usize + h, pos.y as usize + j), (tile::MAJOR_ENEMY, Entity::Enemy));
+                            }
+                        }
+
+                    } else {
+                        world.enemies_map[world.world_position.y as usize][world.world_position.x as usize].push(Enemy::chasing(
+                            pos.x as usize,
+                            pos.y as usize,
+                            world.world_position),);
+                        world.entity_map[world.world_position.y][world.world_position.x].insert(pos, (tile::CHASING_ENEMY, Entity::Enemy));
+                    }
+                }
+                world.bosses[index].enemy_spawn_cooldown = ENEMY_SPAWN_COOLDOWN;
+            } else {
+                if world.bosses[index].enemy_spawn_cooldown != 0 {
+                    world.bosses[index].enemy_spawn_cooldown -= 1;
+                }
+            }
+        } else if world.world_position == BOSS_ROOMS[4] {
+            if curr_entity_map.is_empty() && world.bosses[index].enemy_spawn_cooldown == 0 {
+                for i in 0..10 {
+                    let mut pos = world.bosses[index].position;
+                    let size = world.bosses[index].offset - 1;
+                        while Self::pos_inside_boss(world, Position::new(pos.x + size, pos.y), world.world_position) ||
+                            Self::pos_inside_boss(world, Position::new(pos.x - size, pos.y), world.world_position) ||
+                            Self::pos_inside_boss(world, Position::new(pos.x, pos.y + size), world.world_position) ||
+                            Self::pos_inside_boss(world, Position::new(pos.x, pos.y - size), world.world_position) {
+                            let x = random::rand_range(rng, 3, WORLD_SIZE.0) as usize;
+                            let y = random::rand_range(rng, 3, WORLD_SIZE.1) as usize;
+                            pos = Position::new(x,y);
+                        }
+                    world.enemies_map[world.world_position.y as usize][world.world_position.x as usize].push(Enemy::chasing(
+                        pos.x as usize,
+                        pos.y as usize,
+                        world.world_position),);
+                    world.entity_map[world.world_position.y][world.world_position.x].insert(pos, (tile::CHASING_ENEMY, Entity::Enemy));
+                }
+                world.bosses[index].enemy_spawn_cooldown = ENEMY_SPAWN_COOLDOWN;
+            } else {
+                if world.bosses[index].enemy_spawn_cooldown != 0 {
+                    world.bosses[index].enemy_spawn_cooldown -= 1;
+                }
+            }
+        } else if world.world_position == BOSS_ROOMS[2] {
+            if curr_entity_map.is_empty() && world.bosses[index].enemy_spawn_cooldown == 0 {
+                for i in 0..33 {
+                    let mut pos = world.bosses[index].position;
+                    let size = world.bosses[index].offset - 2;
+                        while Self::pos_inside_boss(world, Position::new(pos.x + size, pos.y), world.world_position) ||
+                            Self::pos_inside_boss(world, Position::new(pos.x - size, pos.y), world.world_position) ||
+                            Self::pos_inside_boss(world, Position::new(pos.x, pos.y + size), world.world_position) ||
+                            Self::pos_inside_boss(world, Position::new(pos.x, pos.y - size), world.world_position) {
+                            let x = random::rand_range(rng, 3, WORLD_SIZE.0 - 5) as usize;
+                            let y = random::rand_range(rng, 3, WORLD_SIZE.1 - 5) as usize;
+                            pos = Position::new(x,y);
+                        }
+                    if i <= 3 {
+                        world.enemies_map[world.world_position.y as usize][world.world_position.x as usize].push(Enemy::major_enemy(
+                            pos.x as usize,
+                            pos.y as usize,
+                            world.world_position),);
+                        for h in 0..3 {
+                            for j in 0..3 {
+                                world.entity_map[world.world_position.y][world.world_position.x].insert(
+                                    Position::new(pos.x as usize + h, pos.y as usize + j), (tile::MAJOR_ENEMY, Entity::Enemy));
+                            }
+                        }
+
+                    } else if i <= 18{
+                        world.enemies_map[world.world_position.y as usize][world.world_position.x as usize].push(Enemy::chasing(
+                            pos.x as usize,
+                            pos.y as usize,
+                            world.world_position),);
+                        world.entity_map[world.world_position.y][world.world_position.x].insert(pos, (tile::CHASING_ENEMY, Entity::Enemy));
+
+                    } else {
+                        world.enemies_map[world.world_position.y as usize][world.world_position.x as usize].push(Enemy::bomber(
+                            pos.x as usize,
+                            pos.y as usize,
+                            world.world_position),);
+                        world.entity_map[world.world_position.y][world.world_position.x].insert(pos, (tile::BOMBER_ENEMY, Entity::Enemy));
+
+                    }
+                } 
+                world.bosses[index].enemy_spawn_cooldown = ENEMY_SPAWN_COOLDOWN;
+            } else {
+                if world.bosses[index].enemy_spawn_cooldown != 0 {
+                    world.bosses[index].enemy_spawn_cooldown -= 1;
+                }
+            }
+        }  
     }
 
     pub fn update(world: &mut World, rng: &mut ChaCha8Rng) {
@@ -147,7 +312,10 @@ impl Boss {
         } else if world.world_position == BOSS_ROOMS[4] {
             Self::draw_safe_spot(world, canvas);
         } else if world.world_position == BOSS_ROOMS[2] {
-            
+            Self::draw_stun_wells(world, canvas);
+            Self::draw_laser_column(world, index, canvas);
+            Self::draw_asteroids(world, index, canvas);
+            Self::draw_lasers(world, canvas, rng);
         }  
     }
 
@@ -159,21 +327,33 @@ impl Boss {
         if world.world_position == BOSS_ROOMS[0] {
             Self::generate_lasers(world, world.bosses[index].laser_amount, index, rng);
             Self::check_laser_damage(world);
+            Self::spawn_enemies(world, rng, index);
         } else if world.world_position == BOSS_ROOMS[1] {
             Self::generate_asteroid(world, index);
             Self::check_asteroid_damage(world);
             Self::generate_column_laser(world, index);
             Self::check_laser_column_damage(world, index);
+            Self::spawn_enemies(world, rng, index);
         } else if world.world_position == BOSS_ROOMS[3] {
             Self::chase_player(world, index);
             Self::generate_stun_well(world, index, rng);
             Self::check_stun_well_stun(world);
+            Self::spawn_enemies(world, rng, index);
         } else if world.world_position == BOSS_ROOMS[4] {
             Self::generate_safe_spot(world, index, rng);
             Self::check_survive_black_out(world);
             Self::generate_vulnerable_spot(world, index, rng);
+            Self::spawn_enemies(world, rng, index);
         } else if world.world_position == BOSS_ROOMS[2] {
-            
+            Self::spawn_enemies(world, rng, index);
+            Self::generate_asteroid(world, index);
+            Self::check_asteroid_damage(world);
+            Self::generate_lasers(world, world.bosses[index].laser_amount, index, rng);
+            Self::check_laser_damage(world);
+            Self::generate_column_laser(world, index);
+            Self::check_laser_column_damage(world, index);
+            Self::generate_stun_well(world, index, rng);
+            Self::check_stun_well_stun(world);
         }  
     }
 
