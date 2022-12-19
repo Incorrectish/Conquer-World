@@ -8,7 +8,7 @@ use crate::{
     BOARD_SIZE, TILE_SIZE, UNIVERSAL_OFFSET, WORLD_SIZE,
 };
 use ggez::graphics::{self, Canvas};
-use std::{cmp::max, collections::BTreeMap, collections::LinkedList};
+use std::{cmp::max, collections::HashMap, collections::LinkedList};
 
 const CHASING_ENEMY_HEALTH: usize = 50;
 const BOMBER_ENEMY_HEALTH: usize = 25;
@@ -558,11 +558,11 @@ impl Enemy {
     pub fn can_travel_to(
         // this is the (position_in_world, position_of_world)
         position_info: (Position, Position),
-        entity_map: &[[BTreeMap<Position, ([f32; 4], Entity)>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
+        entity_map: &[[HashMap<Position, ([f32; 4], Entity)>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
              (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
-        terrain_map: &[[BTreeMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
+        terrain_map: &[[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
              (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
-        atmosphere_map: &[[BTreeMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
+        atmosphere_map: &[[HashMap<Position, [f32; 4]>; (BOARD_SIZE.1 / WORLD_SIZE.1) as usize];
              (BOARD_SIZE.0 / WORLD_SIZE.0) as usize],
         can_dodge_projectiles: bool,
     ) -> bool {

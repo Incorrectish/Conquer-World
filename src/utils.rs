@@ -6,7 +6,7 @@ use ggez::graphics::{self, Canvas};
 use rand::rngs;
 use rand::rngs::ThreadRng;
 use rand_chacha::ChaCha8Rng;
-use std::{cmp::max, collections::BTreeMap};
+use std::{cmp::max, collections::HashMap};
 
 const BOSS_HEALTH: usize = 100;
 const LASER_LINGER_VALUE: usize = 3;
@@ -44,7 +44,7 @@ impl Boss {
         y: usize,
         color: [f32; 4],
         world_position: Position,
-        terrain_loc: &mut BTreeMap<Position, [f32; 4]>,
+        terrain_loc: &mut HashMap<Position, [f32; 4]>,
     ) -> Self {
         let mut offset: usize = 4;
         let is_major: bool = color == tile::MAJOR_BOSS;

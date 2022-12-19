@@ -16,7 +16,6 @@ use std::cmp::{max, min};
 use ggez::graphics::{self, Canvas};
 use ggez::input::keyboard::{KeyCode, KeyInput};
 use ggez::winit::event::VirtualKeyCode;
-use std::collections::HashMap;
 
 // Can change easily
 const MAX_PLAYER_HEALTH: usize = 100;

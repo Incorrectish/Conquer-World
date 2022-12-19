@@ -241,19 +241,10 @@ impl ggez::event::EventHandler<GameError> for State {
 impl State {
     fn save_state(&self) {
         let serialized_world = ron::to_string(self.world.as_ref().unwrap()).unwrap();
-        let mut world_file = OpenOptions::new().write(true).open("./serialization/world").expect("Could not read world file");
-        let _ = world_file.write_all(serialized_world.as_bytes()); // this is not an error
-        let world_str = fs::read_to_string("./serialization/world").expect("Couldn't read world file");
-        
-        println!("{}", world_str == serialized_world);
-
-
-        let new_world: World = ron::from_str(&serialized_world).unwrap();
+        fs::write("./serialization/world", serialized_world.as_bytes());
         let serialized_rng = serde_json::to_string(self.rng.as_ref().unwrap()).unwrap();
-        let mut rng_file = OpenOptions::new().write(true).open("./serialization/rng").expect("Could not read rng file");
-        let _ = rng_file.write_all(serialized_rng.as_bytes());
-        let mut is_serialized_file = OpenOptions::new().write(true).open("./serialization/is_serialized").expect("Could not read is_serialized file");
-        let _ = is_serialized_file.write_all(b"1"); 
+        fs::write("./serialization/rng", serialized_rng.as_bytes());
+        fs::write("./serialization/is_serialized", b"1");
     }
     fn load_save(ctx: &mut Context) -> Option<State> {
         /* Here is how serialization works:
@@ -272,7 +263,9 @@ impl State {
             .expect("Should have been able to read the file")
             .to_string();
         // pops the newline character
-        serialized_game_str.pop();
+        if serialized_game_str.len() > 1 {
+            serialized_game_str.pop();
+        }
 
         let serialized_game = serialized_game_str
             .parse::<u8>()

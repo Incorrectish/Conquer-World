@@ -170,6 +170,7 @@ impl Projectile {
                     let pos = world.projectiles[index as usize].pos;
                     let world_pos = world.projectiles[index as usize].world_pos;
                     world.projectiles.remove(index as usize);
+                    index -= 1;
                     // basically checks the 8 around and including the projectile and turns
                     // them to their original state
                     for i in 1..=LIGHTNING_SIZE {
