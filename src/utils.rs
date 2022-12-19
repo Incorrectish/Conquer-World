@@ -3,7 +3,7 @@ use crate::{
     world::BOSS_ROOMS, BOARD_SIZE, TILE_SIZE, UNIVERSAL_OFFSET, WORLD_SIZE, 
     player::MAX_PLAYER_HEALTH,
 };
-use ggez::{graphics::{self, Canvas}, mint::Point2};
+use ggez::{graphics::{self, Canvas}, mint::Point2, glam::*};
 use rand::rngs;
 use rand::rngs::ThreadRng;
 use rand_chacha::ChaCha8Rng;
@@ -625,9 +625,9 @@ impl Boss {
         if let Some(spot) = world.boss_safe_spot {
             let size = spot.1 as i32;
             let pos = spot.0;
-            let text_spot = 
-            bevy::math::Vec2::new((pos.x as f32 + 0.25) * TILE_SIZE.0 as f32, 
-            (pos.y as f32 + UNIVERSAL_OFFSET as f32) * TILE_SIZE.1 as f32);
+            let text_spot = Vec2::new(0.0, 0.0);
+            // bevy::math::Vec2::new((pos.x as f32 + 0.25) * TILE_SIZE.0 as f32, 
+            // (pos.y as f32 + UNIVERSAL_OFFSET as f32) * TILE_SIZE.1 as f32);
             let duration_left = format!("{}", spot.2);
 
             if world.in_blackout {

@@ -366,6 +366,7 @@ impl Enemy {
 
     // This just makes move along the best path for the speed, eg speed 2 = 2 moves along the best
     // path
+    // returns if the enemy dies
     pub fn move_enemy(index: usize, world: &mut World) {
         // This gets the shortest path
         let can_dodge_projectiles = match world.enemies_map[world.world_position.y][world.world_position.x][index].color {
@@ -465,11 +466,6 @@ impl Enemy {
                     &world.enemies_map[world.world_position.y][world.world_position.x][index].color,
                     &tile::BOMBER_ENEMY_DEACTIVATED,
                 ) {
-                    let pos = &world.enemies_map[world.world_position.y][world.world_position.x][index].pos;
-                    world.entity_map[world.enemies_map[world.world_position.y][world.world_position.x][index].world_pos.y]
-                        [world.enemies_map[world.world_position.y][world.world_position.x][index].world_pos.x]
-                        .remove(&pos[0]);
-                    world.enemies_map[world.world_position.y][world.world_position.x].remove(index);
                     let pos = &world.enemies_map[world.world_position.y][world.world_position.x][index].pos;
                     world.entity_map[world.enemies_map[world.world_position.y][world.world_position.x][index].world_pos.y]
                         [world.enemies_map[world.world_position.y][world.world_position.x][index].world_pos.x]
