@@ -144,17 +144,11 @@ impl Boss {
                 Self::draw_rush(world, index, world.bosses[index].rush_info.3, canvas);
             }
             Self::draw_stun_wells(world, canvas);
-
         } else if world.world_position == BOSS_ROOMS[4] {
             Self::draw_safe_spot(world, canvas);
         } else if world.world_position == BOSS_ROOMS[2] {
             
         }  
-       
-
-        
-        
-
     }
 
     pub fn coin_flip(rng: &mut ChaCha8Rng) -> bool {
