@@ -346,8 +346,11 @@ impl ggez::event::EventHandler<GameError> for State {
             if let Some(key) = input.keycode {
                 if key == KeyCode::Colon {
                     self.command = true;
-                } else if key == KeyCode::Q {
+                } else if self.command && key == KeyCode::W {
                     self.save_state();
+                } else if self.command && key == KeyCode::Q {
+                    self.save_state();
+                    std::process::exit(0);
                 }
             }
 
@@ -396,7 +399,6 @@ impl State {
             fs::write("./serialization/rng", serialized_rng.as_bytes());
             fs::write("./serialization/is_serialized", b"1");
         }
-        std::process::exit(0);
     }
     fn load_save(ctx: &mut Context) -> Option<State> {
         /* Here is how serialization works:
