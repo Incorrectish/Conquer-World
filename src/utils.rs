@@ -21,7 +21,7 @@ const LASER_DAMAGE: usize = 5;
 const COLUMN_LASER_DAMAGE: usize = 20;
 const LASER_AMOUNT: usize = 7;
 const ASTEROID_DAMAGE: usize = 10;
-const VULNERABLE_TIME_BASE: usize = 10;
+const VULNERABLE_TIME_BASE: usize = 15;
 const BOSS_3_RUSH_COOLDOWN: usize = 20;
 const BOSS_3_MOVE_DELAY: usize = 2;
 const SAFE_SPOT_ATTACK_COOLDOWN: usize = 20;
@@ -97,7 +97,7 @@ impl Boss {
         if world.world_position == BOSS_ROOMS[0] {
             if curr_entity_map.is_empty() {
                 if world.bosses[index].vulnerable_time == 0 && world.bosses[index].boss_can_attack && !world.bosses[index].first_enter{
-                    world.bosses[index].vulnerable_time = VULNERABLE_TIME_BASE;
+                    world.bosses[index].vulnerable_time = VULNERABLE_TIME_BASE + 10;
                     world.bosses[index].boss_can_attack = false;
                 } else if world.bosses[index].vulnerable_time != 0 {
                     world.bosses[index].vulnerable_time -= 1;
