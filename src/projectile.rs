@@ -21,7 +21,7 @@ const FIRE_DAMAGE_TERTIARY: usize = 30;
 const FIRE_DAMAGE_FINAL: usize = 15;
 const FIRE_SPEED: usize = 1;
 
-const PERMISSIBLE_TILES: [[f32; 4]; 10] = [
+const PERMISSIBLE_TILES: [[f32; 4]; 9] = [
     tile::WATER,
     tile::GRASS,
     tile::PLAYER,
@@ -31,7 +31,6 @@ const PERMISSIBLE_TILES: [[f32; 4]; 10] = [
     tile::MAJOR_ENEMY,
     tile::KNIGHT_ENEMY,
     tile::SHOOTER_ENEMY,
-    tile::MINOR_BOSS,
     tile::MAJOR_BOSS,
 ];
 

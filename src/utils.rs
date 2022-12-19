@@ -10,7 +10,8 @@ use rand_chacha::ChaCha8Rng;
 use std::{cmp::max, collections::HashMap};
 use ggez::glam::*;
 
-const BOSS_HEALTH: usize = 100;
+pub const BOSS_HEALTH: usize = 1000;
+pub const MAJOR_BOSS_HEALTH: usize = 5000;
 const LASER_LINGER_VALUE: usize = 3;
 const ASTEROID_LINGER_VALUE: usize = 5;
 const ASTEROID_COOLDOWN: usize = 20;
@@ -62,14 +63,18 @@ impl Boss {
     ) -> Self {
         let mut offset: usize = 4;
         let is_major: bool = color == tile::MAJOR_BOSS;
+        let mut health = BOSS_HEALTH;
         if is_major {
             offset = 5;
+        }
+        if color == tile::MAJOR_BOSS {
+            health = MAJOR_BOSS_HEALTH;
         }
         Boss {
             position: Position::new(x, y),
             color,
             world_position,
-            health: BOSS_HEALTH,
+            health,
             laser_amount: LASER_AMOUNT,
             safe_spot_cooldown: SAFE_SPOT_ATTACK_COOLDOWN,
             asteroid_cooldown: ASTEROID_COOLDOWN,

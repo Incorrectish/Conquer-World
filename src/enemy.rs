@@ -198,20 +198,6 @@ impl Enemy {
         )
     }
 
-    pub fn minor_boss(x: usize, y: usize, world_pos: Position) -> Self {
-        let mut pos = Vec::new();
-        pos.push(Position::new(x, y));
-        Enemy::new(
-            pos,
-            MINOR_BOSS_SPEED,
-            tile::MINOR_BOSS,
-            world_pos,
-            MINOR_BOSS_HEALTH,
-            true,
-            false,
-        )
-    }
-
     pub fn health(&self) -> usize {
         self.health
     }
@@ -250,7 +236,7 @@ impl Enemy {
                 tile::MAJOR_ENEMY => MAJOR_ENEMY_ENERGY_RETURN,
                 tile::SHOOTER_ENEMY => SHOOTER_ENEMY_ENERGY_RETURN,
                 tile::KNIGHT_ENEMY => KNIGHT_ENEMY_ENERGY_RETURN,
-                tile::MINOR_BOSS => MINOR_BOSS_ENERGY_RETURN,
+                tile::LASER_BOSS => MINOR_BOSS_ENERGY_RETURN,
                 tile::MAJOR_BOSS => MAJOR_BOSS_ENERGY_RETURN,
                 tile::BOMBER_ENEMY_ACTIVATED => 0,
                 _ => unreachable!("Cannot be anything other than the enemy tiles"),
