@@ -48,6 +48,11 @@ const MAJOR_ENEMY_ENERGY_RETURN: usize = 25;
 const MINOR_BOSS_ENERGY_RETURN: usize = 100;
 const MAJOR_BOSS_ENERGY_RETURN: usize = 100;
 
+const BOMBER_DAMAGE: usize = 20;
+const CHASER_DAMAGE: usize = 3;
+const MAJOR_DAMAGE: usize = 10;
+const MAJOR_BOSS_DAMAGE: usize = 10;
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
 // This is basically the same as the enemy for now, but I am just testing an enemy system
 pub struct Enemy {
@@ -93,13 +98,14 @@ impl Enemy {
         health: usize,
         can_dodge_projectiles: bool,
         boss: bool,
+        attack_damage: usize
     ) -> Self {
         let temp = Self {
             pos,
             direction: Direction::North,
             speed: 1,
             color,
-            attack_damage: 1,
+            attack_damage,
             health,
             resistance: 1.0,
             world_pos,
@@ -121,6 +127,7 @@ impl Enemy {
             BOMBER_ENEMY_HEALTH,
             true,
             false,
+            BOMBER_DAMAGE
         )
     }
 
@@ -135,6 +142,7 @@ impl Enemy {
             CHASING_ENEMY_HEALTH,
             true,
             false,
+            CHASER_DAMAGE,
         )
     }
 
@@ -153,6 +161,7 @@ impl Enemy {
             MAJOR_ENEMY_HEALTH,
             true,
             false,
+           MAJOR_DAMAGE,
         )
     }
 
@@ -167,6 +176,7 @@ impl Enemy {
             SHOOTER_ENEMY_HEALTH,
             true,
             false,
+            0,
         )
     }
 
@@ -181,6 +191,7 @@ impl Enemy {
             KNIGHT_ENEMY_HEALTH,
             true,
             false,
+            0,
         )
     }
 
@@ -195,6 +206,7 @@ impl Enemy {
             MAJOR_BOSS_HEALTH,
             true,
             false,
+            MAJOR_BOSS_DAMAGE
         )
     }
 
