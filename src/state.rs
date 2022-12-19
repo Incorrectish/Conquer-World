@@ -37,7 +37,7 @@ pub const RNG_SEED: u64 = 0;
 pub struct State {
     should_draw: bool,
     command: bool,
-    songs: [audio::Source; 7],
+    songs: [audio::Source; 8],
     // Abstraction for the world and what is contained within it
     world: Option<World>,
     title_screen: bool,
@@ -55,7 +55,9 @@ impl State {
             audio::Source::new(ctx, "/column_laser_boss.ogg")?,
             audio::Source::new(ctx, "/chasing_boss.ogg")?,
             audio::Source::new(ctx, "/laser_boss.ogg")?,
-            audio::Source::new(ctx, "/title_music.ogg")?];
+            audio::Source::new(ctx, "/title_music.ogg")?,
+            audio::Source::new(ctx, "/Sad_Violin_-_Sound_Effect_(HD).ogg")?
+        ];
         let mut rng = ChaCha8Rng::seed_from_u64(RNG_SEED);
         let temp = State {
             should_draw: true,
@@ -64,7 +66,7 @@ impl State {
             world: Some(World::new(&mut rng)),
             title_screen,
             rng: Some(rng),
-            player_curr_world_position: Position::new(0,0),
+            player_curr_world_position: Position::new(0, 0),
         };
         Ok(temp)
     }
@@ -78,7 +80,9 @@ impl State {
             audio::Source::new(ctx, "/column_laser_boss.ogg")?,
             audio::Source::new(ctx, "/chasing_boss.ogg")?,
             audio::Source::new(ctx, "/laser_boss.ogg")?,
-            audio::Source::new(ctx, "/title_music.ogg")?];
+            audio::Source::new(ctx, "/title_music.ogg")?,
+            audio::Source::new(ctx, "/Sad_Violin_-_Sound_Effect_(HD).ogg")?
+        ];
         Ok(State {
             should_draw: true,
             command: false,
@@ -86,7 +90,7 @@ impl State {
             world: None,
             title_screen: true,
             rng: None,
-            player_curr_world_position: Position::new(0,0),
+            player_curr_world_position: Position::new(0, 0),
         })
     }
 
@@ -98,7 +102,9 @@ impl State {
             audio::Source::new(ctx, "/column_laser_boss.ogg")?,
             audio::Source::new(ctx, "/chasing_boss.ogg")?,
             audio::Source::new(ctx, "/laser_boss.ogg")?,
-            audio::Source::new(ctx, "/title_music.ogg")?];
+            audio::Source::new(ctx, "/title_music.ogg")?,
+            audio::Source::new(ctx, "/Sad_Violin_-_Sound_Effect_(HD).ogg")?
+        ];
         let temp = State {
             should_draw: true,
             command: false,
@@ -106,7 +112,7 @@ impl State {
             world: Some(world),
             title_screen: false,
             rng: Some(rng),
-            player_curr_world_position: Position::new(0,0),
+            player_curr_world_position: Position::new(0, 0),
         };
         Ok(temp)
     }
@@ -115,55 +121,65 @@ impl State {
 impl ggez::event::EventHandler<GameError> for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
         if !self.title_screen {
-            let world_pos = self.world.as_mut().unwrap().world_position;
-            let boss_rooms = BOSS_ROOMS;
-            if world_pos == boss_rooms[0] {
-                if !self.songs[5].playing() {
+            if !self.world.as_ref().unwrap().player.is_alive() {
+                if !self.songs[7].playing() {
                     for song in &mut self.songs {
                         song.stop(ctx);
                     }
-                    let _ = self.songs[5].set_repeat(true);
-                    let _ = self.songs[5].play(ctx);
-                }
-            } else if world_pos == boss_rooms[1] {
-                if !self.songs[3].playing() {
-                    for song in &mut self.songs {
-                        song.stop(ctx);
-                    }
-                    let _ = self.songs[3].set_repeat(true);
-                    let _ = self.songs[3].play(ctx);
-                }
-            } else if world_pos == boss_rooms[3] {
-                if !self.songs[4].playing() {
-                    for song in &mut self.songs {
-                        song.stop(ctx);
-                    }
-                    let _ = self.songs[4].set_repeat(true);
-                    let _ = self.songs[4].play(ctx);
-                }
-            } else if world_pos == boss_rooms[4] {
-                if !self.songs[2].playing() {
-                    for song in &mut self.songs {
-                        song.stop(ctx);
-                    }
-                    let _ = self.songs[2].set_repeat(true);
-                    let _ = self.songs[2].play(ctx);
-                }
-            } else if world_pos == boss_rooms[2] {
-                if !self.songs[1].playing() {
-                    for song in &mut self.songs {
-                        song.stop(ctx);
-                    }
-                    let _ = self.songs[1].set_repeat(true);
-                    let _ = self.songs[1].play(ctx);
+                    let _ = self.songs[7].set_repeat(true);
+                    let _ = self.songs[7].play(ctx);
                 }
             } else {
-                if !self.songs[0].playing() {
-                    for song in &mut self.songs {
-                        song.stop(ctx);
+                let world_pos = self.world.as_mut().unwrap().world_position;
+                let boss_rooms = BOSS_ROOMS;
+                if world_pos == boss_rooms[0] {
+                    if !self.songs[5].playing() {
+                        for song in &mut self.songs {
+                            song.stop(ctx);
+                        }
+                        let _ = self.songs[5].set_repeat(true);
+                        let _ = self.songs[5].play(ctx);
                     }
-                    let _ = self.songs[0].set_repeat(true);
-                    let _ = self.songs[0].play(ctx);
+                } else if world_pos == boss_rooms[1] {
+                    if !self.songs[3].playing() {
+                        for song in &mut self.songs {
+                            song.stop(ctx);
+                        }
+                        let _ = self.songs[3].set_repeat(true);
+                        let _ = self.songs[3].play(ctx);
+                    }
+                } else if world_pos == boss_rooms[3] {
+                    if !self.songs[4].playing() {
+                        for song in &mut self.songs {
+                            song.stop(ctx);
+                        }
+                        let _ = self.songs[4].set_repeat(true);
+                        let _ = self.songs[4].play(ctx);
+                    }
+                } else if world_pos == boss_rooms[4] {
+                    if !self.songs[2].playing() {
+                        for song in &mut self.songs {
+                            song.stop(ctx);
+                        }
+                        let _ = self.songs[2].set_repeat(true);
+                        let _ = self.songs[2].play(ctx);
+                    }
+                } else if world_pos == boss_rooms[2] {
+                    if !self.songs[1].playing() {
+                        for song in &mut self.songs {
+                            song.stop(ctx);
+                        }
+                        let _ = self.songs[1].set_repeat(true);
+                        let _ = self.songs[1].play(ctx);
+                    }
+                } else {
+                    if !self.songs[0].playing() {
+                        for song in &mut self.songs {
+                            song.stop(ctx);
+                        }
+                        let _ = self.songs[0].set_repeat(true);
+                        let _ = self.songs[0].play(ctx);
+                    }
                 }
             }
         } else {
@@ -177,7 +193,11 @@ impl ggez::event::EventHandler<GameError> for State {
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         if self.title_screen {
-            let canvas = graphics::Canvas::from_frame(ctx, graphics::Color::from(tile::TITLE_SCREEN_FLOOR));
+            let canvas =
+                graphics::Canvas::from_frame(ctx, graphics::Color::from(tile::TITLE_SCREEN_FLOOR));
+            canvas.finish(ctx)?;
+        } else if !self.world.as_mut().unwrap().player.is_alive() {
+            let canvas = graphics::Canvas::from_frame(ctx, graphics::Color::from(tile::BLACK));
             canvas.finish(ctx)?;
         } else {
             if self.should_draw {
@@ -311,11 +331,14 @@ impl ggez::event::EventHandler<GameError> for State {
 
 impl State {
     fn save_state(&self) {
-        let serialized_world = ron::to_string(self.world.as_ref().unwrap()).unwrap();
-        fs::write("./serialization/world", serialized_world.as_bytes());
-        let serialized_rng = serde_json::to_string(self.rng.as_ref().unwrap()).unwrap();
-        fs::write("./serialization/rng", serialized_rng.as_bytes());
-        fs::write("./serialization/is_serialized", b"1");
+        if self.world.as_ref().unwrap().player.is_alive() {
+            let serialized_world = ron::to_string(self.world.as_ref().unwrap()).unwrap();
+            fs::write("./serialization/world", serialized_world.as_bytes());
+            let serialized_rng = serde_json::to_string(self.rng.as_ref().unwrap()).unwrap();
+            fs::write("./serialization/rng", serialized_rng.as_bytes());
+            fs::write("./serialization/is_serialized", b"1");
+        }
+        std::process::exit(0);
     }
     fn load_save(ctx: &mut Context) -> Option<State> {
         /* Here is how serialization works:
@@ -345,13 +368,15 @@ impl State {
             println!("No serialized game");
             None
         } else if serialized_game == 1 {
-            let world_str = fs::read_to_string("./serialization/world").expect("Couldn't read world file");
+            let world_str =
+                fs::read_to_string("./serialization/world").expect("Couldn't read world file");
             let world: World = ron::from_str(&world_str).unwrap();
-            let rng_str = fs::read_to_string("./serialization/rng").expect("Couldn't read rng file");
+            let rng_str =
+                fs::read_to_string("./serialization/rng").expect("Couldn't read rng file");
             let rng: ChaCha8Rng = serde_json::from_str(&rng_str).unwrap();
             return Some(State::from(world, ctx, rng).expect("couldn't do audio for some reason"));
         } else {
             panic!("Save data corrupted")
-        }
+        };
     }
 }

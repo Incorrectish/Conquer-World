@@ -1,5 +1,6 @@
 pub const TITLE_SCREEN_FLOOR: [f32; 4] = [61.0/256.0, 63.0/256.0, 88.0/256.0, 1.0];
 
+pub const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
 pub const BOSS_FLOOR: [f32; 4] = [0.1, 0.1, 0.1, 1.0];
 pub const FLOOR: [f32; 4] = [0.2, 0.2, 0.2, 1.0];
 pub const WATER: [f32; 4] = [0.145, 0.588, 0.8, 1.0];
