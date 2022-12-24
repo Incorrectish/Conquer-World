@@ -1,98 +1,375 @@
 use crate::direction::Direction;
 use crate::enemy::Enemy;
 use crate::player::Player;
-use crate::{projectile::Projectile, tile, world::World, SCREEN_SIZE, TILE_SIZE, WORLD_SIZE};
+use crate::utils::Boss;
+use crate::utils::Position;
+use crate::UNIVERSAL_OFFSET;
+use ggez::audio;
+use ggez::audio::SoundSource;
+use rand_chacha::ChaChaRng;
+use serde::{Deserialize, Serialize};
+use std::fs::{self, OpenOptions};
+use std::io::Write;
+
+use crate::{
+    entity::Entity,
+    projectile::Projectile,
+    tile,
+    world::{World, BOSS_ROOMS, FINAL_BOSS_ROOM},
+    BOARD_SIZE, SCREEN_SIZE, TILE_SIZE, WORLD_SIZE,
+};
+
+use rand::prelude::*;
+use rand::rngs::ThreadRng;
+use rand_chacha::ChaCha8Rng;
+
 use ggez::{
     event,
+    glam::*,
     graphics::{self, Canvas},
     input::keyboard::{KeyCode, KeyInput},
     Context, GameError, GameResult,
 };
-use rand::rngs::ThreadRng;
 
+pub const RNG_SEED: u64 = 0;
+// const MOVES_TILL_ENERGY_REGEN: usize = 5;
+
+// #[derive(serde::Deserialize, serde::Serialize)]
 pub struct State {
-    // RGBA values
-    r: f32,
-    g: f32,
-    b: f32,
-    a: f32,
-
+    should_draw: bool,
+    command: bool,
+    songs: [audio::Source; 8],
     // Abstraction for the world and what is contained within it
-    world: World,
+    world: Option<World>,
+    title_screen: bool,
+    pub rng: Option<ChaCha8Rng>,
+    player_curr_world_position: Position,
+    death_font_size: f32,
 }
 
 impl State {
     // just returns the default values
-    pub fn new() -> Self {
-        Self {
-            r: 0.,
-            g: 0.,
-            b: 0.,
-            a: 0.,
-            world: World::new(),
-        }
+    pub fn new(ctx: &mut Context, title_screen: bool) -> GameResult<State> {
+        let songs = [
+            audio::Source::new(ctx, "/overworld.ogg")?,
+            audio::Source::new(ctx, "/final_boss.ogg")?,
+            audio::Source::new(ctx, "/blackout_boss.ogg")?,
+            audio::Source::new(ctx, "/column_laser_boss.ogg")?,
+            audio::Source::new(ctx, "/chasing_boss.ogg")?,
+            audio::Source::new(ctx, "/laser_boss.ogg")?,
+            audio::Source::new(ctx, "/title_music.ogg")?,
+            audio::Source::new(ctx, "/Sad_Violin_-_Sound_Effect_(HD).ogg")?
+        ];
+        let mut rng = ChaCha8Rng::seed_from_u64(RNG_SEED);
+        let temp = State {
+            should_draw: true,
+            command: false,
+            songs,
+            world: Some(World::new(&mut rng)),
+            title_screen,
+            rng: Some(rng),
+            player_curr_world_position: Position::new(0, 0),
+            death_font_size: 0.
+        };
+        Ok(temp)
+    }
+
+    pub fn title_screen(ctx: &mut Context) -> GameResult<State> {
+        // TODO make this the title screen music
+        let songs = [
+            audio::Source::new(ctx, "/overworld.ogg")?,
+            audio::Source::new(ctx, "/final_boss.ogg")?,
+            audio::Source::new(ctx, "/blackout_boss.ogg")?,
+            audio::Source::new(ctx, "/column_laser_boss.ogg")?,
+            audio::Source::new(ctx, "/chasing_boss.ogg")?,
+            audio::Source::new(ctx, "/laser_boss.ogg")?,
+            audio::Source::new(ctx, "/title_music.ogg")?,
+            audio::Source::new(ctx, "/Sad_Violin_-_Sound_Effect_(HD).ogg")?
+        ];
+        Ok(State {
+            should_draw: true,
+            command: false,
+            songs,
+            world: None,
+            title_screen: true,
+            rng: None,
+            player_curr_world_position: Position::new(0, 0),
+            death_font_size: 0.
+        })
+    }
+
+    pub fn from(world: World, ctx: &mut Context, rng: ChaCha8Rng) -> GameResult<State> {
+        let songs = [
+            audio::Source::new(ctx, "/overworld.ogg")?,
+            audio::Source::new(ctx, "/final_boss.ogg")?,
+            audio::Source::new(ctx, "/blackout_boss.ogg")?,
+            audio::Source::new(ctx, "/column_laser_boss.ogg")?,
+            audio::Source::new(ctx, "/chasing_boss.ogg")?,
+            audio::Source::new(ctx, "/laser_boss.ogg")?,
+            audio::Source::new(ctx, "/title_music.ogg")?,
+            audio::Source::new(ctx, "/Sad_Violin_-_Sound_Effect_(HD).ogg")?
+        ];
+        let temp = State {
+            should_draw: true,
+            command: false,
+            songs,
+            world: Some(world),
+            title_screen: false,
+            rng: Some(rng),
+            player_curr_world_position: Position::new(0, 0),
+            death_font_size: 0.
+        };
+        Ok(temp)
     }
 }
 
 impl ggez::event::EventHandler<GameError> for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
-        Ok(())
-    }
-    fn draw(&mut self, ctx: &mut Context) -> GameResult {
-        // render the graphics with the rgb value, it will always be black though because the
-        // self.r,g,b,a values never change from 0
-        let mut canvas = graphics::Canvas::from_frame(
-            ctx,
-            graphics::Color::from([self.r, self.g, self.b, self.a]),
-        );
-
-        // draw our state matrix "world" to the screen
-        // We must partition our window into small sectors of 32 by 32 pixels and then for each
-        // individual one, change each of the pixels to the color corresponding to its place in the
-        // state matrix
-        for i in 0..WORLD_SIZE.1 {
-            for j in 0..WORLD_SIZE.0 {
-                canvas.draw(
-                    &graphics::Quad,
-                    graphics::DrawParam::new()
-                        .dest_rect(graphics::Rect::new_i32(
-                            j as i32 * TILE_SIZE.0 as i32,
-                            i as i32 * TILE_SIZE.1 as i32,
-                            TILE_SIZE.0 as i32,
-                            TILE_SIZE.1 as i32,
-                        ))
-                        .color(self.world.world[i as usize][j as usize]),
-                );
+        if !self.title_screen {
+            if !self.world.as_ref().unwrap().player.is_alive() {
+                if !self.songs[7].playing() {
+                    for song in &mut self.songs {
+                        song.stop(ctx);
+                    }
+                    self.songs[7].set_volume(0.5);
+                    self.songs[7].set_repeat(true);
+                    self.songs[7].play(ctx);
+                }
+            } else {
+                let world_pos = self.world.as_mut().unwrap().world_position;
+                let boss_rooms = BOSS_ROOMS;
+                if world_pos == boss_rooms[0] {
+                    if !self.songs[5].playing() {
+                        for song in &mut self.songs {
+                            song.stop(ctx);
+                        }
+                        self.songs[5].set_volume(0.5);
+                        self.songs[5].set_repeat(true);
+                        self.songs[5].play(ctx);
+                    }
+                } else if world_pos == boss_rooms[1] {
+                    if !self.songs[3].playing() {
+                        for song in &mut self.songs {
+                            song.stop(ctx);
+                        }
+                        self.songs[3].set_volume(0.5);
+                        self.songs[3].set_repeat(true);
+                        self.songs[3].play(ctx);
+                    }
+                } else if world_pos == boss_rooms[3] {
+                    if !self.songs[4].playing() {
+                        for song in &mut self.songs {
+                            song.stop(ctx);
+                        }
+                        self.songs[4].set_volume(0.5);
+                        self.songs[4].set_repeat(true);
+                        self.songs[4].play(ctx);
+                    }
+                } else if world_pos == boss_rooms[4] {
+                    if !self.songs[2].playing() {
+                        for song in &mut self.songs {
+                            song.stop(ctx);
+                        }
+                        self.songs[2].set_volume(0.5);
+                        self.songs[2].set_repeat(true);
+                        self.songs[2].play(ctx);
+                    }
+                } else if world_pos == boss_rooms[2] {
+                    if !self.songs[1].playing() {
+                        for song in &mut self.songs {
+                            song.stop(ctx);
+                        }
+                        self.songs[1].set_volume(0.5);
+                        self.songs[1].set_repeat(true);
+                        self.songs[1].play(ctx);
+                    }
+                } else {
+                    if !self.songs[0].playing() {
+                        for song in &mut self.songs {
+                            song.stop(ctx);
+                        }
+                        self.songs[0].set_volume(0.5);
+                        self.songs[0].set_repeat(true);
+                        self.songs[0].play(ctx);
+                    }
+                }
+            }
+        } else {
+            if !self.songs[6].playing() {
+                self.songs[6].set_volume(0.5);
+                self.songs[6].set_repeat(true);
+                self.songs[6].play(ctx);
             }
         }
-        canvas.finish(ctx)?;
         Ok(())
     }
 
-    fn key_down_event(
+    fn draw(&mut self, ctx: &mut Context) -> GameResult {
+        if self.title_screen {
+            let mut canvas =
+                graphics::Canvas::from_frame(ctx, graphics::Color::from(tile::TITLE_SCREEN_FLOOR));
+            let pos = Position::new(8, 2);
+            let text_spot = Vec2::new((pos.x as f32 + 0.25) * TILE_SIZE.0 as f32,  (pos.y as f32 + UNIVERSAL_OFFSET as f32) * TILE_SIZE.1 as f32);
+            let duration_left = "Very Good Game";
+                canvas.draw(
+                    &*(graphics::Text::new(duration_left).set_scale(72.)),//.set_scale(48.),
+                    graphics::DrawParam::from(text_spot).color(graphics::Color::from_rgb(217, 234, 211)),
+                );
+            let pos = Position::new(14, 9);
+            let text_spot = Vec2::new((pos.x as f32 + 0.25) * TILE_SIZE.0 as f32,  (pos.y as f32 + UNIVERSAL_OFFSET as f32) * TILE_SIZE.1 as f32);
+            let duration_left = "\"Features, not bugs\"";
+                canvas.draw(
+                    &*(graphics::Text::new(duration_left).set_scale(32.)),//.set_scale(48.),
+                    graphics::DrawParam::from(text_spot).color(graphics::Color::from_rgb(164, 194, 244)),
+                );
+            let pos = Position::new(13, 22);
+            let text_spot = Vec2::new((pos.x as f32 + 0.25) * TILE_SIZE.0 as f32,  (pos.y as f32 + UNIVERSAL_OFFSET as f32) * TILE_SIZE.1 as f32);
+            let duration_left = " New Game [N]";
+                canvas.draw(
+                    &*(graphics::Text::new(duration_left).set_scale(52.)),//.set_scale(48.),
+                    graphics::DrawParam::from(text_spot).color(graphics::Color::from_rgb(180, 167, 214)),
+                );
+            let pos = Position::new(12, 28);
+            let text_spot = Vec2::new((pos.x as f32 + 0.25) * TILE_SIZE.0 as f32,  (pos.y as f32 + UNIVERSAL_OFFSET as f32) * TILE_SIZE.1 as f32);
+            let duration_left = " Load Save [L]";
+                canvas.draw(
+                    &*(graphics::Text::new(duration_left).set_scale(52.)),//.set_scale(48.),
+                    graphics::DrawParam::from(text_spot).color(graphics::Color::from_rgb(159, 197, 232)),
+                );
+            let pos = Position::new(12, 42);
+            let text_spot = Vec2::new((pos.x as f32 + 0.25) * TILE_SIZE.0 as f32,  (pos.y as f32 + UNIVERSAL_OFFSET as f32) * TILE_SIZE.1 as f32);
+            let duration_left = "By: Ishan, Michael, and Aiden";
+                canvas.draw(
+                    &*(graphics::Text::new(duration_left).set_scale(26.)),//.set_scale(48.),
+                    graphics::DrawParam::from(text_spot).color(graphics::Color::from_rgb(255, 255, 255)),
+                );
+            canvas.finish(ctx)?;
+        } else if !self.world.as_mut().unwrap().player.is_alive() {
+            let mut canvas = graphics::Canvas::from_frame(ctx, graphics::Color::from(tile::BLACK));
+            let pos = Position::new(7, 15);
+            let text_spot = Vec2::new((pos.x as f32 + 0.25) * TILE_SIZE.0 as f32,  (pos.y as f32 + UNIVERSAL_OFFSET as f32) * TILE_SIZE.1 as f32);
+            let duration_left = "You died :(";
+                canvas.draw(
+                    &*(graphics::Text::new(duration_left).set_scale(self.death_font_size)),//.set_scale(48.),
+                    graphics::DrawParam::from(text_spot).color(graphics::Color::RED),
+                );
+                if self.death_font_size < 100.0 {
+                    self.death_font_size += 0.1;
+                }
+            canvas.finish(ctx)?;
+        } else {
+            if self.should_draw {
+                let world = self.world.as_mut().unwrap();
+                let rng = self.rng.as_mut().unwrap();
+                let mut boss_room = false;
+                let mut final_boss = false;
+                for boss_room_position in BOSS_ROOMS {
+                    if world.world_position == boss_room_position {
+                        boss_room = true;
+                    }
+                }
+                if world.world_position == FINAL_BOSS_ROOM {
+                    final_boss = true;
+                }
+                let mut canvas = if final_boss {
+                    graphics::Canvas::from_frame(ctx, graphics::Color::from(tile::BOSS_FLOOR))
+                } else if boss_room {
+                    graphics::Canvas::from_frame(ctx, graphics::Color::from(tile::FLOOR))
+                } else {
+                    graphics::Canvas::from_frame(ctx, graphics::Color::from(tile::GRASS))
+                    // for x in 0..WORLD_SIZE.0 {
+                    //     for y in 0..WORLD_SIZE.1 {
+                    //         let mut rng = rand::thread_rng();
+                    //         canvas.draw(
+                    //             &graphics::Quad,
+                    //             graphics::DrawParam::new()
+                    //                 .dest_rect(graphics::Rect::new_i32(
+                    //                     (x as usize * TILE_SIZE.0 as usize) as i32,
+                    //                     ((y as usize + UNIVERSAL_OFFSET as usize) as i32) * TILE_SIZE.1 as i32,
+                    //                     // (loc.x - (self.world_position.x * WORLD_SIZE.0 as usize)) as i32
+                    //                     //     * TILE_SIZE.0 as i32,
+                    //                     // (loc.y - (self.world_position.y * WORLD_SIZE.1 as usize)
+                    //                     //     + UNIVERSAL_OFFSET as usize) as i32
+                    //                     //     * TILE_SIZE.1 as i32,
+
+                    //                     TILE_SIZE.0 as i32,
+                    //                     TILE_SIZE.1 as i32,
+                    //                 ))
+                    //                 .color(World::related_color(&mut rng, tile::GRASS)),
+                    //         )
+                    //     }
+                    // }
+                };
+                world.draw(&mut canvas, rng);
+
+                //For Text
+                // let level_dest = bevy::math::Vec2::new(10.0, 10.0);
+                // let score_dest = bevy::math::Vec2::new(200.0, 10.0);
+
+                // let level_str = format!("Level: 59");
+                // let score_str = format!("Score: 23423");
+
+                // canvas.draw(
+                //     &graphics::Text::new(level_str),
+                //     graphics::DrawParam::from(level_dest).color(tile::PORTAL),
+                // );
+
+                // canvas.draw(
+                //     &graphics::Text::new(score_str),
+                //     graphics::DrawParam::from(score_dest).color(tile::PORTAL),
+                // );
+                canvas.finish(ctx)?;
+                self.should_draw = false;
+            }
+        }
+        Ok(())
+    }
+
+    fn key_up_event(
         &mut self,
         ctx: &mut Context,
         input: KeyInput,
-        _repeated: bool,
+        // _repeated: bool,
     ) -> Result<(), GameError> {
         // Just takes in the user input and makes an action based off of it
+        if self.title_screen {
+            if let Some(key) = input.keycode {
+                if key == KeyCode::N {
+                    // new game
+                    *self = Self::new(ctx, false)?;
+                } else if key == KeyCode::L {
+                    // load game
+                    *self = Self::load_save(ctx).unwrap();
+                }
+            }
+        } else {
+            if let Some(key) = input.keycode {
+                if key == KeyCode::Colon {
+                    self.command = true;
+                } else if self.command && key == KeyCode::W {
+                    self.save_state();
+                } else if self.command && key == KeyCode::Q {
+                    self.save_state();
+                    std::process::exit(0);
+                }
+            }
 
-        Player::use_input(input, &mut self.world);
-        // updates all the enemies in the world, for now only removes them once their health is
-        // less than or equal to 0
-        Enemy::update(&mut self.world);
-        Projectile::update(&mut self.world);
-        Ok(())
-    }
+            let world = self.world.as_mut().unwrap();
 
-    fn mouse_motion_event(
-        &mut self,
-        _ctx: &mut Context,
-        _x: f32,
-        _y: f32,
-        _dx: f32,
-        _dy: f32,
-    ) -> Result<(), GameError> {
+            if Player::use_input(input, world, self.rng.as_mut().unwrap()) {
+                // self.player_move_count += 1;
+                // if self.player_move_count >= MOVES_TILL_ENERGY_REGEN {
+                //     self.world.player.change_energy(1);
+                //     self.player_move_count = 0;
+                // }
+                Projectile::update(world);
+
+                // updates all the enemies in the world, for now only removes them once their health is
+                // less than or equal to 0
+                Enemy::update(world);
+                self.should_draw = true;
+            }
+        }
         Ok(())
     }
 
@@ -103,7 +380,63 @@ impl ggez::event::EventHandler<GameError> for State {
         _x: f32,
         _y: f32,
     ) -> Result<(), GameError> {
-        self.world.player.queued_position = Some((((_x/TILE_SIZE.0 as f32) as usize), ((_y/TILE_SIZE.1 as f32) as usize))) ;
+        if !self.title_screen && (_y / TILE_SIZE.1 as f32) as usize >= UNIVERSAL_OFFSET as usize {
+            self.world.as_mut().unwrap().player.queued_position = Some(Position::new(
+                (_x / TILE_SIZE.0 as f32) as usize,
+                (_y / TILE_SIZE.1 as f32) as usize - UNIVERSAL_OFFSET as usize,
+            ));
+        }
         Ok(())
+    }
+}
+
+impl State {
+    fn save_state(&self) {
+        if self.world.as_ref().unwrap().player.is_alive() {
+            let serialized_world = ron::to_string(self.world.as_ref().unwrap()).unwrap();
+            fs::write("./serialization/world", serialized_world.as_bytes());
+            let serialized_rng = serde_json::to_string(self.rng.as_ref().unwrap()).unwrap();
+            fs::write("./serialization/rng", serialized_rng.as_bytes());
+            fs::write("./serialization/is_serialized", b"1");
+        }
+    }
+    fn load_save(ctx: &mut Context) -> Option<State> {
+        /* Here is how serialization works:
+         * serialization
+         *      is_serialized:
+         *          Contains either "0" or "1", where one is that there is a game serialized
+         *          while zero means there is none
+         *      world:
+         *          Contains the actual world object, written to in RON
+         *      rng:
+         *          Contains the rng object, in JSON
+         *
+         */
+
+        let mut serialized_game_str = fs::read_to_string("./serialization/is_serialized")
+            .expect("Should have been able to read the file")
+            .to_string();
+        // pops the newline character
+        if serialized_game_str.len() > 1 {
+            serialized_game_str.pop();
+        }
+
+        let serialized_game = serialized_game_str
+            .parse::<u8>()
+            .expect("Save data corrupted");
+        return if serialized_game == 0 {
+            println!("No serialized game");
+            None
+        } else if serialized_game == 1 {
+            let world_str =
+                fs::read_to_string("./serialization/world").expect("Couldn't read world file");
+            let world: World = ron::from_str(&world_str).unwrap();
+            let rng_str =
+                fs::read_to_string("./serialization/rng").expect("Couldn't read rng file");
+            let rng: ChaCha8Rng = serde_json::from_str(&rng_str).unwrap();
+            return Some(State::from(world, ctx, rng).expect("couldn't do audio for some reason"));
+        } else {
+            panic!("Save data corrupted")
+        };
     }
 }
