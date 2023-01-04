@@ -34,6 +34,7 @@ You should also hear music playing. If you do, the process was successful. If no
 | Melee | Press M to deal damage in the direction you are facing |
 | Slam | Press Z to deal damage to all eight squares around you |
 | Lightning | Click a tile and press L to summon lightning |
+| Projectiles | Press Space to spawn a projectile that travels in the direction that the player is facing |
 | Building | Click a tile within one tile of the player and press B to build a wall on that square |
 | Fire | Press F to summon a wave of fire in the direction that the player is facing |
 | Heal | Press H to heal |
@@ -83,9 +84,50 @@ There are 3 different types of enemies
 <br>
 
 **Player Abilities**
+<br>
+<br>
+<br>
+Lightning
+<br>
+![lightning](https://user-images.githubusercontent.com/84337209/210485645-a814326b-6065-468a-aede-c7ee2aab7303.gif)
+<br>
+Projectiles
+<br>
+![projectiles](https://user-images.githubusercontent.com/84337209/210485696-897ba642-ba4a-4092-89d3-e56baf650107.gif)
+<br>
+Heal
+<br>
+![heal](https://user-images.githubusercontent.com/84337209/210509129-7c7df29a-f9ea-403a-9c3d-5bb42944d8ff.gif)
+<br>
+Invisibility
+<br>
+![invis](https://user-images.githubusercontent.com/84337209/210509134-28172cc0-939d-4234-ae75-dac77ff9c5d9.gif)
+<br>
+Missile
+<br>
+![missile](https://user-images.githubusercontent.com/84337209/210509136-e4d1fa7d-3acc-4ff3-affe-6db621039862.gif)
+<br>
+Teleport
+<br>
+![teleport](https://user-images.githubusercontent.com/84337209/210509138-5aba55b7-5321-4a4b-9bbc-d78e82d08b84.gif)
+<br>
+Fire
+<br>
+![fire](https://user-images.githubusercontent.com/84337209/210509140-dd42970a-f97f-45ca-a608-bde944748ab7.gif)
+<br>
+
+
 
 <br>
 
 **Bosses and Mechanics**
 <br>
+<br>
+<br>
+
+
+<br>
+
+
+
 
