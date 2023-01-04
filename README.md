@@ -122,6 +122,36 @@ Fire
 
 **Bosses and Mechanics**
 <br>
+
+
+
+Laser Grid Boss
+<br>
+ ![lasergrid](https://user-images.githubusercontent.com/84337209/210518932-ac623aa7-adc7-45cd-a200-6f2d1e148967.gif)
+<br>
+Spawns grid of lasers with short activation time. Stay away from the lasers to avoid damage. Two types of enemies in this room, majors and bombers. Kill all enemies in the room to activate a boss damage phase. Repeat until boss is dead.
+<br>
+
+Chasing Boss
+<br>
+![ChasingBoss](https://user-images.githubusercontent.com/84337209/210518924-c5cd450e-5063-445d-b236-c533be8fee41.gif)
+<br>
+Relentlessly chases the player, spawns stun wels around the room. Stepping in a stun well temporarily prevents a player from acting. Stepping in the path of the boss provokes it to do a charge attack, which kills you if you get caught. It leaves behind a trail of fire which should be avoided. Damage the boss once it has charged into a wall. No enemies in this room. 
+<br>
+<br>
+SlidingLaser Boss
+<br>
+![slidinglaser](https://user-images.githubusercontent.com/84337209/210518929-689e15de-8227-4caa-891a-183c12b81412.gif)
+<br>
+The boss creates a full map range laser horizontally or vertically depending on the players position and creates a full map range laser and begins moving towards the player vertically or horizontally. Additionally, asteroids will spawn every few turns which linger for a couple of turns and do damage to the player if stood in. Once the boss has finished it's laser animation, a short damage phase will begin. Chasers and majors spawn in this room. 
+<br>
+<br>
+Blackout Boss
+<br>
+![Blackout](https://user-images.githubusercontent.com/84337209/210518918-c663768e-7dba-43e2-ade5-b381e211aa38.gif)
+<br>
+Creates safe zones around the dungeon that the player must get into before the timer expires. If the player doesn't reach the zone by the time the blackout effect happens(timer expiring), the player will instantly die. Damage specific parts of the boss that glow yellow to activate this damage phase. Only chasers spawn in this room. 
+<br>
 <br>
 <br>
 
