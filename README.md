@@ -6,7 +6,7 @@ Requirements:
 <li>    Rust compiler
 <li>    Cargo
 </ol>
-
+<br>
 Installation instructions:
 
 ```sh
@@ -22,7 +22,7 @@ You should also hear music playing. If you do, the process was successful. If no
 
 
 
-
+<br>
 
 
 **Player Abilities**
@@ -39,9 +39,21 @@ You should also hear music playing. If you do, the process was successful. If no
 | Heal | Press H to heal |
 | Teleport | Click a square and press T to teleport to that tile |
 | Missiles | Press X to spawn a missile that tracks the closest enemies to it and deals massive damage |
-
+<br>
 
 **Warning: The rest of this file contains massive spoilers for the game and mechanics. Don't read on if you want the most interesting experience**
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
 
 **General Game Model**
 
@@ -68,4 +80,12 @@ There are 3 different types of enemies
 | Bomber | Gets close to the player and explodes, dealing damage if the player is in the explosion radius |
 | Major | Chases the player, can move through walls, mountains, and lakes. Deals a lot of damage, but is larger and easier to damage | 
 
+<br>
+
+**Player Abilities**
+
+<br>
+
+**Bosses and Mechanics**
+<br>
 
