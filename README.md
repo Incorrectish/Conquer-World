@@ -155,7 +155,9 @@ Creates safe zones around the dungeon that the player must get into before the t
 <br>
 <br>
 
-
+Final Boss
+<br>
+This boss is by far the hardest and it combines mechanics of all the previous bosses. The mechanics aren't shown, because the boss is an interesting surprise for players. 
 <br>
 
 
